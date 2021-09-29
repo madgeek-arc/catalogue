@@ -8,12 +8,12 @@
 		<version>2.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>eu.intelcomp</groupId>
-	<artifactId>registry</artifactId>
+	<groupId>gr.athenarc</groupId>
+	<artifactId>catalogue</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
-	<name>intelcomp_registry</name>
-	<description>Intelcomp catalogue</description>
+	<name>catalogue</name>
+	<description>Catalogue project</description>
 	<properties>
 		<java.version>11</java.version>
 		<registry-core.version>2.2.1-SNAPSHOT</registry-core.version>
