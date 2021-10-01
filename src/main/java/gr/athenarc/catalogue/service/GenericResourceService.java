@@ -3,14 +3,12 @@ package gr.athenarc.catalogue.service;
 import eu.openminted.registry.core.domain.*;
 import eu.openminted.registry.core.domain.index.IndexField;
 import eu.openminted.registry.core.service.*;
-import eu.openminted.registry.core.service.ResourceService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -33,13 +31,13 @@ public class GenericResourceService {
     @Value("${elastic.index.max_result_window:10000}")
     protected int maxQuantity;
 
-    private static final Logger logger = LogManager.getLogger(AbstractGenericService.class);
+    private static final Logger logger = LogManager.getLogger(GenericResourceService.class);
     private List<String> browseBy;
 
     private Map<String, String> labels;
 
     protected ResourceType resourceType;
-    protected Class typeParameterClass;
+    protected Class<?> typeParameterClass;
 
     public GenericResourceService() {
     }
@@ -48,41 +46,46 @@ public class GenericResourceService {
         return resourceType.getName();
     }
 
-//    @PostConstruct
-//    void init() {
-//        resourceType = resourceTypeService.getResourceType(getResourceType());
-//        Set<String> browseSet = new HashSet<>();
-//        Map<String, Set<String>> sets = new HashMap<>();
-//        labels = new HashMap<>();
-//        labels.put("resourceType", "Resource Type");
-//        for (IndexField f : resourceTypeService.getResourceTypeIndexFields(getResourceType())) {
-//            sets.putIfAbsent(f.getResourceType().getName(), new HashSet<>());
-//            labels.put(f.getName(), f.getLabel());
-//            if (f.getLabel() != null) {
-//                sets.get(f.getResourceType().getName()).add(f.getName());
-//            }
-//        }
-//        boolean flag = true;
-//        for (Map.Entry<String, Set<String>> entry : sets.entrySet()) {
-//            if (flag) {
-//                browseSet.addAll(entry.getValue());
-//                flag = false;
-//            } else {
-//                browseSet.retainAll(entry.getValue());
-//            }
-//        }
-//        browseBy = new ArrayList<>();
-//        browseBy.addAll(browseSet);
+    void initBrowseFields(String resourceTypeName) {
+        resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        Set<String> browseSet = new HashSet<>();
+        Map<String, Set<String>> sets = new HashMap<>();
+        labels = new HashMap<>();
+        labels.put("resourceType", "Resource Type");
+        for (IndexField f : resourceTypeService.getResourceTypeIndexFields(getResourceType())) {
+            sets.putIfAbsent(f.getResourceType().getName(), new HashSet<>());
+            labels.put(f.getName(), f.getLabel());
+            if (f.getLabel() != null) {
+                sets.get(f.getResourceType().getName()).add(f.getName());
+            }
+        }
+        boolean flag = true;
+        for (Map.Entry<String, Set<String>> entry : sets.entrySet()) {
+            if (flag) {
+                browseSet.addAll(entry.getValue());
+                flag = false;
+            } else {
+                browseSet.retainAll(entry.getValue());
+            }
+        }
+        browseBy = new ArrayList<>();
+        browseBy.addAll(browseSet);
 //        browseBy.add("resourceType");
-//        logger.info("Generated generic service for " + getResourceType() + "[" + getClass().getSimpleName() + "]");
-//    }
+        java.util.Collections.sort(browseBy);
+        logger.info("Generating browse fields for [{}]", getResourceType());
+    }
 
     public <T> Browsing<T> cqlQuery(FacetFilter filter) {
 //        filter.setResourceType(getResourceType());
-        return convertToBrowsing(cqlQuery(filter));
+        initBrowseFields(filter.getResourceType());
+        filter.setBrowseBy(browseBy);
+        return convertToBrowsing(searchService.cqlQuery(filter));
     }
 
-    protected <T> Browsing<T> getResults(FacetFilter filter) {
+    public <T> Browsing<T> getResults(FacetFilter filter) {
+        initBrowseFields(filter.getResourceType());
+//        filter.setResourceType(getResourceType());
+        filter.setBrowseBy(browseBy);
         Browsing<T> browsing;
         filter.setResourceType(getResourceType());
         try {
