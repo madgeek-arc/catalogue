@@ -2,11 +2,14 @@ package gr.athenarc.catalogue;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,11 @@ public class ClasspathUtils {
     }
 
     public static Set<Class<?>> findAllClasses(String packageName) {
+        Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
+        return new HashSet<>(reflections.getSubTypesOf(Object.class));
+    }
+
+    public static Set<Class<?>> getAllClasses(String packageName) {
         InputStream stream = ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(packageName.replaceAll("[.]", "/"));
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));

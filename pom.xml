@@ -76,6 +76,11 @@
 			<version>2.2.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.12</version>
+		</dependency>
 
 	</dependencies>
 

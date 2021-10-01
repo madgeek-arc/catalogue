@@ -30,6 +30,7 @@ public class ServiceConf {
 
     private Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
         Set<Class<?>> allClasses = ClasspathUtils.findAllClasses(packageName);
+        logger.info("Classes found in '" + packageName + "': " + allClasses.size());
         Set<Class<?>> classes = new HashSet<>();
         for (Class<?> c : allClasses) {
             if (!c.isInterface()) {
