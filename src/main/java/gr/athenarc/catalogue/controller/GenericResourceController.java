@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "items")
-public class GenericResourceController<T> {
+public class GenericResourceController {
 
     @Autowired
     GenericResourceService genericService;
 
     @GetMapping("/resources/{resourceType}")
-    ResponseEntity<Paging<?>> getResourcesByResourceType(@PathVariable("resourceType") String resourceType, @RequestParam("keyword") String keyword) throws UnknownHostException {
+    ResponseEntity<Paging<?>> getResourcesByResourceType(@PathVariable("resourceType") String resourceType, @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword) throws UnknownHostException {
         FacetFilter ff = new FacetFilter();
         ff.setResourceType(resourceType);
         ff.setKeyword(keyword);
@@ -29,7 +29,7 @@ public class GenericResourceController<T> {
     }
 
     @GetMapping("{resourceType}")
-    ResponseEntity<Paging<?>> getByResourceType(@PathVariable("resourceType") String resourceType, @RequestParam("keyword") String keyword) throws UnknownHostException {
+    ResponseEntity<Paging<?>> getByResourceType(@PathVariable("resourceType") String resourceType, @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword) throws UnknownHostException {
         FacetFilter ff = new FacetFilter();
         ff.setResourceType(resourceType);
         ff.setKeyword(keyword);
@@ -37,7 +37,7 @@ public class GenericResourceController<T> {
 //        Paging<Object> results = genericService.convertToBrowsing(genericService.searchService.searchKeyword(resourceType, keyword));
         Paging<Object> results = genericService.getResults(ff);
 
-        results.setResults(results.getResults().stream().map(item -> ReflectUtils.getFieldValue("value", item)).collect(Collectors.toList()));
+        results.setResults(results.getResults().stream().parallel().map(item -> ReflectUtils.getFieldValue("value", item)).collect(Collectors.toList()));
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 }
