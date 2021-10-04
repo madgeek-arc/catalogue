@@ -3,13 +3,17 @@ package gr.athenarc.catalogue.service;
 import eu.openminted.registry.core.domain.*;
 import eu.openminted.registry.core.domain.index.IndexField;
 import eu.openminted.registry.core.service.*;
+import gr.athenarc.catalogue.exception.ResourceException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 
 import javax.validation.constraints.NotNull;
+import javax.xml.bind.JAXBElement;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,16 +21,10 @@ import java.util.stream.Collectors;
 @Service
 public class GenericResourceService {
 
-    @Autowired
-    public SearchService searchService;
-
-    @Autowired
-    public ResourceService resourceService;
-
-    @Autowired
-    public ResourceTypeService resourceTypeService;
-    @Autowired
-    public ParserService parserPool;
+    public final SearchService searchService;
+    public final ResourceService resourceService;
+    public final ResourceTypeService resourceTypeService;
+    public final ParserService parserPool;
 
     @Value("${elastic.index.max_result_window:10000}")
     protected int maxQuantity;
@@ -39,7 +37,15 @@ public class GenericResourceService {
     protected ResourceType resourceType;
     protected Class<?> typeParameterClass;
 
-    public GenericResourceService() {
+    @Autowired
+    public GenericResourceService(SearchService searchService,
+                                  ResourceService resourceService,
+                                  ResourceTypeService resourceTypeService,
+                                  ParserService parserPool) {
+        this.searchService = searchService;
+        this.resourceService = resourceService;
+        this.resourceTypeService = resourceTypeService;
+        this.parserPool = parserPool;
     }
 
     protected String getResourceType() {
@@ -52,7 +58,8 @@ public class GenericResourceService {
         Map<String, Set<String>> sets = new HashMap<>();
         labels = new HashMap<>();
         labels.put("resourceType", "Resource Type");
-        for (IndexField f : resourceTypeService.getResourceTypeIndexFields(getResourceType())) {
+//        for (IndexField f : resourceTypeService.getResourceTypeIndexFields(getResourceType())) {
+        for (IndexField f : resourceType.getIndexFields()) {
             sets.putIfAbsent(f.getResourceType().getName(), new HashSet<>());
             labels.put(f.getName(), f.getLabel());
             if (f.getLabel() != null) {
@@ -73,6 +80,42 @@ public class GenericResourceService {
 //        browseBy.add("resourceType");
         java.util.Collections.sort(browseBy);
         logger.info("Generating browse fields for [{}]", getResourceType());
+    }
+
+    public Object getObject(String resourceTypeName, String field, String value, boolean throwOnNull) {
+        Resource res;
+        Object ret;
+        try {
+            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(field, value));
+            if (throwOnNull && res == null) {
+                throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
+            }
+            ret = parserPool.deserialize(res, Object.class);
+        } catch (UnknownHostException e) {
+            throw new ResourceException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        if (ret instanceof JAXBElement<?>) {
+            ret = ((JAXBElement<?>) ret).getValue();
+        }
+        return ret;
+    }
+
+    public <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull) {
+        Resource res;
+        T ret;
+        try {
+            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(field, value));
+            if (throwOnNull && res == null) {
+                throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
+            }
+            ret = (T) parserPool.deserialize(res, MultiValueMap.class);
+        } catch (UnknownHostException e) {
+            throw new ResourceException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        if (ret instanceof JAXBElement<?>) {
+            ret = (T) ((JAXBElement<?>) ret).getValue();
+        }
+        return ret;
     }
 
     public <T> Browsing<T> cqlQuery(FacetFilter filter) {

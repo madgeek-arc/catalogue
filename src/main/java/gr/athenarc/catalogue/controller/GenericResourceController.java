@@ -2,13 +2,13 @@ package gr.athenarc.catalogue.controller;
 
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Paging;
-import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.service.GenericResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.bind.JAXBElement;
 import java.net.UnknownHostException;
 import java.util.stream.Collectors;
 
@@ -37,7 +37,24 @@ public class GenericResourceController {
 //        Paging<Object> results = genericService.convertToBrowsing(genericService.searchService.searchKeyword(resourceType, keyword));
         Paging<Object> results = genericService.getResults(ff);
 
-        results.setResults(results.getResults().stream().parallel().map(item -> ReflectUtils.getFieldValue("value", item)).collect(Collectors.toList()));
+        results.setResults(results.getResults().stream().parallel().map(item -> ((JAXBElement) item).getValue()).collect(Collectors.toList()));
         return new ResponseEntity<>(results, HttpStatus.OK);
+    }
+
+    @GetMapping("{resourceType}/query")
+    <T> ResponseEntity<?> getByField(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+        T ret = genericService.get(resourceType, field, value, true);
+        return new ResponseEntity<>(ret, HttpStatus.OK);
+    }
+
+    @GetMapping("{resourceType}/object")
+    ResponseEntity<?> getObjectByField(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+        Object ret = genericService.getObject(resourceType, field, value, true);
+        return new ResponseEntity<>(ret, HttpStatus.OK);
+    }
+
+    @GetMapping("{resourceType}/{id}")
+    ResponseEntity<?> getById(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+        return new ResponseEntity<>(genericService.get(resourceType, field, value, true), HttpStatus.OK);
     }
 }
