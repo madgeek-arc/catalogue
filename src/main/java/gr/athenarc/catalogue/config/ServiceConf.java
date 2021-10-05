@@ -1,12 +1,11 @@
 package gr.athenarc.catalogue.config;
 
+import eu.openminted.registry.core.controllers.ResourceSyncController;
 import gr.athenarc.catalogue.ClasspathUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
+import org.springframework.context.annotation.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -16,6 +15,8 @@ import java.util.Set;
 @Configuration
 @ComponentScan(value = {
         "eu.openminted.registry.core",
+}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceSyncController.class)
 })
 @PropertySource(value = {"classpath:application.properties", "classpath:registry.properties"})
 public class ServiceConf {
