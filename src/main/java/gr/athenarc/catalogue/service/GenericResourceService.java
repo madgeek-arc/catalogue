@@ -117,9 +117,10 @@ public class GenericResourceService {
     }
 
     public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
+        Class<?> clazz = getResourceTypeClass(resourceTypeName);
         List<T> results = (List<T>) paging.getResults()
                 .parallelStream()
-                .map(res -> (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName)))
+                .map(res -> (T) parserPool.deserialize(res, clazz))
                 .collect(Collectors.toList());
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }
@@ -127,6 +128,7 @@ public class GenericResourceService {
 
     protected <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category) {
         Map<String, List<T>> result = new HashMap<>();
+        Class<?> clazz = getResourceTypeClass(filter.getResourceType());
 
         Map<String, List<Resource>> resources;
         try {
@@ -134,7 +136,7 @@ public class GenericResourceService {
             for (Map.Entry<String, List<Resource>> bucket : resources.entrySet()) {
                 List<T> bucketResults = new ArrayList<>();
                 for (Resource res : bucket.getValue()) {
-                    bucketResults.add((T) parserPool.deserialize(res, getResourceTypeClass(filter.getResourceType())));
+                    bucketResults.add((T) parserPool.deserialize(res, clazz));
                 }
                 result.put(bucket.getKey(), bucketResults);
             }
