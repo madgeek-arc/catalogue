@@ -49,12 +49,6 @@ public class GenericResourceController {
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
-    @GetMapping("{resourceType}/object")
-    ResponseEntity<?> getObjectByField(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
-        Object ret = genericService.getObject(resourceType, field, value, true);
-        return new ResponseEntity<>(ret, HttpStatus.OK);
-    }
-
     @GetMapping("{resourceType}/{id}")
     ResponseEntity<?> getById(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
         return new ResponseEntity<>(genericService.get(resourceType, field, value, true), HttpStatus.OK);
