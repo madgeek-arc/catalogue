@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBElement;
 import java.net.UnknownHostException;
@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 @Service
 public class GenericResourceService {
 
+    private static final Logger logger = LogManager.getLogger(GenericResourceService.class);
+
     public final SearchService searchService;
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
@@ -29,13 +31,8 @@ public class GenericResourceService {
     @Value("${elastic.index.max_result_window:10000}")
     protected int maxQuantity;
 
-    private static final Logger logger = LogManager.getLogger(GenericResourceService.class);
-    private List<String> browseBy;
-
-    private Map<String, String> labels;
-
-    protected ResourceType resourceType;
-    protected Class<?> typeParameterClass;
+    private Map<String, List<String>> browseByMap;
+    private Map<String, Map<String, String>> labelsMap;
 
     @Autowired
     public GenericResourceService(SearchService searchService,
@@ -48,56 +45,38 @@ public class GenericResourceService {
         this.parserPool = parserPool;
     }
 
-    protected String getResourceType() {
-        return resourceType.getName();
-    }
-
-    void initBrowseFields(String resourceTypeName) {
-        resourceType = resourceTypeService.getResourceType(resourceTypeName);
-        Set<String> browseSet = new HashSet<>();
-        Map<String, Set<String>> sets = new HashMap<>();
-        labels = new HashMap<>();
-        labels.put("resourceType", "Resource Type");
-//        for (IndexField f : resourceTypeService.getResourceTypeIndexFields(getResourceType())) {
-        for (IndexField f : resourceType.getIndexFields()) {
-            sets.putIfAbsent(f.getResourceType().getName(), new HashSet<>());
-            labels.put(f.getName(), f.getLabel());
-            if (f.getLabel() != null) {
-                sets.get(f.getResourceType().getName()).add(f.getName());
+    @PostConstruct
+    void initResourceTypesBrowseFields() {
+        browseByMap = new HashMap<>();
+        labelsMap = new HashMap<>();
+        for (ResourceType rt : resourceTypeService.getAllResourceType()) {
+            Set<String> browseSet = new HashSet<>();
+            Map<String, Set<String>> sets = new HashMap<>();
+            Map<String, String> labels = new HashMap<>();
+            labels = new HashMap<>();
+            labels.put("resourceType", "Resource Type");
+            for (IndexField f : rt.getIndexFields()) {
+                sets.putIfAbsent(f.getResourceType().getName(), new HashSet<>());
+                labels.put(f.getName(), f.getLabel());
+                if (f.getLabel() != null) {
+                    sets.get(f.getResourceType().getName()).add(f.getName());
+                }
             }
-        }
-        boolean flag = true;
-        for (Map.Entry<String, Set<String>> entry : sets.entrySet()) {
-            if (flag) {
-                browseSet.addAll(entry.getValue());
-                flag = false;
-            } else {
-                browseSet.retainAll(entry.getValue());
+            labelsMap.put(rt.getName(), labels);
+            boolean flag = true;
+            for (Map.Entry<String, Set<String>> entry : sets.entrySet()) {
+                if (flag) {
+                    browseSet.addAll(entry.getValue());
+                    flag = false;
+                } else {
+                    browseSet.retainAll(entry.getValue());
+                }
             }
+            List<String> browseBy = new ArrayList<>(browseSet);
+            java.util.Collections.sort(browseBy);
+            browseByMap.put(rt.getName(), browseBy);
+            logger.info("Generating browse fields for [{}]", rt.getName());
         }
-        browseBy = new ArrayList<>();
-        browseBy.addAll(browseSet);
-//        browseBy.add("resourceType");
-        java.util.Collections.sort(browseBy);
-        logger.info("Generating browse fields for [{}]", getResourceType());
-    }
-
-    public Object getObject(String resourceTypeName, String field, String value, boolean throwOnNull) {
-        Resource res;
-        Object ret;
-        try {
-            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(field, value));
-            if (throwOnNull && res == null) {
-                throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
-            }
-            ret = parserPool.deserialize(res, Object.class);
-        } catch (UnknownHostException e) {
-            throw new ResourceException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        if (ret instanceof JAXBElement<?>) {
-            ret = ((JAXBElement<?>) ret).getValue();
-        }
-        return ret;
     }
 
     public <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull) {
@@ -108,7 +87,7 @@ public class GenericResourceService {
             if (throwOnNull && res == null) {
                 throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
             }
-            ret = (T) parserPool.deserialize(res, MultiValueMap.class);
+            ret = (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
         } catch (UnknownHostException e) {
             throw new ResourceException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -120,19 +99,16 @@ public class GenericResourceService {
 
     public <T> Browsing<T> cqlQuery(FacetFilter filter) {
 //        filter.setResourceType(getResourceType());
-        initBrowseFields(filter.getResourceType());
-        filter.setBrowseBy(browseBy);
-        return convertToBrowsing(searchService.cqlQuery(filter));
+        filter.setBrowseBy(browseByMap.get(filter.getResourceType()));
+        return convertToBrowsing(searchService.cqlQuery(filter), filter.getResourceType());
     }
 
     public <T> Browsing<T> getResults(FacetFilter filter) {
-        initBrowseFields(filter.getResourceType());
 //        filter.setResourceType(getResourceType());
-        filter.setBrowseBy(browseBy);
+        filter.setBrowseBy(browseByMap.get(filter.getResourceType()));
         Browsing<T> browsing;
-        filter.setResourceType(getResourceType());
         try {
-            browsing = convertToBrowsing(searchService.search(filter));
+            browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
         } catch (UnknownHostException e) {
             logger.fatal("getResults", e);
             throw new ServiceException(e);
@@ -140,26 +116,25 @@ public class GenericResourceService {
         return browsing;
     }
 
-    public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging) {
+    public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
         List<T> results = (List<T>) paging.getResults()
                 .parallelStream()
-                .map(res -> (T) parserPool.deserialize(res, typeParameterClass))
+                .map(res -> (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName)))
                 .collect(Collectors.toList());
-        return new Browsing<>(paging, results, labels);
+        return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }
 
 
     protected <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category) {
         Map<String, List<T>> result = new HashMap<>();
 
-        filter.setResourceType(getResourceType());
         Map<String, List<Resource>> resources;
         try {
             resources = searchService.searchByCategory(filter, category);
             for (Map.Entry<String, List<Resource>> bucket : resources.entrySet()) {
                 List<T> bucketResults = new ArrayList<>();
                 for (Resource res : bucket.getValue()) {
-                    bucketResults.add((T) parserPool.deserialize(res, typeParameterClass));
+                    bucketResults.add((T) parserPool.deserialize(res, getResourceTypeClass(filter.getResourceType())));
                 }
                 result.put(bucket.getKey(), bucketResults);
             }
@@ -170,13 +145,21 @@ public class GenericResourceService {
         }
     }
 
-
-    protected List<String> getBrowseBy() {
-        return browseBy;
+    private Class<?> getResourceTypeClass(String resourceTypeName) {
+        Class<?> tClass = null;
+        try {
+            tClass = Class.forName(resourceTypeService.getResourceType(resourceTypeName).getProperty("class"));
+        } catch (ClassNotFoundException e) {
+            logger.error(e);
+        }
+        return tClass;
     }
 
-    public void setBrowseBy(List<String> browseBy) {
-        this.browseBy = browseBy;
+    public Map<String, List<String>> getBrowseByMap() {
+        return browseByMap;
     }
 
+    public void setBrowseByMap(Map<String, List<String>> browseByMap) {
+        this.browseByMap = browseByMap;
+    }
 }
