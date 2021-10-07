@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Paging;
 import gr.athenarc.catalogue.service.GenericResourceService;
@@ -8,9 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.xml.bind.JAXBElement;
 import java.net.UnknownHostException;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "items")
@@ -24,7 +23,7 @@ public class GenericResourceController {
         FacetFilter ff = new FacetFilter();
         ff.setResourceType(resourceType);
         ff.setKeyword(keyword);
-        Paging<Object> results = genericService.getResults(ff);
+        Paging<?> results = genericService.getResults(ff);
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 
@@ -33,22 +32,22 @@ public class GenericResourceController {
         FacetFilter ff = new FacetFilter();
         ff.setResourceType(resourceType);
         ff.setKeyword(keyword);
-//        Paging<Object> results = genericService.convertToBrowsing(genericService.cqlQuery(ff));
-//        Paging<Object> results = genericService.convertToBrowsing(genericService.searchService.searchKeyword(resourceType, keyword));
-        Paging<Object> results = genericService.getResults(ff);
+        return new ResponseEntity<>(genericService.getResults(ff), HttpStatus.OK);
+    }
 
-        results.setResults(results.getResults().stream().parallel().map(item -> ((JAXBElement) item).getValue()).collect(Collectors.toList()));
-        return new ResponseEntity<>(results, HttpStatus.OK);
+    @PostMapping("{resourceType}")
+    <T> ResponseEntity<?> saveResource(@PathVariable("resourceType") String resourceType, @RequestBody T resource) {
+        return new ResponseEntity<>(genericService.save(resourceType, resource), HttpStatus.OK);
     }
 
     @GetMapping("{resourceType}/query")
-    <T> ResponseEntity<?> getByField(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
-        T ret = genericService.get(resourceType, field, value, true);
+    ResponseEntity<?> getByField(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+        Object ret = genericService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
     @GetMapping("{resourceType}/{id}")
-    ResponseEntity<?> getById(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+    <T> ResponseEntity<T> getById(@PathVariable("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
         return new ResponseEntity<>(genericService.get(resourceType, field, value, true), HttpStatus.OK);
     }
 }

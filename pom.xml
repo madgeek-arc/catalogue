@@ -90,21 +90,76 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+<!--			<plugin>-->
+<!--				&lt;!&ndash; xsd to Java plugin&ndash;&gt;-->
+<!--				<groupId>org.codehaus.mojo</groupId>-->
+<!--				<artifactId>jaxb2-maven-plugin</artifactId>-->
+<!--				<version>2.5.0</version>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>xsd-to-java</id>-->
+<!--						<goals>-->
+<!--							<goal>xjc</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--				<configuration>-->
+<!--					<packageName>gr.athenarc.xsd2java</packageName>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
 			<plugin>
-				<!-- xsd to Java plugin-->
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>jaxb2-maven-plugin</artifactId>
-				<version>2.5.0</version>
+				<groupId>org.jvnet.jaxb2.maven2</groupId>
+				<artifactId>maven-jaxb2-plugin</artifactId>
+				<version>0.14.0</version>
 				<executions>
 					<execution>
-						<id>xsd-to-java</id>
+						<phase>generate-sources</phase>
 						<goals>
-							<goal>xjc</goal>
+							<goal>generate</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<packageName>gr.athenarc.xsd2java</packageName>
+					<args>
+						<arg>-Xannotate</arg>
+						<arg>-nv</arg>
+					</args>
+					<extension>true</extension>
+					<bindingDirectory>${basedir}/src/main/resources/schema/xjb</bindingDirectory>
+					<bindingIncludes>
+						<include>*.xjb</include>
+					</bindingIncludes>
+					<schemas>
+						<schema>
+							<fileset>
+								<directory>${basedir}/src/main/resources/schema/</directory>
+								<includes>
+									<include>*.xsd</include>
+								</includes>
+							</fileset>
+						</schema>
+					</schemas>
+					<generatePackage>gr.athenarc.xsd2java</generatePackage>
+
+					<debug>true</debug>
+					<verbose>true</verbose>
+					<plugins>
+						<plugin>
+							<groupId>org.jvnet.jaxb2_commons</groupId>
+							<artifactId>jaxb2-basics</artifactId>
+							<version>0.6.2</version>
+						</plugin>
+						<plugin>
+							<groupId>org.jvnet.jaxb2_commons</groupId>
+							<artifactId>jaxb2-basics-annotate</artifactId>
+							<version>0.6.2</version>
+						</plugin>
+						<plugin>
+							<groupId>org.jvnet.jaxb2_commons</groupId>
+							<artifactId>jaxb2-namespace-prefix</artifactId>
+							<version>1.1</version>
+						</plugin>
+					</plugins>
 				</configuration>
 			</plugin>
 		</plugins>
