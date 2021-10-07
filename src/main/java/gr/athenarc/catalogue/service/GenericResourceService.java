@@ -21,7 +21,13 @@ public interface GenericResourceService {
 
     <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category);
 
-    <T> T save(String resourceTypeName, T resource);
+    <T> T add(String resourceTypeName, T resource);
+
+    <T> T update(String resourceTypeName, String id, T resource);
+
+    <T> T delete(String resourceTypeName, String id);
+
+    <T> T get(String resourceTypeName, String id);
 
     Class<?> getResourceTypeClass(String resourceTypeName);
 

@@ -97,7 +97,7 @@ public class SimpleGenericResourceService implements GenericResourceService {
     }
 
     @Override
-    public <T> T save(String resourceTypeName, T resource) {
+    public <T> T add(String resourceTypeName, T resource) {
         Class<?> clazz = getResourceTypeClass(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
 
@@ -113,6 +113,34 @@ public class SimpleGenericResourceService implements GenericResourceService {
         resourceService.addResource(res);
 
         return resource;
+    }
+
+    @Override
+    public <T> T update(String resourceTypeName, String id, T resource) {
+        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        resource = (T) objectMapper.convertValue(resource, clazz);
+
+        Resource res = searchResource(resourceTypeName, id);
+        res.setModificationDate(new Date());
+        String ret;
+        ret = parserPool.serialize(resource, ParserService.ParserServiceTypes.XML);
+        res.setPayload(ret);
+        resourceService.updateResource(res);
+
+        return resource;
+    }
+
+    @Override
+    public <T> T delete(String resourceTypeName, String id) {
+        Resource res = searchResource(resourceTypeName, id);
+        resourceService.deleteResource(res.getId());
+        return (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
+    }
+
+    @Override
+    public <T> T get(String resourceTypeName, String id) {
+        Resource res = searchResource(resourceTypeName, id);
+        return (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
     }
 
     @Override
@@ -183,5 +211,15 @@ public class SimpleGenericResourceService implements GenericResourceService {
 
     public void setBrowseByMap(Map<String, List<String>> browseByMap) {
         this.browseByMap = browseByMap;
+    }
+
+    private Resource searchResource(String resourceTypeName, String id) {
+        Resource res = null;
+        try {
+            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        return res;
     }
 }
