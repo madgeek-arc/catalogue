@@ -2,25 +2,29 @@ package gr.athenarc.catalogue.ui.service;
 
 import gr.athenarc.catalogue.ui.domain.*;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public interface UiFieldsService {
 
-    default List<UiField> createFields(String className, String group) throws ClassNotFoundException {
+    default List<UiField> createFields(String className, String parent) throws ClassNotFoundException {
         List<UiField> fields = new LinkedList<>();
         Class<?> clazz = Class.forName(className);
 
 
-        if (clazz.getSuperclass().getName().startsWith("eu.einfracentral.domain.Bundle")) {
+        if (clazz.getSuperclass().getName().startsWith("gr.athenarc")) {
+//        if (clazz.getSuperclass().getTypeName().length() > 1) {
             String name = clazz.getGenericSuperclass().getTypeName();
-            name = name.replaceFirst(".*\\.", "").replace(">", "");
+            if (name.contains("<")) {
+                name = name.substring(name.indexOf("<")+1, name.indexOf(">"));
+            }
             List<UiField> subfields = createFields(name, name);
             fields.addAll(subfields);
         }
 
-        if (clazz.getSuperclass().getName().startsWith("eu.einfracentral.domain")) {
-            String name = clazz.getSuperclass().getName().replaceFirst(".*\\.", "");
+        if (clazz.getSuperclass().getName().startsWith("gr.athenarc")) {
+            String name = clazz.getSuperclass().getName()/*.replaceFirst(".*\\.", "")*/;
             List<UiField> subfields = createFields(name, name);
             fields.addAll(subfields);
         }
@@ -31,39 +35,28 @@ public interface UiFieldsService {
 
 //            field.setAccessible(true);
             uiField.setName(field.getName());
-//            uiField.setParent(parent);
-//
-//            XmlElement annotation = field.getAnnotation(XmlElement.class);
-//
-//            if (annotation != null) {
-//                uiField.getForm().setMandatory(!annotation.nillable());
-//
-//                if (annotation.containsId() && Vocabulary.class.equals(annotation.idClass())) {
-//                    VocabularyValidation vvAnnotation = field.getAnnotation(VocabularyValidation.class);
-//                    if (vvAnnotation != null) {
-//                        uiField.getForm().setVocabulary(vvAnnotation.type().getKey());
-//                    }
-//                    uiField.setType("VOCABULARY");
-//                } else if (!field.getType().getName().contains("eu.einfracentral.domain.Identifiable")) {
-//                    String type = field.getType().getName();
-//
-//                    if (Collection.class.isAssignableFrom(field.getType())) {
-//                        uiField.setMultiplicity(true);
-//                        type = field.getGenericType().getTypeName();
-//                        type = type.replaceFirst(".*<", "");
-//                        type = type.substring(0, type.length() - 1);
-//                    }
-//                    String typeName = type.replaceFirst(".*\\.", "").replaceAll("[<>]", "");
-//                    uiField.setType(typeName);
-//
-//                    if (type.startsWith("gr.athenarc")) {
-////                        uiField.getForm().setSubgroup(typeName);
-//                        List<UiField> subfields = createFields(typeName, field.getName());
-//                        fields.addAll(subfields);
-//                    }
-//                }
-//
-//            }
+            uiField.setParent(parent);
+
+            XmlElement annotation = field.getAnnotation(XmlElement.class);
+
+            if (annotation != null) {
+                uiField.getForm().setMandatory(!annotation.nillable());
+
+                String type = field.getType().getName();
+
+                if (Collection.class.isAssignableFrom(field.getType())) {
+                    uiField.setMultiplicity(true);
+                    type = field.getGenericType().getTypeName();
+                    type = type.substring(type.indexOf("<")+1, type.indexOf(">"));
+                }
+                String typeName = type.replaceFirst(".*\\.", "").replaceAll("[<>]", "");
+                uiField.setType(typeName);
+
+                if (type.startsWith("gr.athenarc")) {
+                    List<UiField> subfields = createFields(type, field.getName());
+                    fields.addAll(subfields);
+                }
+            }
             fields.add(uiField);
         }
         return fields;
