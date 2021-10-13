@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.*;
 import eu.openminted.registry.core.domain.index.IndexField;
 import eu.openminted.registry.core.service.*;
+import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,6 +99,7 @@ public class SimpleGenericResourceService implements GenericResourceService {
 
     @Override
     public <T> T addRaw(String resourceTypeName, String payload) {
+        Class<?> clazz = getResourceTypeClass(resourceTypeName);
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
 
@@ -107,12 +109,18 @@ public class SimpleGenericResourceService implements GenericResourceService {
         Date now = new Date();
         res.setCreationDate(now);
         res.setModificationDate(now);
-
         res.setPayload(payload);
-        res = resourceService.addResource(res);
+        res.setPayloadFormat("xml");
 
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
-        return (T) parserPool.deserialize(res, clazz);
+        // create Java class and set ID using reflection
+        T item = (T) parserPool.deserialize(res, clazz);
+        ReflectUtils.setId(clazz, item, UUID.randomUUID().toString());
+
+        // return to Resource class and save
+        payload = parserPool.serialize(item, ParserService.ParserServiceTypes.XML);
+        res.setPayload(payload);
+        resourceService.addResource(res);
+        return item;
     }
 
     @Override
@@ -127,6 +135,7 @@ public class SimpleGenericResourceService implements GenericResourceService {
         res.setModificationDate(new Date());
         String ret;
 
+        ReflectUtils.setId(clazz, resource, UUID.randomUUID().toString());
         ret = parserPool.serialize(resource, ParserService.ParserServiceTypes.XML);
         res.setPayload(ret);
         resourceService.addResource(res);
