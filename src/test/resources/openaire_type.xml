@@ -1,8 +1,11 @@
 <dataset_type>
-	<id/>
+	<id>test</id>
 	<identifier identifierType="DOI">10.0001/zenodo.3424535</identifier>
 	<name>OpenAIRE Graph</name>
 	<metadata>
+		<titles>
+			<title>My title</title>
+		</titles>
 		<publisher>OpenAIRE</publisher>
 		<subjects>
 			<subject>publications</subject>
@@ -19,10 +22,10 @@
 		</rightsList>
 		<descriptions>
 			<description descriptionType="Abstract">
-				<br>OpenAIRE Research Graph is an open resource that aggregates a collection of research data 
-				properties (metadata, links) available within the OpenAIRE Open Science infrastructure for funders, 
-				organizations, researchers, research communities and publishers to interlink information by using 
-				a semantic graph database approach.</br>
+				<br>OpenAIRE Research Graph is an open resource that aggregates a collection of research data
+					properties (metadata, links) available within the OpenAIRE Open Science infrastructure for funders,
+					organizations, researchers, research communities and publishers to interlink information by using
+					a semantic graph database approach.</br>
 			</description>
 		</descriptions>
 		<source>OpenAIRE</source>
@@ -43,65 +46,64 @@
 		<entities>
 			<entity>
 				<name>result</name>
-				<description>Results are intended as digital objects, described by metadata, resulting from a scientific 
-				process. Its sub-entity types are Literature, Dataset, Software, and Other Research Product, which inherit 
-				all Result properties and relationships with other entities</description>
+				<description>Results are intended as digital objects, described by metadata, resulting from a scientific
+					process. Its sub-entity types are Literature, Dataset, Software, and Other Research Product, which inherit
+					all Result properties and relationships with other entities</description>
 				<filters>
 					<filter>
 						<field>type</field>
 						<type>text</type>
 					</filter>
-					<filter>
-						<field>dateofacceptance</field>
-						<type>date</type>
-					</filter>
 				</filters>
+				<sample/>
+				<database>
+					<table>test table</table>
+				</database>
 			</entity>
 			<entity>
 				<name>project</name>
 				<description>A Project is here intended as the (metadata) description/representation of a research project grant.</description>
 				<filters>
 					<filter>
-						<field>acronym</field>
-						<type>text</type>
-					</filter>
-					<filter>
-						<field>funder</field>
-						<type>text</type>
-					</filter>
-					<filter>
 						<field>code</field>
 						<type>text</type>
 					</filter>
 				</filters>
+				<sample/>
+				<database>
+					<table>test table</table>
+				</database>
 			</entity>
 			<entity>
 				<name>datasource</name>
-				<description>OpenAIRE entity instances are created out of data collected from various data sources of different 
-				kinds, such as publication repositories, dataset archives, CRIS systems, funder databases, etc</description>
+				<description>OpenAIRE entity instances are created out of data collected from various data sources of different
+					kinds, such as publication repositories, dataset archives, CRIS systems, funder databases, etc</description>
 				<filters>
 					<filter>
 						<field>type</field>
-						<field>text</field>
+						<type>text</type>
 					</filter>
 				</filters>
+				<sample/>
+				<database>
+					<table>test table</table>
+				</database>
 			</entity>
 			<entity>
 				<name>organization</name>
-				<description>Organizations include companies, research centers or institutions involved as project partners or as 
-				responsible for operating data sources.</description>
+				<description>Organizations include companies, research centers or institutions involved as project partners or as
+					responsible for operating data sources.</description>
 				<filters>
 					<filter>
-						<field>name</field>
-						<field>text</field>
-					</filter>
-					<filter>
 						<field>country</field>
-						<field>text</field>
+						<type>text</type>
 					</filter>
 				</filters>
+				<sample/>
+				<database>
+					<table>test table</table>
+				</database>
 			</entity>
 		</entities>
 	</schema>
 </dataset_type>
-	
