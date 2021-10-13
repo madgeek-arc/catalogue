@@ -1,0 +1,35 @@
+<dataset_instance>
+	<type>OpenAIRE Graph</type>
+	<metadata>
+		<version>openaire_prod_20210923</version>
+		<identifier identifierType="DOI">10.0001/zenodo.234234</identifier>
+		<creators>
+			<creator>
+				<creatorName>Antonis Lempesis</creatorName>
+				<nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org/">0000-0003-4483-1976</nameIdentifier>
+				<affiliation>OpenAIRE</affiliation>
+			</creator>
+		</creators>
+		<contributors>
+			<contributor contributorType="DataManager">
+				<creatorName>Claudio Atzori</creatorName>
+				<nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org/">0000-0001-9613-6639</nameIdentifier>
+				<affiliation>OpenAIRE</affiliation>
+			</contributor>
+		</contributors>
+		<dates>
+			<date dateType="Created">2021-09-23</date>
+		</dates>
+		<sizes>
+			<size>409GB</size>
+			<size>122M publications</size>
+			<size>12.5M datasets</size>
+			<size>200K software</size>
+		</sizes>
+	</metadata>
+	<location>
+		<files>
+			<baseDir>htdf://data/openaire/20210923</baseDir>
+		</files>
+	</location>
+</dataset_instance>
