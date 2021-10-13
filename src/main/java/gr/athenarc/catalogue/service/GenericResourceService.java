@@ -21,6 +21,8 @@ public interface GenericResourceService {
 
     <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category);
 
+    <T> T addRaw(String resourceTypeName, String payload);
+
     <T> T add(String resourceTypeName, T resource);
 
     <T> T update(String resourceTypeName, String id, T resource);

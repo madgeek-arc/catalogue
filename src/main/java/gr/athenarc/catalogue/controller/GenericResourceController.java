@@ -24,6 +24,12 @@ public class GenericResourceController {
         this.genericService = genericService;
     }
 
+    @PostMapping("{resourceType}/payload")
+    public <T> ResponseEntity<?> createResource(@PathVariable("resourceType") String resourceType, @RequestBody String resource) {
+        T createdResource = genericService.addRaw(resourceType, resource);
+        return new ResponseEntity<>(createdResource, HttpStatus.OK);
+    }
+
     @PostMapping("{resourceType}")
     public <T> ResponseEntity<?> createResource(@PathVariable("resourceType") String resourceType, @RequestBody T resource) {
         return new ResponseEntity<>(genericService.add(resourceType, resource), HttpStatus.OK);

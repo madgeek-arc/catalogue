@@ -97,6 +97,25 @@ public class SimpleGenericResourceService implements GenericResourceService {
     }
 
     @Override
+    public <T> T addRaw(String resourceTypeName, String payload) {
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        payload = payload.replaceAll("[\n\t]", "");
+
+        Resource res = new Resource();
+        res.setResourceTypeName(resourceTypeName);
+        res.setResourceType(resourceType);
+        Date now = new Date();
+        res.setCreationDate(now);
+        res.setModificationDate(now);
+
+        res.setPayload(payload);
+        res = resourceService.addResource(res);
+
+        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        return (T) parserPool.deserialize(res, clazz);
+    }
+
+    @Override
     public <T> T add(String resourceTypeName, T resource) {
         Class<?> clazz = getResourceTypeClass(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
@@ -201,6 +220,9 @@ public class SimpleGenericResourceService implements GenericResourceService {
             tClass = Class.forName(resourceTypeService.getResourceType(resourceTypeName).getProperty("class"));
         } catch (ClassNotFoundException e) {
             logger.error(e);
+        } catch (NullPointerException e) {
+            logger.error("Class property is not defined", e);
+            throw new ServiceException("ResourceType [" + resourceTypeName + "] does not have properties field");
         }
         return tClass;
     }
