@@ -1,0 +1,51 @@
+{
+  "indexFields": [
+    {
+      "multivalued": false,
+      "name": "dataset_instance_id",
+      "path": "//*[local-name()='resource']/*[local-name()='identifier']/text()",
+      "type": "java.lang.String",
+      "primaryKey": true
+    },
+    {
+      "multivalued": true,
+      "name": "titles",
+      "label": "Titles",
+      "path": "//*[local-name()='resource']/*[local-name()='titles']/*[local-name()='title']/text()",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "subjects",
+      "label": "Subjects",
+      "path": "//*[local-name()='resource']/*[local-name()='subjects']/*[local-name()='subject']/text()",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "formats",
+      "label": "Formats",
+      "path": "//*[local-name()='resource']/*[local-name()='formats']/*[local-name()='format']/text()",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "rights",
+      "label": "Rights",
+      "path": "//*[local-name()='resource']/*[local-name()='rightsList']/*[local-name()='rights']/text()",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "publisher",
+      "label": "Publisher",
+      "path": "//*[local-name()='resource']/*[local-name()='publisher']/text()",
+      "type": "java.lang.String"
+    }
+  ],
+  "indexMapperClass": "eu.openminted.registry.core.index.DefaultIndexMapper",
+  "name": "dataset_instance",
+  "aliasGroup": "resourceTypes",
+  "payloadType": "xml",
+  "schemaUrl": "http://schema.datacite.org/meta/kernel-3/metadata.xsd"
+}
