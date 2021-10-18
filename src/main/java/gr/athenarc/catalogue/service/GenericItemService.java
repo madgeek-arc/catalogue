@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public interface GenericResourceService {
+public interface GenericItemService {
 
     <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull);
 
@@ -21,11 +21,9 @@ public interface GenericResourceService {
 
     <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category);
 
-    <T> T addRaw(String resourceTypeName, String payload);
-
     <T> T add(String resourceTypeName, T resource);
 
-    <T> T update(String resourceTypeName, String id, T resource);
+    <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException;
 
     <T> T delete(String resourceTypeName, String id);
 

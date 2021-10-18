@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class SimpleGenericResourceService implements GenericResourceService {
+public class SimpleGenericItemService implements GenericItemService, ResourcePayloadService {
 
-    private static final Logger logger = LogManager.getLogger(SimpleGenericResourceService.class);
+    private static final Logger logger = LogManager.getLogger(SimpleGenericItemService.class);
 
     public final SearchService searchService;
     public final ResourceService resourceService;
@@ -37,10 +37,10 @@ public class SimpleGenericResourceService implements GenericResourceService {
     private Map<String, Map<String, String>> labelsMap;
 
     @Autowired
-    public SimpleGenericResourceService(SearchService searchService,
-                                        ResourceService resourceService,
-                                        ResourceTypeService resourceTypeService,
-                                        ParserService parserPool) {
+    public SimpleGenericItemService(SearchService searchService,
+                                    ResourceService resourceService,
+                                    ResourceTypeService resourceTypeService,
+                                    ParserService parserPool) {
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
@@ -98,7 +98,13 @@ public class SimpleGenericResourceService implements GenericResourceService {
     }
 
     @Override
-    public <T> T addRaw(String resourceTypeName, String payload) {
+    public String getRaw(String resourceTypeName, String id) {
+        Resource res = searchResource(resourceTypeName, id);
+        return res.getPayload();
+    }
+
+    @Override
+    public String addRaw(String resourceTypeName, String payload) {
         Class<?> clazz = getResourceTypeClass(resourceTypeName);
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
@@ -110,17 +116,36 @@ public class SimpleGenericResourceService implements GenericResourceService {
         res.setCreationDate(now);
         res.setModificationDate(now);
         res.setPayload(payload);
-        res.setPayloadFormat("xml");
+        res.setPayloadFormat(resourceType.getPayloadType());
 
         // create Java class and set ID using reflection
-        T item = (T) parserPool.deserialize(res, clazz);
+        Object item = parserPool.deserialize(res, clazz);
         ReflectUtils.setId(clazz, item, UUID.randomUUID().toString());
 
         // return to Resource class and save
         payload = parserPool.serialize(item, ParserService.ParserServiceTypes.XML);
         res.setPayload(payload);
         resourceService.addResource(res);
-        return item;
+        return payload;
+    }
+
+    @Override
+    public String updateRaw(String resourceTypeName, String id, String payload) throws NoSuchFieldException {
+        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        payload = payload.replaceAll("[\n\t]", "");
+
+        String existingId = ReflectUtils.getId(clazz, payload);
+        if (!id.equals(existingId)) {
+            throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
+        }
+        Resource res = this.searchResource(resourceTypeName, id);
+        Date now = new Date();
+        res.setModificationDate(now);
+        res.setPayload(payload);
+
+        // save resource
+        res = resourceService.addResource(res);
+        return res.getPayload();
     }
 
     @Override
@@ -144,9 +169,14 @@ public class SimpleGenericResourceService implements GenericResourceService {
     }
 
     @Override
-    public <T> T update(String resourceTypeName, String id, T resource) {
+    public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException {
         Class<?> clazz = getResourceTypeClass(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
+
+        String existingId = ReflectUtils.getId(clazz, resource);
+        if (!id.equals(existingId)) {
+            throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
+        }
 
         Resource res = searchResource(resourceTypeName, id);
         res.setModificationDate(new Date());
