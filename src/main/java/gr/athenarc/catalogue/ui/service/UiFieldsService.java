@@ -92,7 +92,9 @@ public interface UiFieldsService {
         }
 
         for (Map.Entry<Integer, List<FieldGroup>> entry : groups.entrySet()) {
-            fieldGroupMap.get(entry.getKey()).setSubFieldGroups(entry.getValue());
+            if (fieldGroupMap.get(entry.getKey()) != null) {
+                fieldGroupMap.get(entry.getKey()).setSubFieldGroups(entry.getValue());
+            }
         }
 
 
