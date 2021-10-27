@@ -24,28 +24,28 @@
     {
       "multivalued": true,
       "name": "titles",
-      "label": "Titles",
+      "label": "Title",
       "path": "//*[local-name()='dataset_type']/*[local-name()='metadata']/*[local-name()='titles']/*[local-name()='title']/text()",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
       "name": "subjects",
-      "label": "Subjects",
+      "label": "Subject",
       "path": "//*[local-name()='dataset_type']/*[local-name()='metadata']/*[local-name()='subjects']/*[local-name()='subject']/text()",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
       "name": "languages",
-      "label": "Languages",
+      "label": "Language",
       "path": "//*[local-name()='dataset_type']/*[local-name()='metadata']/*[local-name()='languages']/*[local-name()='language']/text()",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
       "name": "formats",
-      "label": "Formats",
+      "label": "Format",
       "path": "//*[local-name()='dataset_type']/*[local-name()='metadata']/*[local-name()='formats']/*[local-name()='format']/text()",
       "type": "java.lang.String"
     },
@@ -68,6 +68,13 @@
       "name": "type",
       "label": "Type",
       "path": "//*[local-name()='dataset_type']/*[local-name()='schema']/*[local-name()='type']/text()",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "publisher",
+      "label": "Publisher",
+      "path": "//*[local-name()='dataset_type']/*[local-name()='metadata']/*[local-name()='publisher']/text()",
       "type": "java.lang.String"
     }
   ],
