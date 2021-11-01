@@ -68,39 +68,7 @@ public interface UiFieldsService {
 
     List<Group> getGroups();
 
-    default List<FieldGroup> createFieldGroups(List<UiField> fields) {
-        Map<Integer, FieldGroup> fieldGroupMap = new HashMap<>();
-        Map<Integer, List<FieldGroup>> groups = new HashMap<>();
-        Set<Integer> ids = fields
-                .stream()
-                .map(UiField::getParentId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        for (Integer id : ids) {
-            groups.put(id, new ArrayList<>());
-        }
-
-        for (Iterator<UiField> it = fields.iterator(); it.hasNext(); ) {
-            UiField field = it.next();
-            FieldGroup fieldGroup = new FieldGroup(field);
-            if (ids.contains(field.getParentId())) {
-                groups.get(field.getParentId()).add(fieldGroup);
-            } else {
-                fieldGroupMap.put(field.getId(), fieldGroup);
-            }
-        }
-
-        for (Map.Entry<Integer, List<FieldGroup>> entry : groups.entrySet()) {
-            if (fieldGroupMap.get(entry.getKey()) != null) {
-                fieldGroupMap.get(entry.getKey()).setSubFieldGroups(entry.getValue());
-            }
-        }
-
-
-        return new ArrayList<>(fieldGroupMap.values());
-
-    }
+    List<FieldGroup> createFieldGroups(List<UiField> fields);
 
     default List<UiField> getFieldsByGroup(String groupId) {
         List<UiField> allFields = getFields();

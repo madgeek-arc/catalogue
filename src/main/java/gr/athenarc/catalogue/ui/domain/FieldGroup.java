@@ -1,11 +1,12 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FieldGroup {
 
     private UiField field;
-    private List<FieldGroup> subFieldGroups;
+    private List<FieldGroup> subFieldGroups = new ArrayList<>();
 
     public FieldGroup() {}
 

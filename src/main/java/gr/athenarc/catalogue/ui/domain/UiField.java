@@ -22,6 +22,19 @@ public class UiField {
         this.display = new Display();
     }
 
+    public UiField(UiField field) {
+        this.id = field.getId();
+        this.name = field.getName();
+        this.parentId = field.getParentId();
+        this.parent = field.getParent();
+        this.label = field.getLabel();
+        this.accessPath = field.getAccessPath();
+        this.multiplicity = field.getMultiplicity();
+        this.type = field.getType();
+        this.form = field.getForm();
+        this.display = field.getDisplay();
+    }
+
     public String getType() {
         return type;
     }

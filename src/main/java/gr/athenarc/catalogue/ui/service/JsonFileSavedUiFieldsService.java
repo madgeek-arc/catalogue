@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class JsonFileSavedUiFieldsService implements UiFieldsService {
@@ -120,24 +122,13 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
         for (UiField field : allFields) {
             String accessPath = field.getName();
             UiField parentField = field;
-            int counter = 0;
-            while (parentField.getParent() != null && counter < allFields.size()) {
-                counter++;
+            while (parentField != null && parentField.getParent() != null) {
                 accessPath = String.join(".", parentField.getParent(), accessPath);
-                for (UiField temp : allFields) {
-                    if (temp.getName().equals(parentField.getParent())) {
-                        parentField = temp;
-                        break;
-                    }
+                if (parentField.getParentId() == null) {
+                    break;
                 }
+                parentField = getField(parentField.getParentId());
             }
-            if (counter >= allFields.size()) {
-                throw new RuntimeException("The json model located at '" + directory + "/" + FILENAME_FIELDS +
-                        "' contains errors in the 'parent' fields...\nPlease fix it and try again.");
-            }
-
-            // FIXME: Check if this is needed
-            accessPath = accessPath.replaceFirst("\\w+\\.", "");
 
             field.setAccessPath(accessPath);
         }
@@ -147,5 +138,59 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     @Override
     public List<Group> getGroups() {
         return readGroups(directory + "/" + FILENAME_GROUPS);
+    }
+
+    @Override
+    public List<FieldGroup> createFieldGroups(List<UiField> fields) {
+        Map<Integer, FieldGroup> topLevelFieldGroupMap;
+        Set<Integer> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
+        topLevelFieldGroupMap = fields
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(field -> field.getParentId() == null)
+                .filter(field -> "composite".equals(field.getType()))
+                .map(FieldGroup::new)
+                .collect(Collectors.toMap(f -> (f.getField().getId()), Function.identity()));
+
+        List<UiField> leftOvers = sortFieldsByParentId(fields);
+
+        Map<Integer, FieldGroup> tempFieldGroups = new HashMap<>();
+        tempFieldGroups.putAll(topLevelFieldGroupMap);
+        int retries = 0;
+        do {
+            retries++;
+            fields = leftOvers;
+            leftOvers = new ArrayList<>();
+            for (UiField field : fields) {
+                FieldGroup fieldGroup = new FieldGroup(field, new ArrayList<>());
+
+                // Fix problem when Parent ID is defined but Field with that ID is not contained to this group of fields.
+                if (!fieldIds.contains(field.getParentId())) {
+                    field = new UiField(field);
+                    field.setParentId(null);
+                }
+
+                if (field.getParentId() == null) {
+                    topLevelFieldGroupMap.putIfAbsent(field.getId(), fieldGroup);
+                }
+                else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
+                    topLevelFieldGroupMap.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
+                    tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
+                } else if (tempFieldGroups.containsKey(field.getParentId())) {
+                    tempFieldGroups.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
+                    tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
+                } else {
+                    leftOvers.add(field);
+                }
+            }
+
+        } while (!leftOvers.isEmpty() && retries < 10);
+        return new ArrayList<>(topLevelFieldGroupMap.values());
+    }
+
+    private List<UiField> sortFieldsByParentId(List<UiField> fields) {
+        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparingInt(UiField::getParentId)).collect(Collectors.toList());
+        sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
+        return sorted;
     }
 }
