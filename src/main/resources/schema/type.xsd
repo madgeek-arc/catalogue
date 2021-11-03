@@ -160,12 +160,13 @@
                                             <xs:annotation>
                                                 <xs:documentation>All additional information that does not fit in any of the other categories. May be used for technical information. It is a best practice to supply a description.</xs:documentation>
                                             </xs:annotation>
-                                            <xs:complexType mixed="true">
-                                                <xs:choice>
-                                                    <xs:element name="br" minOccurs="0" maxOccurs="unbounded" type="xs:string"/>
-                                                </xs:choice>
-                                                <xs:attribute name="descriptionType" type="descriptionType" use="required" />
-                                                <xs:attribute ref="xml:lang" />
+                                            <xs:complexType>
+                                                <xs:simpleContent>
+                                                    <xs:extension base="xs:string">
+                                                        <xs:attribute name="descriptionType" type="descriptionType" use="required" />
+                                                        <xs:attribute ref="xml:lang" />
+                                                    </xs:extension>
+                                                </xs:simpleContent>
                                             </xs:complexType>
                                         </xs:element>
                                     </xs:sequence>
@@ -197,7 +198,7 @@
                             <xs:element name="tags">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element name="tag" type="xs:string" minOccurs="1"/>
+                                        <xs:element name="tag" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>
@@ -237,10 +238,10 @@
                                                 <xs:sequence>
                                                     <xs:element name="name" type="xs:string" />
                                                     <xs:element name="description" type="xs:string" />
-                                                    <xs:element name="filters">
+                                                    <xs:element name="filters" minOccurs="0">
                                                         <xs:complexType>
                                                             <xs:sequence>
-                                                                <xs:element name="filter">
+                                                                <xs:element name="filter" minOccurs="1" maxOccurs="unbounded">
                                                                     <xs:complexType>
                                                                         <xs:sequence>
                                                                             <xs:element name="field" type="xs:string" />

@@ -108,59 +108,40 @@
 <!--				</configuration>-->
 <!--			</plugin>-->
 			<plugin>
-				<groupId>org.jvnet.jaxb2.maven2</groupId>
-				<artifactId>maven-jaxb2-plugin</artifactId>
-				<version>0.14.0</version>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxb2-maven-plugin</artifactId>
+				<version>2.5.0</version>
 				<executions>
 					<execution>
-						<phase>generate-sources</phase>
+						<id>xjc</id>
 						<goals>
-							<goal>generate</goal>
+							<goal>xjc</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<args>
-						<arg>-Xannotate</arg>
-						<arg>-nv</arg>
-					</args>
+					<xjbSources>${basedir}/src/main/resources/xjb</xjbSources>
+					<sources>${basedir}/src/main/resources/schema</sources>
+					<packageName>gr.athenarc.xsd2java</packageName>
 					<extension>true</extension>
-					<bindingDirectory>${basedir}/src/main/resources/schema/xjb</bindingDirectory>
-					<bindingIncludes>
-						<include>*.xjb</include>
-					</bindingIncludes>
-					<schemas>
-						<schema>
-							<fileset>
-								<directory>${basedir}/src/main/resources/schema/</directory>
-								<includes>
-									<include>*.xsd</include>
-								</includes>
-							</fileset>
-						</schema>
-					</schemas>
-					<generatePackage>gr.athenarc.xsd2java</generatePackage>
-
-					<debug>true</debug>
-					<verbose>true</verbose>
-					<plugins>
-						<plugin>
-							<groupId>org.jvnet.jaxb2_commons</groupId>
-							<artifactId>jaxb2-basics</artifactId>
-							<version>0.6.2</version>
-						</plugin>
-						<plugin>
-							<groupId>org.jvnet.jaxb2_commons</groupId>
-							<artifactId>jaxb2-basics-annotate</artifactId>
-							<version>0.6.2</version>
-						</plugin>
-						<plugin>
-							<groupId>org.jvnet.jaxb2_commons</groupId>
-							<artifactId>jaxb2-namespace-prefix</artifactId>
-							<version>1.1</version>
-						</plugin>
-					</plugins>
+					<arguments>
+						<argument>-no-header</argument>
+						<argument>-Xxew</argument>
+						<argument>-Xxew:instantiate lazy</argument>
+					</arguments>
 				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.github.jaxb-xew-plugin</groupId>
+						<artifactId>jaxb-xew-plugin</artifactId>
+						<version>1.10</version>
+					</dependency>
+					<dependency>
+						<groupId>javax.xml.bind</groupId>
+						<artifactId>jaxb-api</artifactId>
+						<version>2.3.1</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>

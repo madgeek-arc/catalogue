@@ -23,12 +23,10 @@
         </rightsList>
         <descriptions>
             <description descriptionType="Abstract">
-                <br>
                     OpenAIRE Research Graph is an open resource that aggregates a collection of research data
                     properties (metadata, links) available within the OpenAIRE Open Science infrastructure for funders,
                     organizations, researchers, research communities and publishers to interlink information by using
                     a semantic graph database approach.
-                </br>
             </description>
         </descriptions>
         <source>OpenAIRE</source>
