@@ -10,8 +10,7 @@ public class UiField {
     String parent;
     String label;
     String accessPath;
-    boolean multiplicity = false;
-    String type;
+    TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
     Form form;
     Display display;
@@ -29,30 +28,17 @@ public class UiField {
         this.parent = field.getParent();
         this.label = field.getLabel();
         this.accessPath = field.getAccessPath();
-        this.multiplicity = field.getMultiplicity();
-        this.type = field.getType();
+        this.typeInfo = field.getTypeInfo();
         this.form = field.getForm();
         this.display = field.getDisplay();
     }
 
-    public String getType() {
-        return type;
+    public TypeInfo getTypeInfo() {
+        return typeInfo;
     }
 
-    public void setType(FieldType type) {
-        this.type = type.getKey();
-    }
-
-    public void setType(String type) {
-        try {
-            if (FieldType.exists(type)) {
-                this.type = FieldType.fromString(type).getKey();
-            } else {
-                this.type = type;
-            }
-        } catch (IllegalArgumentException e) {
-            this.type = FieldType.COMPOSITE.getKey();
-        }
+    public void setTypeInfo(TypeInfo typeInfo) {
+        this.typeInfo = typeInfo;
     }
 
     public int getId() {
@@ -101,14 +87,6 @@ public class UiField {
 
     public void setAccessPath(String accessPath) {
         this.accessPath = accessPath;
-    }
-
-    public boolean getMultiplicity() {
-        return multiplicity;
-    }
-
-    public void setMultiplicity(boolean multiplicity) {
-        this.multiplicity = multiplicity;
     }
 
     public boolean isIncludedInSnippet() {

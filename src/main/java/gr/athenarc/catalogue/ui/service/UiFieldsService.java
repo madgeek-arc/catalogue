@@ -44,7 +44,7 @@ public interface UiFieldsService {
             int total = 0;
             for (UiField f : groupedFields.getFields()) {
                 if (f.getForm().getMandatory() != null && f.getForm().getMandatory()
-                        && f.getType() != null && !f.getType().equals("composite")) {
+                        && f.getTypeInfo().getType() != null && !f.getTypeInfo().getType().equals("composite")) {
                     total += 1;
                 }
             }
@@ -119,12 +119,12 @@ public interface UiFieldsService {
                 String type = field.getType().getName();
 
                 if (Collection.class.isAssignableFrom(field.getType())) {
-                    uiField.setMultiplicity(true);
+                    uiField.getTypeInfo().setMultiplicity(true);
                     type = field.getGenericType().getTypeName();
                     type = type.substring(type.indexOf("<") + 1, type.indexOf(">"));
                 }
                 String typeName = type.replaceFirst(".*\\.", "").replaceAll("[<>]", "");
-                uiField.setType(typeName);
+                uiField.getTypeInfo().setType(typeName);
 
                 if (type.startsWith("gr.athenarc")) {
                     List<UiField> subfields = createFields(type, field.getName());

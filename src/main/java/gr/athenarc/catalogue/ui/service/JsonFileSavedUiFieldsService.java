@@ -148,7 +148,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(field -> field.getParentId() == null)
-                .filter(field -> "composite".equals(field.getType()))
+                .filter(field -> "composite".equals(field.getTypeInfo().getType()))
                 .map(FieldGroup::new)
                 .collect(Collectors.toMap(f -> (f.getField().getId()), Function.identity()));
 
