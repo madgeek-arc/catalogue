@@ -6,6 +6,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -17,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
+@ConditionalOnProperty(name = "ui.elements.json.dir")
 public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(JsonFileSavedUiFieldsService.class);
@@ -29,10 +31,6 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     @Autowired
     public JsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String directory) {
-        if ("".equals(directory)) {
-            directory = "catalogue/uiElements";
-            logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
-        }
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
