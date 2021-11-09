@@ -73,5 +73,8 @@
   "name": "field",
   "aliasGroup": "resourceTypes",
   "payloadType": "json",
-  "schema": ""
+  "properties": {
+    "class": "gr.athenarc.catalogue.ui.domain.UiField"
+  },
+  "schema": "{\n\t\"$schema\": \"https://json-schema.org/draft/2019-09/schema\"\n}"
 }
