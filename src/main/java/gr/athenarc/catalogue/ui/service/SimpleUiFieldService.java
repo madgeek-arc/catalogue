@@ -3,23 +3,25 @@ package gr.athenarc.catalogue.ui.service;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Resource;
-import eu.openminted.registry.core.exception.ResourceNotFoundException;
 import eu.openminted.registry.core.service.AbstractGenericService;
 import eu.openminted.registry.core.service.ParserService;
-import eu.openminted.registry.core.service.ResourceCRUDService;
 import eu.openminted.registry.core.service.SearchService;
+import gr.athenarc.catalogue.exception.ResourceException;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.Group;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
 
 import java.net.UnknownHostException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
-public class SimpleUiFieldService extends AbstractGenericService<UiField> implements ResourceCRUDService<UiField, Authentication>, UiFieldsService {
+public class SimpleUiFieldService extends AbstractGenericService<UiField> implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
     private static final String RESOURCE_TYPE_NAME = "field";
@@ -36,46 +38,31 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public UiField get(String id) {
-        UiField field = genericItemService.get(RESOURCE_TYPE_NAME, id);
-        return field;
-    }
-
-    @Override
-    public Browsing<UiField> getAll(FacetFilter filter, Authentication authentication) {
-        return genericItemService.getResults(filter);
-    }
-
-    @Override
-    public Browsing<UiField> getMy(FacetFilter filter, Authentication authentication) {
-        return getAll(filter, authentication);
-    }
-
-    @Override
-    public UiField add(UiField field, Authentication authentication) {
+    public UiField addField(UiField field) {
         logger.trace(String.format("adding field: %s", field));
-        try {
-            field.setId(searchService.search(new FacetFilter()).getTotal());
-        } catch (UnknownHostException e) {
-            logger.error(e);
+        if (field.getId() == 0) {
+            field.setId(createId());
         }
         Resource resource = new Resource();
         resource.setResourceTypeName(RESOURCE_TYPE_NAME);
         resource.setResourceType(resourceTypeService.getResourceType(RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(resource, ParserService.ParserServiceTypes.JSON));
+        resource.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
         resource = resourceService.addResource(resource);
         return parserPool.deserialize(resource, UiField.class);
     }
 
     @Override
-    public UiField update(UiField field, Authentication authentication) throws ResourceNotFoundException {
-        logger.trace(String.format("updating field: %s", field));
+    public UiField updateField(int id, UiField field) throws ResourceNotFoundException {
+        logger.trace(String.format("updating field with id [%s] and body: %s", id, field));
+        if (field.getId() != id) {
+            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
+        }
         Resource existing = null;
         try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", Integer.toString(field.getId())));
+            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", Integer.toString(id)));
         } catch (UnknownHostException e) {
             logger.error(e);
-            throw new ResourceNotFoundException(Integer.toString(field.getId()), RESOURCE_TYPE_NAME);
+            throw new ResourceNotFoundException(Integer.toString(id), RESOURCE_TYPE_NAME);
         }
         existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
         Resource resource = resourceService.addResource(existing);
@@ -83,18 +70,36 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public void delete(UiField field) throws ResourceNotFoundException {
-        throw new ResourceNotFoundException(Integer.toString(field.getId()), RESOURCE_TYPE_NAME);
+    public void deleteField(int fieldId) throws ResourceNotFoundException {
+        Resource resource = null;
+        try {
+            resource = searchService.searchId(RESOURCE_TYPE_NAME, new SearchService.KeyValue("id", Integer.toString(fieldId)));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        if (resource == null) {
+            throw new ResourceNotFoundException();
+        } else {
+            resourceService.deleteResource(resource.getId());
+        }
     }
 
     @Override
     public UiField getField(int id) {
-        return null;
+        return genericItemService.get(RESOURCE_TYPE_NAME, Integer.toString(id));
+    }
+
+    @Override
+    public Browsing<UiField> browseFields(FacetFilter filter) {
+        return genericItemService.getResults(filter);
     }
 
     @Override
     public List<UiField> getFields() {
-        return null;
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(RESOURCE_TYPE_NAME);
+        return browseFields(ff).getResults();
     }
 
     @Override
@@ -105,5 +110,10 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     @Override
     public List<FieldGroup> createFieldGroups(List<UiField> fields) {
         return null;
+    }
+
+    private int createId() {
+        Optional<UiField> field = getFields().stream().max(Comparator.comparingInt(UiField::getId));
+        return field.map(uiField -> uiField.getId() + 1).orElse(0);
     }
 }

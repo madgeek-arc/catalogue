@@ -1,6 +1,8 @@
 package gr.athenarc.catalogue.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.openminted.registry.core.domain.Browsing;
+import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.FieldIdName;
 import gr.athenarc.catalogue.ui.domain.Group;
@@ -77,6 +79,26 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
         }
 
         return fields;
+    }
+
+    @Override
+    public UiField addField(UiField field) {
+        throw new UnsupportedOperationException("To add a field contact the administrator.");
+    }
+
+    @Override
+    public UiField updateField(int id, UiField field) {
+        throw new UnsupportedOperationException("To update a field contact the administrator.");
+    }
+
+    @Override
+    public void deleteField(int fieldId) {
+        throw new UnsupportedOperationException("To delete a field contact the administrator.");
+    }
+
+    @Override
+    public Browsing<UiField> browseFields(FacetFilter filter) {
+        throw new UnsupportedOperationException("Browsing is not supported. Please use getFields() method instead.");
     }
 
     @Override

@@ -1,5 +1,8 @@
 package gr.athenarc.catalogue.ui.service;
 
+import eu.openminted.registry.core.domain.Browsing;
+import eu.openminted.registry.core.domain.FacetFilter;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.*;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -10,6 +13,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public interface UiFieldsService {
+
+    UiField addField(UiField field);
+
+    UiField updateField(int id, UiField field) throws ResourceNotFoundException;
+
+    void deleteField(int fieldId) throws ResourceNotFoundException;
+
+    Browsing<UiField> browseFields(FacetFilter filter);
 
     UiField getField(int id);
 
