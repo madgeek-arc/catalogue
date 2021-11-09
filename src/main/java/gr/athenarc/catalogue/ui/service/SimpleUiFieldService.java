@@ -14,26 +14,17 @@ import gr.athenarc.catalogue.ui.domain.Group;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
 
 import java.net.UnknownHostException;
 import java.util.List;
 
-@Service
-@ConditionalOnProperty(
-        name = "ui.elements.json.dir",
-        havingValue = "",
-        matchIfMissing = true)
 public class SimpleUiFieldService extends AbstractGenericService<UiField> implements ResourceCRUDService<UiField, Authentication>, UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
     private static final String RESOURCE_TYPE_NAME = "field";
     private final GenericItemService genericItemService;
 
-    @Autowired
     public SimpleUiFieldService(GenericItemService genericItemService) {
         super(UiField.class);
         this.genericItemService = genericItemService;

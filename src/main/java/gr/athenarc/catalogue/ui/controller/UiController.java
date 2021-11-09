@@ -1,4 +1,4 @@
-package gr.athenarc.catalogue.ui;
+package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.GroupedFields;

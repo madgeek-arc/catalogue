@@ -1,7 +1,6 @@
-package gr.athenarc.catalogue.ui;
+package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ui.domain.UiField;
-import gr.athenarc.catalogue.ui.service.SimpleUiFieldService;
 import gr.athenarc.catalogue.ui.service.UiFieldsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

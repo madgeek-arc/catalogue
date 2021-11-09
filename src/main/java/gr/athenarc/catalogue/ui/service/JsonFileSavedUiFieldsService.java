@@ -1,13 +1,12 @@
 package gr.athenarc.catalogue.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.FieldGroup;
+import gr.athenarc.catalogue.ui.domain.FieldIdName;
+import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,8 +16,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
-@ConditionalOnProperty(name = "ui.elements.json.dir")
 public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(JsonFileSavedUiFieldsService.class);
@@ -29,8 +26,11 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     private final String directory;
     private String jsonObject;
 
-    @Autowired
-    public JsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String directory) {
+    public JsonFileSavedUiFieldsService(String directory) {
+        if ("".equals(directory)) {
+            directory = "catalogue/uiElements";
+            logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
+        }
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
@@ -170,8 +170,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
                 if (field.getParentId() == null) {
                     topLevelFieldGroupMap.putIfAbsent(field.getId(), fieldGroup);
-                }
-                else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
+                } else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
                     topLevelFieldGroupMap.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
                     tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
                 } else if (tempFieldGroups.containsKey(field.getParentId())) {
