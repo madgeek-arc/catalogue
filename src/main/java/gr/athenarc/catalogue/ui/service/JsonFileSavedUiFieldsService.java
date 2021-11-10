@@ -36,7 +36,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
-            logger.error("Directory for UI elements has been created. Please place the necessary files inside...");
+            logger.error(String.format("Directory for UI elements has been created: [%s]. Please place the necessary files inside...", dir.getAbsolutePath()));
         }
     }
 
