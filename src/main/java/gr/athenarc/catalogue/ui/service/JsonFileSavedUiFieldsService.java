@@ -41,7 +41,13 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     protected String readFile(String filename) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+        File file = new File(filename);
+        if (!file.exists()) {
+            logger.error(String.format("File [%s] does not exist", file.getAbsolutePath()));
+        } else if (!file.canRead()) {
+            logger.error(String.format("File [%s] is not readable", file.getAbsolutePath()));
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
 
