@@ -26,12 +26,12 @@ public class UiFieldsController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<UiField> update(@PathVariable("id") int id, @RequestBody UiField field) {
+    public ResponseEntity<UiField> update(@PathVariable("id") String id, @RequestBody UiField field) {
         return new ResponseEntity<>(uiFieldsService.updateField(id, field), HttpStatus.CREATED);
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<UiField> get(@PathVariable("id") Integer id) {
+    public ResponseEntity<UiField> get(@PathVariable("id") String id) {
         return new ResponseEntity<>(uiFieldsService.getField(id), HttpStatus.OK);
     }
 
@@ -41,7 +41,7 @@ public class UiFieldsController {
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
         uiFieldsService.deleteField(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -9,6 +9,7 @@ import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.Group;
 import gr.athenarc.catalogue.ui.domain.UiField;
@@ -17,19 +18,19 @@ import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 
 import java.net.UnknownHostException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 public class SimpleUiFieldService extends AbstractGenericService<UiField> implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
     private static final String RESOURCE_TYPE_NAME = "field";
     private final GenericItemService genericItemService;
+    private final IdCreator<String> idCreator;
 
-    public SimpleUiFieldService(GenericItemService genericItemService) {
+    public SimpleUiFieldService(GenericItemService genericItemService, IdCreator<String> idCreator) {
         super(UiField.class);
         this.genericItemService = genericItemService;
+        this.idCreator = idCreator;
     }
 
     @Override
@@ -40,8 +41,8 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     @Override
     public UiField addField(UiField field) {
         logger.trace(String.format("adding field: %s", field));
-        if (field.getId() == 0) {
-            field.setId(createId());
+        if (field.getId() == null) {
+            field.setId(idCreator.createId("f-"));
         }
         Resource resource = new Resource();
         resource.setResourceTypeName(RESOURCE_TYPE_NAME);
@@ -52,17 +53,17 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public UiField updateField(int id, UiField field) throws ResourceNotFoundException {
+    public UiField updateField(String id, UiField field) throws ResourceNotFoundException {
         logger.trace(String.format("updating field with id [%s] and body: %s", id, field));
-        if (field.getId() != id) {
+        if (field.getId().equals(id)) {
             throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
         }
         Resource existing = null;
         try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", Integer.toString(id)));
+            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", id));
         } catch (UnknownHostException e) {
             logger.error(e);
-            throw new ResourceNotFoundException(Integer.toString(id), RESOURCE_TYPE_NAME);
+            throw new ResourceNotFoundException(id, RESOURCE_TYPE_NAME);
         }
         existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
         Resource resource = resourceService.addResource(existing);
@@ -70,10 +71,10 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public void deleteField(int fieldId) throws ResourceNotFoundException {
+    public void deleteField(String fieldId) throws ResourceNotFoundException {
         Resource resource = null;
         try {
-            resource = searchService.searchId(RESOURCE_TYPE_NAME, new SearchService.KeyValue("id", Integer.toString(fieldId)));
+            resource = searchService.searchId(RESOURCE_TYPE_NAME, new SearchService.KeyValue("id", fieldId));
         } catch (UnknownHostException e) {
             logger.error(e);
         }
@@ -85,8 +86,8 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public UiField getField(int id) {
-        return genericItemService.get(RESOURCE_TYPE_NAME, Integer.toString(id));
+    public UiField getField(String id) {
+        return genericItemService.get(RESOURCE_TYPE_NAME, id);
     }
 
     @Override
@@ -112,8 +113,4 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         return null;
     }
 
-    private int createId() {
-        Optional<UiField> field = getFields().stream().max(Comparator.comparingInt(UiField::getId));
-        return field.map(uiField -> uiField.getId() + 1).orElse(0);
-    }
 }

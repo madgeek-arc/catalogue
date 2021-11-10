@@ -2,11 +2,9 @@ package gr.athenarc.catalogue.ui.domain;
 
 public class UiField {
 
-    private static int ID_COUNTER = 0;
-
-    int id;
+    String id;
     String name;
-    Integer parentId;
+    String parentId;
     String parent;
     String label;
     String accessPath;
@@ -16,7 +14,6 @@ public class UiField {
     Display display;
 
     public UiField() {
-        this.id = ID_COUNTER++;
         this.form = new Form();
         this.display = new Display();
     }
@@ -41,11 +38,11 @@ public class UiField {
         this.typeInfo = typeInfo;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -57,11 +54,11 @@ public class UiField {
         this.name = name;
     }
 
-    public Integer getParentId() {
+    public String getParentId() {
         return parentId;
     }
 
-    public void setParentId(Integer parentId) {
+    public void setParentId(String parentId) {
         this.parentId = parentId;
     }
 

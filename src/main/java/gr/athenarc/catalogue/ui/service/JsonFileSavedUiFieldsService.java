@@ -93,12 +93,12 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     @Override
-    public UiField updateField(int id, UiField field) {
+    public UiField updateField(String id, UiField field) {
         throw new UnsupportedOperationException("To update a field contact the administrator.");
     }
 
     @Override
-    public void deleteField(int fieldId) {
+    public void deleteField(String fieldId) {
         throw new UnsupportedOperationException("To delete a field contact the administrator.");
     }
 
@@ -108,7 +108,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     @Override
-    public UiField getField(int id) {
+    public UiField getField(String id) {
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
         for (UiField field : allFields) {
             if (field.getId() == id) {
@@ -122,7 +122,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     public List<UiField> getFields() { // TODO: refactor
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
 
-        Map<Integer, UiField> fieldMap = new HashMap<>();
+        Map<String, UiField> fieldMap = new HashMap<>();
         for (UiField field : allFields) {
             fieldMap.put(field.getId(), field);
         }
@@ -168,8 +168,8 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     @Override
     public List<FieldGroup> createFieldGroups(List<UiField> fields) {
-        Map<Integer, FieldGroup> topLevelFieldGroupMap;
-        Set<Integer> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
+        Map<String, FieldGroup> topLevelFieldGroupMap;
+        Set<String> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
         topLevelFieldGroupMap = fields
                 .stream()
                 .filter(Objects::nonNull)
@@ -180,7 +180,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
         List<UiField> leftOvers = sortFieldsByParentId(fields);
 
-        Map<Integer, FieldGroup> tempFieldGroups = new HashMap<>();
+        Map<String, FieldGroup> tempFieldGroups = new HashMap<>();
         tempFieldGroups.putAll(topLevelFieldGroupMap);
         int retries = 0;
         do {
@@ -214,7 +214,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
-        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparingInt(UiField::getParentId)).collect(Collectors.toList());
+        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
     }

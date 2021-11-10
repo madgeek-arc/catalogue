@@ -1,6 +1,8 @@
 package gr.athenarc.catalogue.ui.config;
 
 import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.id.IdCreator;
+import gr.athenarc.catalogue.service.id.StringIdCreator;
 import gr.athenarc.catalogue.ui.service.JsonFileSavedUiFieldsService;
 import gr.athenarc.catalogue.ui.service.SimpleUiFieldService;
 import gr.athenarc.catalogue.ui.service.UiFieldsService;
@@ -27,7 +29,12 @@ public class UiFieldsSourceConfiguration {
             havingValue = "false",
             matchIfMissing = true)
     UiFieldsService simpleUiFieldService(GenericItemService genericItemService) {
-        return new SimpleUiFieldService(genericItemService);
+        return new SimpleUiFieldService(genericItemService, stringIdCreator());
+    }
+
+    @Bean
+    IdCreator<String> stringIdCreator() {
+        return new StringIdCreator();
     }
 
 }

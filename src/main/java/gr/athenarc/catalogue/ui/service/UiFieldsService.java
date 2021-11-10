@@ -16,13 +16,13 @@ public interface UiFieldsService {
 
     UiField addField(UiField field);
 
-    UiField updateField(int id, UiField field) throws ResourceNotFoundException;
+    UiField updateField(String id, UiField field) throws ResourceNotFoundException;
 
-    void deleteField(int fieldId) throws ResourceNotFoundException;
+    void deleteField(String fieldId) throws ResourceNotFoundException;
 
     Browsing<UiField> browseFields(FacetFilter filter);
 
-    UiField getField(int id);
+    UiField getField(String id);
 
     List<UiField> getFields();
 
