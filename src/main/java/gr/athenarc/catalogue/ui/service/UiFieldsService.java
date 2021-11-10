@@ -26,6 +26,9 @@ public interface UiFieldsService {
 
     List<UiField> getFields();
 
+    // TODO: refactor crud for fields/groups
+    Group addGroup(Group group);
+
     List<Group> getGroups();
 
     List<FieldGroup> createFieldGroups(List<UiField> fields);

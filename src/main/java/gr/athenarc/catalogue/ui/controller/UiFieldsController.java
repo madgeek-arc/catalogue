@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue.ui.controller;
 
+import gr.athenarc.catalogue.ui.domain.Group;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import gr.athenarc.catalogue.ui.service.UiFieldsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,11 @@ public class UiFieldsController {
     @Autowired
     public UiFieldsController(UiFieldsService uiFieldsService) {
         this.uiFieldsService = uiFieldsService;
+    }
+
+    @PostMapping("groups")
+    public ResponseEntity<Group> addGroup(@RequestBody Group group) {
+        return new ResponseEntity<>(uiFieldsService.addGroup(group), HttpStatus.CREATED);
     }
 
     @PostMapping()

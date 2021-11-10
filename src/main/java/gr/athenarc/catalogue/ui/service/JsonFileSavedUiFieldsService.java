@@ -88,6 +88,11 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     @Override
+    public Group addGroup(Group group) {
+        throw new UnsupportedOperationException("To add a field group contact the administrator.");
+    }
+
+    @Override
     public UiField addField(UiField field) {
         throw new UnsupportedOperationException("To add a field contact the administrator.");
     }
