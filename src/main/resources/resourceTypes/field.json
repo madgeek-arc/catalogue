@@ -4,14 +4,14 @@
       "multivalued": false,
       "name": "field_id",
       "path": "$.id",
-      "type": "java.lang.Integer",
+      "type": "java.lang.String",
       "primaryKey": true
     },
     {
       "multivalued": false,
       "name": "parentId",
       "path": "$.parentId",
-      "type": "java.lang.Integer"
+      "type": "java.lang.String"
     },
     {
       "multivalued": false,
