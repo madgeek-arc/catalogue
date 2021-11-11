@@ -58,7 +58,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     @Override
     public UiField updateField(String id, UiField field) throws ResourceNotFoundException {
         logger.trace(String.format("updating field with id [%s] and body: %s", id, field));
-        if (field.getId().equals(id)) {
+        if (!field.getId().equals(id)) {
             throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
         }
         Resource existing = null;
@@ -69,7 +69,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
             throw new ResourceNotFoundException(id, FIELD_RESOURCE_TYPE_NAME);
         }
         existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.addResource(existing);
+        Resource resource = resourceService.updateResource(existing);
         return parserPool.deserialize(resource, UiField.class);
     }
 
