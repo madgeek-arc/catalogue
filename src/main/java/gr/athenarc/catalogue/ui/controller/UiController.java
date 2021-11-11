@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue.ui.controller;
 
+import gr.athenarc.catalogue.ClasspathUtils;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.GroupedFields;
 import gr.athenarc.catalogue.ui.domain.UiField;
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import javax.xml.bind.JAXBContext;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("ui")
@@ -44,4 +47,21 @@ public class UiController {
         return uiFieldsService.getModel();
     }
 
+
+
+    @GetMapping(value = "vocabularies/map", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, List<String>> getVocabularies() {
+        return getEnumsMap("gr.athenarc.xsd2java");
+    }
+
+    private Map<String, List<String>> getEnumsMap(String packageName) {
+        Map<String, List<String>> enumsMap = new HashMap<>();
+        Set<Class<?>> allClasses = ClasspathUtils.findAllEnums(packageName);
+        for (Class<?> c : allClasses) {
+            if (c.isEnum()) {
+                enumsMap.put(c.getSimpleName(), new ArrayList<>(Arrays.stream(c.getEnumConstants()).map(Object::toString).collect(Collectors.toList())));
+            }
+        }
+        return enumsMap;
+    }
 }
