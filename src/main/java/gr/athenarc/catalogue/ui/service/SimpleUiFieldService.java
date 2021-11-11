@@ -69,7 +69,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
             throw new ResourceNotFoundException(id, FIELD_RESOURCE_TYPE_NAME);
         }
         existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.addResource(existing);
+        Resource resource = resourceService.updateResource(existing);
         return parserPool.deserialize(resource, UiField.class);
     }
 
