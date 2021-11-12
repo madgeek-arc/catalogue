@@ -2,22 +2,18 @@ package gr.athenarc.catalogue.ui.domain;
 
 public class UiField {
 
-    private static int ID_COUNTER = 0;
-
-    int id;
+    String id;
     String name;
-    Integer parentId;
+    String parentId;
     String parent;
     String label;
     String accessPath;
-    boolean multiplicity = false;
-    String type;
+    TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
     Form form;
     Display display;
 
     public UiField() {
-        this.id = ID_COUNTER++;
         this.form = new Form();
         this.display = new Display();
     }
@@ -29,37 +25,24 @@ public class UiField {
         this.parent = field.getParent();
         this.label = field.getLabel();
         this.accessPath = field.getAccessPath();
-        this.multiplicity = field.getMultiplicity();
-        this.type = field.getType();
+        this.typeInfo = field.getTypeInfo();
         this.form = field.getForm();
         this.display = field.getDisplay();
     }
 
-    public String getType() {
-        return type;
+    public TypeInfo getTypeInfo() {
+        return typeInfo;
     }
 
-    public void setType(FieldType type) {
-        this.type = type.getKey();
+    public void setTypeInfo(TypeInfo typeInfo) {
+        this.typeInfo = typeInfo;
     }
 
-    public void setType(String type) {
-        try {
-            if (FieldType.exists(type)) {
-                this.type = FieldType.fromString(type).getKey();
-            } else {
-                this.type = type;
-            }
-        } catch (IllegalArgumentException e) {
-            this.type = FieldType.COMPOSITE.getKey();
-        }
-    }
-
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -71,11 +54,11 @@ public class UiField {
         this.name = name;
     }
 
-    public Integer getParentId() {
+    public String getParentId() {
         return parentId;
     }
 
-    public void setParentId(Integer parentId) {
+    public void setParentId(String parentId) {
         this.parentId = parentId;
     }
 
@@ -101,14 +84,6 @@ public class UiField {
 
     public void setAccessPath(String accessPath) {
         this.accessPath = accessPath;
-    }
-
-    public boolean getMultiplicity() {
-        return multiplicity;
-    }
-
-    public void setMultiplicity(boolean multiplicity) {
-        this.multiplicity = multiplicity;
     }
 
     public boolean isIncludedInSnippet() {
