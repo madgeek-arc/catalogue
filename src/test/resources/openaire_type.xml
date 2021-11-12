@@ -1,0 +1,116 @@
+﻿<!-- Created with Liquid Studio 2021 (https://www.liquid-technologies.com) -->
+<dataset_type>
+    <id/>
+    <identifier identifierType="DOI">10.0001/zenodo.3424535</identifier>
+    <name>OpenAIRE Graph</name>
+    <metadata>
+        <titles>
+            <title>My title</title>
+        </titles>
+        <publisher>OpenAIRE</publisher>
+        <subjects>
+            <subject>publications</subject>
+        </subjects>
+        <languages>
+            <language>en</language>
+        </languages>
+        <type class="Dataset">dump</type>
+        <formats>
+            <format>parquet</format>
+        </formats>
+        <rightsList>
+            <rights rightsURI="https://creativecommons.org/licenses/by/4.0/">cc-by</rights>
+        </rightsList>
+        <descriptions>
+            <description descriptionType="Abstract">
+                    OpenAIRE Research Graph is an open resource that aggregates a collection of research data
+                    properties (metadata, links) available within the OpenAIRE Open Science infrastructure for funders,
+                    organizations, researchers, research communities and publishers to interlink information by using
+                    a semantic graph database approach.
+            </description>
+        </descriptions>
+        <source>OpenAIRE</source>
+        <tags>
+            <tag>Science. Set free</tag>
+        </tags>
+        <contact>
+            <name>Antonis Lempesis</name>
+            <email>antleb@di.uoa.gr</email>
+            <phone>+30 210 68 75 370</phone>
+            <organization>OpenAIRE</organization>
+        </contact>
+        <webpage>https://graph.openaire.eu/</webpage>
+        <logo>https://graph.openaire.eu/assets/common-assets/logo-large-graph.png</logo>
+    </metadata>
+    <schema>
+        <type>file</type>
+        <entities>
+            <entity>
+                <name>result</name>
+                <description>
+                    Results are intended as digital objects, described by metadata, resulting from a scientific
+                    process. Its sub-entity types are Literature, Dataset, Software, and Other Research Product, which inherit
+                    all Result properties and relationships with other entities
+                </description>
+                <filters>
+                    <filter>
+                        <field>type</field>
+                        <type>text</type>
+                    </filter>
+                </filters>
+                <sample/>
+                <file>
+                    <relativePath>result.csv</relativePath>
+                </file>
+            </entity>
+            <entity>
+                <name>project</name>
+                <description>A Project is here intended as the (metadata) description/representation of a research project grant.</description>
+                <filters>
+                    <filter>
+                        <field>code</field>
+                        <type>text</type>
+                    </filter>
+                </filters>
+                <sample/>
+                <file>
+                    <relativePath>project.csv</relativePath>
+                </file>
+            </entity>
+            <entity>
+                <name>datasource</name>
+                <description>
+                    OpenAIRE entity instances are created out of data collected from various data sources of different
+                    kinds, such as publication repositories, dataset archives, CRIS systems, funder databases, etc
+                </description>
+                <filters>
+                    <filter>
+                        <field>type</field>
+                        <type>text</type>
+                    </filter>
+                </filters>
+                <sample/>
+                <file>
+                    <relativePath>datasource.csv</relativePath>
+                </file>
+            </entity>
+            <entity>
+                <name>organization</name>
+                <description>
+                    Organizations include companies, research centers or institutions involved as project partners or as
+                    responsible for operating data sources.
+                </description>
+                <filters>
+                    <filter>
+                        <field>country</field>
+                        <type>text</type>
+                    </filter>
+                </filters>
+                <sample/>
+                <file>
+                    <relativePath>organization.csv</relativePath>
+                </file>
+            </entity>
+        </entities>
+    </schema>
+</dataset_type>

@@ -4,7 +4,6 @@ import eu.openminted.registry.core.controllers.ResourceSyncController;
 import gr.athenarc.catalogue.ClasspathUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.context.annotation.*;
 
 import javax.xml.bind.JAXBContext;
