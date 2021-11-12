@@ -39,6 +39,11 @@ public class ClasspathUtils {
         return classes;
     }
 
+    public static Set<Class<?>> findAllEnums(String packageName) {
+        Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
+        return new HashSet<>(reflections.getSubTypesOf(Enum.class));
+    }
+
     public static Set<Class<?>> findAllClasses(String packageName) {
         Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
         return new HashSet<>(reflections.getSubTypesOf(Object.class));

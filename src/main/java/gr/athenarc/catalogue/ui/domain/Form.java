@@ -7,7 +7,6 @@ public class Form {
 
     FieldIdName dependsOn;
     List<FieldIdName> affects = null;
-    String vocabulary;
     String group;
     String description;
     String suggestion;
@@ -35,14 +34,6 @@ public class Form {
 
     public void setAffects(List<FieldIdName> affects) {
         this.affects = affects;
-    }
-
-    public String getVocabulary() {
-        return vocabulary;
-    }
-
-    public void setVocabulary(String vocabulary) {
-        this.vocabulary = vocabulary;
     }
 
     public String getGroup() {

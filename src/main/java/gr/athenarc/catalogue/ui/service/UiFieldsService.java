@@ -1,5 +1,8 @@
 package gr.athenarc.catalogue.ui.service;
 
+import eu.openminted.registry.core.domain.Browsing;
+import eu.openminted.registry.core.domain.FacetFilter;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.*;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -11,9 +14,20 @@ import java.util.stream.Collectors;
 
 public interface UiFieldsService {
 
-    UiField getField(int id);
+    UiField addField(UiField field);
+
+    UiField updateField(String id, UiField field) throws ResourceNotFoundException;
+
+    void deleteField(String fieldId) throws ResourceNotFoundException;
+
+    Browsing<UiField> browseFields(FacetFilter filter);
+
+    UiField getField(String id);
 
     List<UiField> getFields();
+
+    // TODO: refactor crud for fields/groups
+    Group addGroup(Group group);
 
     List<Group> getGroups();
 
@@ -44,7 +58,7 @@ public interface UiFieldsService {
             int total = 0;
             for (UiField f : groupedFields.getFields()) {
                 if (f.getForm().getMandatory() != null && f.getForm().getMandatory()
-                        && f.getType() != null && !f.getType().equals("composite")) {
+                        && f.getTypeInfo().getType() != null && !f.getTypeInfo().getType().equals("composite")) {
                     total += 1;
                 }
             }
@@ -119,12 +133,12 @@ public interface UiFieldsService {
                 String type = field.getType().getName();
 
                 if (Collection.class.isAssignableFrom(field.getType())) {
-                    uiField.setMultiplicity(true);
+                    uiField.getTypeInfo().setMultiplicity(true);
                     type = field.getGenericType().getTypeName();
                     type = type.substring(type.indexOf("<") + 1, type.indexOf(">"));
                 }
                 String typeName = type.replaceFirst(".*\\.", "").replaceAll("[<>]", "");
-                uiField.setType(typeName);
+                uiField.getTypeInfo().setType(typeName);
 
                 if (type.startsWith("gr.athenarc")) {
                     List<UiField> subfields = createFields(type, field.getName());
