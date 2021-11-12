@@ -38,7 +38,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public String getResourceType() {
-        throw new UnsupportedOperationException();
+        return "";
     }
 
     @Override
