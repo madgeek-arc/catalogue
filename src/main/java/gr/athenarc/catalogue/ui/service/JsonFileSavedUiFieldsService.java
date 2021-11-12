@@ -3,6 +3,7 @@ package gr.athenarc.catalogue.ui.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.FieldIdName;
 import gr.athenarc.catalogue.ui.domain.Group;
@@ -89,7 +90,28 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     @Override
     public Group addGroup(Group group) {
-        throw new UnsupportedOperationException("To add a field group contact the administrator.");
+        throw new UnsupportedOperationException("To add a group contact the administrator.");
+    }
+
+    @Override
+    public Group updateGroup(String id, Group group) {
+        throw new UnsupportedOperationException("To update a group contact the administrator.");
+    }
+
+    @Override
+    public Group getGroup(String groupId) {
+        List<Group> allGroups = readGroups(directory + "/" + FILENAME_GROUPS);
+        for (Group group : allGroups) {
+            if (group.getId() == groupId) {
+                return group;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void deleteGroup(String fieldId) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException("To delete a group contact the administrator.");
     }
 
     @Override

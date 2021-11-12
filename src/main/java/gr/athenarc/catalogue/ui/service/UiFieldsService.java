@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 
 public interface UiFieldsService {
 
+    /**
+     * Fields Methods
+     */
     UiField addField(UiField field);
 
     UiField updateField(String id, UiField field) throws ResourceNotFoundException;
@@ -26,11 +29,24 @@ public interface UiFieldsService {
 
     List<UiField> getFields();
 
+    /**
+     * Groups Methods
+     */
     // TODO: refactor crud for fields/groups
     Group addGroup(Group group);
 
+    Group updateGroup(String id, Group group);
+
+    void deleteGroup(String fieldId) throws ResourceNotFoundException;
+
+    Group getGroup(String id);
+
     List<Group> getGroups();
 
+
+    /**
+     * Models Methods
+     */
     List<FieldGroup> createFieldGroups(List<UiField> fields);
 
     default List<UiField> getFieldsByGroup(String groupId) {

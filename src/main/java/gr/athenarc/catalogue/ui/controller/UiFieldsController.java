@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("fields")
+@RequestMapping()
 public class UiFieldsController {
 
     private final UiFieldsService uiFieldsService;
@@ -21,38 +21,33 @@ public class UiFieldsController {
         this.uiFieldsService = uiFieldsService;
     }
 
-    @PostMapping("groups")
-    public ResponseEntity<Group> addGroup(@RequestBody Group group) {
-        return new ResponseEntity<>(uiFieldsService.addGroup(group), HttpStatus.CREATED);
-    }
-
-    @PostMapping()
-    public ResponseEntity<UiField> add(@RequestBody UiField field) {
+    @PostMapping("fields")
+    public ResponseEntity<UiField> addField(@RequestBody UiField field) {
         return new ResponseEntity<>(uiFieldsService.addField(field), HttpStatus.CREATED);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<UiField> update(@PathVariable("id") String id, @RequestBody UiField field) {
-        return new ResponseEntity<>(uiFieldsService.updateField(id, field), HttpStatus.CREATED);
+    @PutMapping("fields/{id}")
+    public ResponseEntity<UiField> updateField(@PathVariable("id") String id, @RequestBody UiField field) {
+        return new ResponseEntity<>(uiFieldsService.updateField(id, field), HttpStatus.OK);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<UiField> get(@PathVariable("id") String id) {
+    @GetMapping("fields/{id}")
+    public ResponseEntity<UiField> getField(@PathVariable("id") String id) {
         return new ResponseEntity<>(uiFieldsService.getField(id), HttpStatus.OK);
     }
 
-    @GetMapping()
+    @GetMapping("fields")
     public ResponseEntity<List<UiField>> getFields() {
         return new ResponseEntity<>(uiFieldsService.getFields(), HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
+    @DeleteMapping("fields/{id}")
+    public ResponseEntity<Void> deleteField(@PathVariable("id") String id) {
         uiFieldsService.deleteField(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PostMapping("/import")
+    @PostMapping("fields/import")
     public ResponseEntity<Void> importFields(@RequestBody List<UiField> fields) {
         for (UiField field : fields) {
             uiFieldsService.addField(field);
@@ -60,12 +55,56 @@ public class UiFieldsController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/all")
-    public ResponseEntity<List<UiField>> deleteAll() {
+    @DeleteMapping("fields/all")
+    public ResponseEntity<List<UiField>> deleteAllFields() {
         List<UiField> fields = uiFieldsService.getFields();
         for (UiField field : fields) {
             uiFieldsService.deleteField(field.getId());
         }
         return new ResponseEntity<>(fields, HttpStatus.OK);
+    }
+
+
+    @PostMapping("groups")
+    public ResponseEntity<Group> addGroup(@RequestBody Group group) {
+        return new ResponseEntity<>(uiFieldsService.addGroup(group), HttpStatus.CREATED);
+    }
+
+    @PutMapping("groups/{id}")
+    public ResponseEntity<Group> updateGroup(@PathVariable("id") String id, @RequestBody Group group) {
+        return new ResponseEntity<>(uiFieldsService.updateGroup(id, group), HttpStatus.OK);
+    }
+
+    @GetMapping("groups/{id}")
+    public ResponseEntity<Group> getGroup(@PathVariable("id") String id) {
+        return new ResponseEntity<>(uiFieldsService.getGroup(id), HttpStatus.OK);
+    }
+
+    @GetMapping("groups")
+    public ResponseEntity<List<Group>> getGroups() {
+        return new ResponseEntity<>(uiFieldsService.getGroups(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("groups/{id}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable("id") String id) {
+        uiFieldsService.deleteGroup(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("groups/import")
+    public ResponseEntity<Void> importGroups(@RequestBody List<Group> groups) {
+        for (Group group : groups) {
+            uiFieldsService.addGroup(group);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("groups/all")
+    public ResponseEntity<List<Group>> deleteAllGroups() {
+        List<Group> groups = uiFieldsService.getGroups();
+        for (Group group : groups) {
+            uiFieldsService.deleteField(group.getId());
+        }
+        return new ResponseEntity<>(groups, HttpStatus.OK);
     }
 }

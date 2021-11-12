@@ -38,7 +38,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public String getResourceType() {
-        return FIELD_RESOURCE_TYPE_NAME;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     public void deleteField(String fieldId) throws ResourceNotFoundException {
         Resource resource = null;
         try {
-            resource = searchService.searchId(FIELD_RESOURCE_TYPE_NAME, new SearchService.KeyValue("id", fieldId));
+            resource = searchService.searchId(FIELD_RESOURCE_TYPE_NAME, new SearchService.KeyValue("field_id", fieldId));
         } catch (UnknownHostException e) {
             logger.error(e);
         }
@@ -107,14 +107,6 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     @Override
-    public List<Group> getGroups() {
-        FacetFilter ff = new FacetFilter();
-        ff.setQuantity(10000);
-        ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
-        return (List) genericItemService.getResults(ff).getResults();
-    }
-
-    @Override
     public Group addGroup(Group group) {
         logger.trace(String.format("adding field: %s", group));
         if (group.getId() == null) {
@@ -126,6 +118,53 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         resource.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
         resource = resourceService.addResource(resource);
         return parserPool.deserialize(resource, Group.class);
+    }
+
+    @Override
+    public Group updateGroup(String id, Group group) {
+        logger.trace(String.format("updating group with id [%s] and body: %s", id, group));
+        if (!group.getId().equals(id)) {
+            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
+        }
+        Resource existing = null;
+        try {
+            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("group_id", id));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+            throw new ResourceNotFoundException(id, GROUP_RESOURCE_TYPE_NAME);
+        }
+        existing.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
+        Resource resource = resourceService.updateResource(existing);
+        return parserPool.deserialize(resource, Group.class);
+    }
+
+    @Override
+    public void deleteGroup(String groupId) throws ResourceNotFoundException {
+        logger.trace(String.format("deleting group with id [%s]", groupId));
+        Resource resource = null;
+        try {
+            resource = searchService.searchId(GROUP_RESOURCE_TYPE_NAME, new SearchService.KeyValue("group_id", groupId));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        if (resource == null) {
+            throw new ResourceNotFoundException();
+        } else {
+            resourceService.deleteResource(resource.getId());
+        }
+    }
+
+    @Override
+    public Group getGroup(String id) {
+        return genericItemService.get(GROUP_RESOURCE_TYPE_NAME, id);
+    }
+
+    @Override
+    public List<Group> getGroups() {
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
+        return (List) genericItemService.getResults(ff).getResults();
     }
 
     // TODO: REWRITE THIS METHOD
