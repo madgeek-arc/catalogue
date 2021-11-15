@@ -224,10 +224,7 @@
                         <xs:sequence>
                             <xs:element name="type">
                                 <xs:simpleType>
-                                    <xs:restriction base="xs:string">
-                                        <xs:enumeration value="file" />
-                                        <xs:enumeration value="database" />
-                                    </xs:restriction>
+                                    <xs:restriction base="schemaType" />
                                 </xs:simpleType>
                             </xs:element>
                             <xs:element name="entities">
@@ -343,6 +340,15 @@
             <xs:enumeration value="SeriesInformation" />
             <xs:enumeration value="TableOfContents" />
             <xs:enumeration value="Other" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType id="schemaType" name="schemaType">
+        <xs:annotation>
+            <xs:documentation>The type of the entity.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="file" />
+            <xs:enumeration value="database" />
         </xs:restriction>
     </xs:simpleType>
     

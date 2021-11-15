@@ -1,12 +1,15 @@
 package gr.athenarc.catalogue.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gr.athenarc.catalogue.ui.domain.*;
+import eu.openminted.registry.core.domain.Browsing;
+import eu.openminted.registry.core.domain.FacetFilter;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.athenarc.catalogue.ui.domain.FieldGroup;
+import gr.athenarc.catalogue.ui.domain.FieldIdName;
+import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,7 +19,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
 public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(JsonFileSavedUiFieldsService.class);
@@ -27,8 +29,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     private final String directory;
     private String jsonObject;
 
-    @Autowired
-    public JsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String directory) {
+    public JsonFileSavedUiFieldsService(String directory) {
         if ("".equals(directory)) {
             directory = "catalogue/uiElements";
             logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
@@ -36,12 +37,18 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
-            logger.error("Directory for UI elements has been created. Please place the necessary files inside...");
+            logger.error(String.format("Directory for UI elements has been created: [%s]. Please place the necessary files inside...", dir.getAbsolutePath()));
         }
     }
 
     protected String readFile(String filename) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+        File file = new File(filename);
+        if (!file.exists()) {
+            logger.error(String.format("File [%s] does not exist", file.getAbsolutePath()));
+        } else if (!file.canRead()) {
+            logger.error(String.format("File [%s] is not readable", file.getAbsolutePath()));
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
 
@@ -82,7 +89,53 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     @Override
-    public UiField getField(int id) {
+    public Group addGroup(Group group) {
+        throw new UnsupportedOperationException("To add a group contact the administrator.");
+    }
+
+    @Override
+    public Group updateGroup(String id, Group group) {
+        throw new UnsupportedOperationException("To update a group contact the administrator.");
+    }
+
+    @Override
+    public Group getGroup(String groupId) {
+        List<Group> allGroups = readGroups(directory + "/" + FILENAME_GROUPS);
+        for (Group group : allGroups) {
+            if (group.getId() == groupId) {
+                return group;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void deleteGroup(String fieldId) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException("To delete a group contact the administrator.");
+    }
+
+    @Override
+    public UiField addField(UiField field) {
+        throw new UnsupportedOperationException("To add a field contact the administrator.");
+    }
+
+    @Override
+    public UiField updateField(String id, UiField field) {
+        throw new UnsupportedOperationException("To update a field contact the administrator.");
+    }
+
+    @Override
+    public void deleteField(String fieldId) {
+        throw new UnsupportedOperationException("To delete a field contact the administrator.");
+    }
+
+    @Override
+    public Browsing<UiField> browseFields(FacetFilter filter) {
+        throw new UnsupportedOperationException("Browsing is not supported. Please use getFields() method instead.");
+    }
+
+    @Override
+    public UiField getField(String id) {
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
         for (UiField field : allFields) {
             if (field.getId() == id) {
@@ -96,7 +149,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     public List<UiField> getFields() { // TODO: refactor
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
 
-        Map<Integer, UiField> fieldMap = new HashMap<>();
+        Map<String, UiField> fieldMap = new HashMap<>();
         for (UiField field : allFields) {
             fieldMap.put(field.getId(), field);
         }
@@ -142,19 +195,19 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
     @Override
     public List<FieldGroup> createFieldGroups(List<UiField> fields) {
-        Map<Integer, FieldGroup> topLevelFieldGroupMap;
-        Set<Integer> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
+        Map<String, FieldGroup> topLevelFieldGroupMap;
+        Set<String> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
         topLevelFieldGroupMap = fields
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(field -> field.getParentId() == null)
-                .filter(field -> "composite".equals(field.getType()))
+                .filter(field -> "composite".equals(field.getTypeInfo().getType()))
                 .map(FieldGroup::new)
                 .collect(Collectors.toMap(f -> (f.getField().getId()), Function.identity()));
 
         List<UiField> leftOvers = sortFieldsByParentId(fields);
 
-        Map<Integer, FieldGroup> tempFieldGroups = new HashMap<>();
+        Map<String, FieldGroup> tempFieldGroups = new HashMap<>();
         tempFieldGroups.putAll(topLevelFieldGroupMap);
         int retries = 0;
         do {
@@ -172,8 +225,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
 
                 if (field.getParentId() == null) {
                     topLevelFieldGroupMap.putIfAbsent(field.getId(), fieldGroup);
-                }
-                else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
+                } else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
                     topLevelFieldGroupMap.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
                     tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
                 } else if (tempFieldGroups.containsKey(field.getParentId())) {
@@ -189,7 +241,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
-        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparingInt(UiField::getParentId)).collect(Collectors.toList());
+        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
     }
