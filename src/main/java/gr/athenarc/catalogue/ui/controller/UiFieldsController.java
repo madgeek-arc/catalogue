@@ -1,6 +1,7 @@
 package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.Survey;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import gr.athenarc.catalogue.ui.service.UiFieldsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,5 +107,41 @@ public class UiFieldsController {
             uiFieldsService.deleteField(group.getId());
         }
         return new ResponseEntity<>(groups, HttpStatus.OK);
+    }
+
+
+    @PostMapping("surveys")
+    public ResponseEntity<Survey> addSurvey(@RequestBody Survey group) {
+        return new ResponseEntity<>(uiFieldsService.addSurvey(group), HttpStatus.CREATED);
+    }
+
+    @PutMapping("surveys/{id}")
+    public ResponseEntity<Survey> updateSurvey(@PathVariable("id") String id, @RequestBody Survey survey) {
+        return new ResponseEntity<>(uiFieldsService.updateSurvey(id, survey), HttpStatus.OK);
+    }
+
+    @GetMapping("surveys/{id}")
+    public ResponseEntity<Survey> getSurvey(@PathVariable("id") String id) {
+        return new ResponseEntity<>(uiFieldsService.getSurvey(id), HttpStatus.OK);
+    }
+
+    @GetMapping("surveys")
+    public ResponseEntity<List<Survey>> getSurveys() {
+        return new ResponseEntity<>(uiFieldsService.getSurveys(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("surveys/{id}")
+    public ResponseEntity<Void> deleteSurvey(@PathVariable("id") String id) {
+        uiFieldsService.deleteSurvey(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("surveys/all")
+    public ResponseEntity<List<Survey>> deleteAllSurveys() {
+        List<Survey> surveys = uiFieldsService.getSurveys();
+        for (Survey survey : surveys) {
+            uiFieldsService.deleteSurvey(survey.getId());
+        }
+        return new ResponseEntity<>(surveys, HttpStatus.OK);
     }
 }

@@ -12,6 +12,7 @@ import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.Survey;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -27,6 +28,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
+    private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
     private final GenericItemService genericItemService;
     private final IdCreator<String> idCreator;
 
@@ -108,7 +110,7 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public Group addGroup(Group group) {
-        logger.trace(String.format("adding field: %s", group));
+        logger.trace(String.format("adding group: %s", group));
         if (group.getId() == null) {
             group.setId(idCreator.createId("g-"));
         }
@@ -164,6 +166,67 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         FacetFilter ff = new FacetFilter();
         ff.setQuantity(10000);
         ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
+        return (List) genericItemService.getResults(ff).getResults();
+    }
+
+    @Override
+    public Survey addSurvey(Survey survey) {
+        logger.trace(String.format("adding survey: %s", survey));
+        if (survey.getId() == null) {
+            survey.setId(idCreator.createId("s-"));
+        }
+        Resource resource = new Resource();
+        resource.setResourceTypeName(SURVEY_RESOURCE_TYPE_NAME);
+        resource.setResourceType(resourceTypeService.getResourceType(SURVEY_RESOURCE_TYPE_NAME));
+        resource.setPayload(parserPool.serialize(survey, ParserService.ParserServiceTypes.JSON));
+        resource = resourceService.addResource(resource);
+        return parserPool.deserialize(resource, Survey.class);
+    }
+
+    @Override
+    public Survey updateSurvey(String id, Survey survey) {
+        logger.trace(String.format("updating survey with id [%s] and body: %s", id, survey));
+        if (!survey.getId().equals(id)) {
+            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
+        }
+        Resource existing = null;
+        try {
+            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("survey_id", id));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+            throw new ResourceNotFoundException(id, SURVEY_RESOURCE_TYPE_NAME);
+        }
+        existing.setPayload(parserPool.serialize(survey, ParserService.ParserServiceTypes.JSON));
+        Resource resource = resourceService.updateResource(existing);
+        return parserPool.deserialize(resource, Survey.class);
+    }
+
+    @Override
+    public void deleteSurvey(String surveyId) throws ResourceNotFoundException {
+        logger.trace(String.format("deleting survey with id [%s]", surveyId));
+        Resource resource = null;
+        try {
+            resource = searchService.searchId(SURVEY_RESOURCE_TYPE_NAME, new SearchService.KeyValue("survey_id", surveyId));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        if (resource == null) {
+            throw new ResourceNotFoundException();
+        } else {
+            resourceService.deleteResource(resource.getId());
+        }
+    }
+
+    @Override
+    public Survey getSurvey(String id) {
+        return genericItemService.get(SURVEY_RESOURCE_TYPE_NAME, id);
+    }
+
+    @Override
+    public List<Survey> getSurveys() {
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(SURVEY_RESOURCE_TYPE_NAME);
         return (List) genericItemService.getResults(ff).getResults();
     }
 

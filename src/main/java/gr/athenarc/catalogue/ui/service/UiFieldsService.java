@@ -43,6 +43,19 @@ public interface UiFieldsService {
 
     List<Group> getGroups();
 
+    /**
+     * Survey Methods
+     */
+    Survey addSurvey(Survey survey);
+
+    Survey updateSurvey(String id, Survey survey);
+
+    void deleteSurvey(String surveyId) throws ResourceNotFoundException;
+
+    Survey getSurvey(String id);
+
+    List<Survey> getSurveys();
+
 
     /**
      * Models Methods
