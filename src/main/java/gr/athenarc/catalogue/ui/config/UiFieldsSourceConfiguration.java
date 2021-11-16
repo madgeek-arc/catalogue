@@ -1,5 +1,9 @@
 package gr.athenarc.catalogue.ui.config;
 
+import eu.openminted.registry.core.service.ParserService;
+import eu.openminted.registry.core.service.ResourceService;
+import eu.openminted.registry.core.service.ResourceTypeService;
+import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.service.id.StringIdCreator;
@@ -28,8 +32,8 @@ public class UiFieldsSourceConfiguration {
             name = "ui.elements.json.enabled",
             havingValue = "false",
             matchIfMissing = true)
-    UiFieldsService simpleUiFieldService(GenericItemService genericItemService) {
-        return new SimpleUiFieldService(genericItemService, stringIdCreator());
+    UiFieldsService simpleUiFieldService(GenericItemService genericItemService, SearchService searchService, ResourceService resourceService, ResourceTypeService resourceTypeService, ParserService parserService) {
+        return new SimpleUiFieldService(genericItemService, stringIdCreator(), searchService, resourceService, resourceTypeService, parserService);
     }
 
     @Bean

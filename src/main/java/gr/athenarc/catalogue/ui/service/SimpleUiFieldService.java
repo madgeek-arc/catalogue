@@ -4,9 +4,11 @@ import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Resource;
 import eu.openminted.registry.core.domain.ResourceType;
-import eu.openminted.registry.core.service.AbstractGenericService;
 import eu.openminted.registry.core.service.ParserService;
+import eu.openminted.registry.core.service.ResourceService;
+import eu.openminted.registry.core.service.ResourceTypeService;
 import eu.openminted.registry.core.service.SearchService;
+import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
@@ -20,12 +22,11 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleUiFieldService extends AbstractGenericService<UiField> implements UiFieldsService {
+public class SimpleUiFieldService implements UiFieldsService {
 
     private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
@@ -33,16 +34,23 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
     private final GenericItemService genericItemService;
     private final IdCreator<String> idCreator;
+    public final SearchService searchService;
+    public final ResourceService resourceService;
+    public final ResourceTypeService resourceTypeService;
+    public final ParserService parserPool;
 
-    public SimpleUiFieldService(GenericItemService genericItemService, IdCreator<String> idCreator) {
-        super(UiField.class);
+    public SimpleUiFieldService(GenericItemService genericItemService,
+                                IdCreator<String> idCreator,
+                                SearchService searchService,
+                                ResourceService resourceService,
+                                ResourceTypeService resourceTypeService,
+                                ParserService parserPool) {
         this.genericItemService = genericItemService;
         this.idCreator = idCreator;
-    }
-
-    @Override
-    public String getResourceType() {
-        return "";
+        this.searchService = searchService;
+        this.resourceService = resourceService;
+        this.resourceTypeService = resourceTypeService;
+        this.parserPool = parserPool;
     }
 
     @Override
@@ -195,13 +203,13 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
     }
 
     public <T> T add(T obj, String resourceTypeName) {
-        logger.trace(String.format("adding [%s]: %s", resourceTypeName, obj));
-
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
-
+        String id = null;
         try {
-            if (ReflectUtils.getId(obj.getClass(), obj) == null) {
-                ReflectUtils.setId(obj.getClass(), obj, idCreator.createId(resourceTypeName.charAt(0) + "-"));
+            id = ReflectUtils.getId(obj.getClass(), obj);
+            if (id == null) {
+                id = idCreator.createId(resourceTypeName.charAt(0) + "-");
+                ReflectUtils.setId(obj.getClass(), obj, id);
             }
 
         } catch (NoSuchFieldException e) {
@@ -212,43 +220,36 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         resource.setResourceTypeName(resourceTypeName);
         resource.setResourceType(resourceType);
         resource.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType())));
-        resource = resourceService.addResource(resource);
-        return (T) parserPool.deserialize(resource, obj.getClass());
+        logger.trace(LoggingUtils.addResource(resourceTypeName, id, obj));
+        resourceService.addResource(resource);
+        return obj;
     }
 
     public <T> T update(String id, T obj, String resourceTypeName) {
-        logger.trace(String.format("updating [%s] with id [%s] and body: %s", resourceTypeName, id, obj));
         Resource existing = null;
         try {
             if (!id.equals(ReflectUtils.getId(obj.getClass(), obj))) {
                 throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
             }
-            existing = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+            existing = genericItemService.searchResource(resourceTypeName, id, true);
             existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
         } catch (NoSuchFieldException e) {
             logger.error(e);
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, SURVEY_RESOURCE_TYPE_NAME);
         }
 
-        Resource resource = resourceService.updateResource(existing);
-        return (T) parserPool.deserialize(resource, obj.getClass());
+        logger.trace(LoggingUtils.updateResource(resourceTypeName, id, obj));
+        resourceService.updateResource(existing);
+        return obj;
     }
 
-    public void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
-        logger.trace(String.format("deleting [%s] with id [%s]", resourceTypeName, id));
+    public <T> void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
         Resource resource = null;
-        try {
-            resource = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        Class<?> clazz = genericItemService.getClassFromResourceType(resourceTypeName);
+        resource = genericItemService.searchResource(resourceTypeName, id, true);
+        T obj = (T) parserPool.deserialize(resource, clazz);
+        logger.trace(LoggingUtils.deleteResource(resourceTypeName, id, obj));
+        resourceService.deleteResource(resource.getId());
+//        return obj;
     }
 
 }
