@@ -3,9 +3,11 @@ package gr.athenarc.catalogue.ui.service;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Resource;
+import eu.openminted.registry.core.domain.ResourceType;
 import eu.openminted.registry.core.service.AbstractGenericService;
 import eu.openminted.registry.core.service.ParserService;
 import eu.openminted.registry.core.service.SearchService;
+import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
@@ -45,49 +47,19 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public UiField addField(UiField field) {
-        logger.trace(String.format("adding field: %s", field));
-        if (field.getId() == null) {
-            field.setId(idCreator.createId("f-"));
-        }
-        Resource resource = new Resource();
-        resource.setResourceTypeName(FIELD_RESOURCE_TYPE_NAME);
-        resource.setResourceType(resourceTypeService.getResourceType(FIELD_RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        resource = resourceService.addResource(resource);
-        return parserPool.deserialize(resource, UiField.class);
+        field = add(field, FIELD_RESOURCE_TYPE_NAME);
+        return field;
     }
 
     @Override
     public UiField updateField(String id, UiField field) throws ResourceNotFoundException {
-        logger.trace(String.format("updating field with id [%s] and body: %s", id, field));
-        if (!field.getId().equals(id)) {
-            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
-        }
-        Resource existing = null;
-        try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, FIELD_RESOURCE_TYPE_NAME);
-        }
-        existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.updateResource(existing);
-        return parserPool.deserialize(resource, UiField.class);
+        field = update(id, field, FIELD_RESOURCE_TYPE_NAME);
+        return field;
     }
 
     @Override
     public void deleteField(String fieldId) throws ResourceNotFoundException {
-        Resource resource = null;
-        try {
-            resource = searchService.searchId(FIELD_RESOURCE_TYPE_NAME, new SearchService.KeyValue("field_id", fieldId));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        delete(fieldId, FIELD_RESOURCE_TYPE_NAME);
     }
 
     @Override
@@ -110,50 +82,19 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public Group addGroup(Group group) {
-        logger.trace(String.format("adding group: %s", group));
-        if (group.getId() == null) {
-            group.setId(idCreator.createId("g-"));
-        }
-        Resource resource = new Resource();
-        resource.setResourceTypeName(GROUP_RESOURCE_TYPE_NAME);
-        resource.setResourceType(resourceTypeService.getResourceType(GROUP_RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
-        resource = resourceService.addResource(resource);
-        return parserPool.deserialize(resource, Group.class);
+        group = add(group, GROUP_RESOURCE_TYPE_NAME);
+        return group;
     }
 
     @Override
     public Group updateGroup(String id, Group group) {
-        logger.trace(String.format("updating group with id [%s] and body: %s", id, group));
-        if (!group.getId().equals(id)) {
-            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
-        }
-        Resource existing = null;
-        try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("group_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, GROUP_RESOURCE_TYPE_NAME);
-        }
-        existing.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.updateResource(existing);
-        return parserPool.deserialize(resource, Group.class);
+        group = update(id, group, GROUP_RESOURCE_TYPE_NAME);
+        return group;
     }
 
     @Override
     public void deleteGroup(String groupId) throws ResourceNotFoundException {
-        logger.trace(String.format("deleting group with id [%s]", groupId));
-        Resource resource = null;
-        try {
-            resource = searchService.searchId(GROUP_RESOURCE_TYPE_NAME, new SearchService.KeyValue("group_id", groupId));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        delete(groupId, GROUP_RESOURCE_TYPE_NAME);
     }
 
     @Override
@@ -171,50 +112,19 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public Survey addSurvey(Survey survey) {
-        logger.trace(String.format("adding survey: %s", survey));
-        if (survey.getId() == null) {
-            survey.setId(idCreator.createId("s-"));
-        }
-        Resource resource = new Resource();
-        resource.setResourceTypeName(SURVEY_RESOURCE_TYPE_NAME);
-        resource.setResourceType(resourceTypeService.getResourceType(SURVEY_RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(survey, ParserService.ParserServiceTypes.JSON));
-        resource = resourceService.addResource(resource);
-        return parserPool.deserialize(resource, Survey.class);
+        survey = add(survey, SURVEY_RESOURCE_TYPE_NAME);
+        return survey;
     }
 
     @Override
     public Survey updateSurvey(String id, Survey survey) {
-        logger.trace(String.format("updating survey with id [%s] and body: %s", id, survey));
-        if (!survey.getId().equals(id)) {
-            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
-        }
-        Resource existing = null;
-        try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("survey_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, SURVEY_RESOURCE_TYPE_NAME);
-        }
-        existing.setPayload(parserPool.serialize(survey, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.updateResource(existing);
-        return parserPool.deserialize(resource, Survey.class);
+        survey = update(id, survey, SURVEY_RESOURCE_TYPE_NAME);
+        return survey;
     }
 
     @Override
     public void deleteSurvey(String surveyId) throws ResourceNotFoundException {
-        logger.trace(String.format("deleting survey with id [%s]", surveyId));
-        Resource resource = null;
-        try {
-            resource = searchService.searchId(SURVEY_RESOURCE_TYPE_NAME, new SearchService.KeyValue("survey_id", surveyId));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        delete(surveyId, SURVEY_RESOURCE_TYPE_NAME);
     }
 
     @Override
@@ -282,6 +192,63 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
+    }
+
+    public <T> T add(T obj, String resourceTypeName) {
+        logger.trace(String.format("adding [%s]: %s", resourceTypeName, obj));
+
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+
+        try {
+            if (ReflectUtils.getId(obj.getClass(), obj) == null) {
+                ReflectUtils.setId(obj.getClass(), obj, idCreator.createId(resourceTypeName.charAt(0) + "-"));
+            }
+
+        } catch (NoSuchFieldException e) {
+            logger.error(e);
+        }
+
+        Resource resource = new Resource();
+        resource.setResourceTypeName(resourceTypeName);
+        resource.setResourceType(resourceType);
+        resource.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType())));
+        resource = resourceService.addResource(resource);
+        return (T) parserPool.deserialize(resource, obj.getClass());
+    }
+
+    public <T> T update(String id, T obj, String resourceTypeName) {
+        logger.trace(String.format("updating [%s] with id [%s] and body: %s", resourceTypeName, id, obj));
+        Resource existing = null;
+        try {
+            if (!id.equals(ReflectUtils.getId(obj.getClass(), obj))) {
+                throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
+            }
+            existing = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+            existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
+        } catch (NoSuchFieldException e) {
+            logger.error(e);
+        } catch (UnknownHostException e) {
+            logger.error(e);
+            throw new ResourceNotFoundException(id, SURVEY_RESOURCE_TYPE_NAME);
+        }
+
+        Resource resource = resourceService.updateResource(existing);
+        return (T) parserPool.deserialize(resource, obj.getClass());
+    }
+
+    public void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
+        logger.trace(String.format("deleting [%s] with id [%s]", resourceTypeName, id));
+        Resource resource = null;
+        try {
+            resource = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        if (resource == null) {
+            throw new ResourceNotFoundException();
+        } else {
+            resourceService.deleteResource(resource.getId());
+        }
     }
 
 }
