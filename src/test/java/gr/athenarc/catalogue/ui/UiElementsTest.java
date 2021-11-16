@@ -1,51 +1,21 @@
 package gr.athenarc.catalogue.ui;
 
-import eu.openminted.registry.core.service.ParserService;
-import eu.openminted.registry.core.service.ResourceService;
-import eu.openminted.registry.core.service.ResourceTypeService;
-import eu.openminted.registry.core.service.SearchService;
-import gr.athenarc.catalogue.CatalogueApplication;
-import gr.athenarc.catalogue.service.GenericItemService;
-import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.ui.domain.*;
 import gr.athenarc.catalogue.ui.service.UiFieldsService;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes =
-        CatalogueApplication.class)
-@AutoConfigureMockMvc
-@TestPropertySource(
-        locations = "classpath:registry.properties")
+@SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UiElementsTest {
-
-    @Autowired
-    GenericItemService genericItemService;
-    @Autowired
-    ResourceTypeService resourceTypeService;
-    @Autowired
-    ParserService parserService;
-    @Autowired
-    SearchService searchService;
-    @Autowired
-    ResourceService resourceService;
-
-    @Autowired
-    IdCreator<String> stringIdCreator;
 
     @Autowired
     UiFieldsService uiFieldsService;
@@ -58,44 +28,48 @@ class UiElementsTest {
     @Order(1)
     void addField() {
         UiField field = createField();
-        uiFieldsService.addField(field);
+        UiField res = uiFieldsService.addField(field);
+        assert res.equals(field);
     }
 
     @Test
     @Order(2)
     void updateField() {
         UiField field = uiFieldsService.getField(fieldId);
-        uiFieldsService.updateField(fieldId, field);
-        assert true;
+        UiField res = uiFieldsService.updateField(fieldId, field);
+        assert res.equals(field);
     }
 
     @Test
     @Order(3)
     void addGroup() {
         Group group = createGroup();
-        uiFieldsService.addGroup(group);
+        Group res = uiFieldsService.addGroup(group);
+        assert res.equals(group);
     }
 
     @Test
     @Order(4)
     void updateGroup() {
         Group group = uiFieldsService.getGroup(groupId);
-        uiFieldsService.updateGroup(groupId, group);
-        assert true;
+        Group res = uiFieldsService.updateGroup(groupId, group);
+        assert res.equals(group);
     }
 
     @Test
     @Order(5)
     void addSurvey() {
         Survey survey = createSurvey();
-        uiFieldsService.addSurvey(survey);
+        Survey res = uiFieldsService.addSurvey(survey);
+        assert res.equals(survey);
     }
 
     @Test
     @Order(6)
     void updateSurvey() {
         Survey survey = uiFieldsService.getSurvey(surveyId);
-        uiFieldsService.updateSurvey(surveyId, survey);
+        Survey res = uiFieldsService.updateSurvey(surveyId, survey);
+        assert res.equals(survey);
     }
 
     @Test
