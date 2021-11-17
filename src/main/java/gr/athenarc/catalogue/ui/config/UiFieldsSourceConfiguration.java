@@ -7,9 +7,9 @@ import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.service.id.StringIdCreator;
-import gr.athenarc.catalogue.ui.service.JsonFileSavedUiFieldsService;
-import gr.athenarc.catalogue.ui.service.SimpleUiFieldService;
-import gr.athenarc.catalogue.ui.service.UiFieldsService;
+import gr.athenarc.catalogue.ui.service.JsonFileSavedFormsService;
+import gr.athenarc.catalogue.ui.service.SimpleFormsService;
+import gr.athenarc.catalogue.ui.service.FormsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +23,8 @@ public class UiFieldsSourceConfiguration {
             name = "ui.elements.json.enabled",
             havingValue = "true",
             matchIfMissing = false)
-    UiFieldsService jsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String jsonDir) {
-        return new JsonFileSavedUiFieldsService(jsonDir);
+    FormsService jsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String jsonDir) {
+        return new JsonFileSavedFormsService(jsonDir);
     }
 
     @Bean
@@ -32,8 +32,8 @@ public class UiFieldsSourceConfiguration {
             name = "ui.elements.json.enabled",
             havingValue = "false",
             matchIfMissing = true)
-    UiFieldsService simpleUiFieldService(GenericItemService genericItemService, SearchService searchService, ResourceService resourceService, ResourceTypeService resourceTypeService, ParserService parserService) {
-        return new SimpleUiFieldService(genericItemService, stringIdCreator(), searchService, resourceService, resourceTypeService, parserService);
+    FormsService simpleUiFieldService(GenericItemService genericItemService, SearchService searchService, ResourceService resourceService, ResourceTypeService resourceTypeService, ParserService parserService) {
+        return new SimpleFormsService(genericItemService, stringIdCreator(), searchService, resourceService, resourceTypeService, parserService);
     }
 
     @Bean

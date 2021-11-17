@@ -26,9 +26,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleUiFieldService implements UiFieldsService {
+public class SimpleFormsService implements FormsService {
 
-    private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
+    private static final Logger logger = LogManager.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
@@ -39,12 +39,12 @@ public class SimpleUiFieldService implements UiFieldsService {
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
 
-    public SimpleUiFieldService(GenericItemService genericItemService,
-                                IdCreator<String> idCreator,
-                                SearchService searchService,
-                                ResourceService resourceService,
-                                ResourceTypeService resourceTypeService,
-                                ParserService parserPool) {
+    public SimpleFormsService(GenericItemService genericItemService,
+                              IdCreator<String> idCreator,
+                              SearchService searchService,
+                              ResourceService resourceService,
+                              ResourceTypeService resourceTypeService,
+                              ParserService parserPool) {
         this.genericItemService = genericItemService;
         this.idCreator = idCreator;
         this.searchService = searchService;

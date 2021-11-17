@@ -1,7 +1,7 @@
 package gr.athenarc.catalogue.ui;
 
 import gr.athenarc.catalogue.ui.domain.*;
-import gr.athenarc.catalogue.ui.service.UiFieldsService;
+import gr.athenarc.catalogue.ui.service.FormsService;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import java.util.List;
 class UiElementsTest {
 
     @Autowired
-    UiFieldsService uiFieldsService;
+    FormsService formsService;
 
     final String fieldId = "f-test";
     final String groupId = "g-test";
@@ -28,15 +28,15 @@ class UiElementsTest {
     @Order(1)
     void addField() {
         UiField field = createField();
-        UiField res = uiFieldsService.addField(field);
+        UiField res = formsService.addField(field);
         assert res.equals(field);
     }
 
     @Test
     @Order(2)
     void updateField() {
-        UiField field = uiFieldsService.getField(fieldId);
-        UiField res = uiFieldsService.updateField(fieldId, field);
+        UiField field = formsService.getField(fieldId);
+        UiField res = formsService.updateField(fieldId, field);
         assert res.equals(field);
     }
 
@@ -44,15 +44,15 @@ class UiElementsTest {
     @Order(3)
     void addGroup() {
         Group group = createGroup();
-        Group res = uiFieldsService.addGroup(group);
+        Group res = formsService.addGroup(group);
         assert res.equals(group);
     }
 
     @Test
     @Order(4)
     void updateGroup() {
-        Group group = uiFieldsService.getGroup(groupId);
-        Group res = uiFieldsService.updateGroup(groupId, group);
+        Group group = formsService.getGroup(groupId);
+        Group res = formsService.updateGroup(groupId, group);
         assert res.equals(group);
     }
 
@@ -60,34 +60,34 @@ class UiElementsTest {
     @Order(5)
     void addSurvey() {
         Survey survey = createSurvey();
-        Survey res = uiFieldsService.addSurvey(survey);
+        Survey res = formsService.addSurvey(survey);
         assert res.equals(survey);
     }
 
     @Test
     @Order(6)
     void updateSurvey() {
-        Survey survey = uiFieldsService.getSurvey(surveyId);
-        Survey res = uiFieldsService.updateSurvey(surveyId, survey);
+        Survey survey = formsService.getSurvey(surveyId);
+        Survey res = formsService.updateSurvey(surveyId, survey);
         assert res.equals(survey);
     }
 
     @Test
     @Order(7)
     void deleteSurvey() {
-        uiFieldsService.deleteSurvey(surveyId);
+        formsService.deleteSurvey(surveyId);
     }
 
     @Test
     @Order(8)
     void deleteGroup() {
-        uiFieldsService.deleteGroup(groupId);
+        formsService.deleteGroup(groupId);
     }
 
     @Test
     @Order(9)
     void deleteField() {
-        uiFieldsService.deleteField(fieldId);
+        formsService.deleteField(fieldId);
     }
 
     UiField createField() {

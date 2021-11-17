@@ -16,9 +16,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileSavedUiFieldsService implements UiFieldsService {
+public class JsonFileSavedFormsService implements FormsService {
 
-    private static final Logger logger = LogManager.getLogger(JsonFileSavedUiFieldsService.class);
+    private static final Logger logger = LogManager.getLogger(JsonFileSavedFormsService.class);
 
     private static final String FILENAME_GROUPS = "groups.json";
     private static final String FILENAME_FIELDS = "fields.json";
@@ -26,7 +26,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     private final String directory;
     private String jsonObject;
 
-    public JsonFileSavedUiFieldsService(String directory) {
+    public JsonFileSavedFormsService(String directory) {
         if ("".equals(directory)) {
             directory = "catalogue/uiElements";
             logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
