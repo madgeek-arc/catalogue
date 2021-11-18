@@ -49,6 +49,18 @@ public class ClasspathUtils {
         return new HashSet<>(reflections.getSubTypesOf(Object.class));
     }
 
+    public static Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
+        Set<Class<?>> allClasses = ClasspathUtils.findAllClasses(packageName);
+        logger.info("Classes found in '" + packageName + "': " + allClasses.size());
+        Set<Class<?>> classes = new HashSet<>();
+        for (Class<?> c : allClasses) {
+            if (!c.isInterface()) {
+                classes.add(c);
+            }
+        }
+        return classes;
+    }
+
     public static Set<Class<?>> getAllClasses(String packageName) {
         InputStream stream = ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(packageName.replaceAll("[.]", "/"));

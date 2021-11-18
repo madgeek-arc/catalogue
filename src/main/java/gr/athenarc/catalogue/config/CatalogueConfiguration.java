@@ -1,6 +1,6 @@
 package gr.athenarc.catalogue.config;
 
-import eu.openminted.registry.core.controllers.ResourceSyncController;
+import gr.athenarc.catalogue.CatalogueApplication;
 import gr.athenarc.catalogue.ClasspathUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -16,12 +16,15 @@ import static gr.athenarc.catalogue.ClasspathUtils.getClassesWithoutInterfaces;
         "gr.athenarc",
         "eu.openminted.registry.core",
 }, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceSyncController.class)
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = CatalogueConfiguration.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = CatalogueApplication.class)
+}, includeFilters = {
+
 })
 @PropertySource(value = {"classpath:application.properties", "classpath:registry.properties"})
-public class ServiceConf {
+public class CatalogueConfiguration {
 
-    private static final Logger logger = LogManager.getLogger(ServiceConf.class);
+    private static final Logger logger = LogManager.getLogger(CatalogueConfiguration.class);
 
     @Bean
     JAXBContext catalogueJAXBContext() throws JAXBException {
