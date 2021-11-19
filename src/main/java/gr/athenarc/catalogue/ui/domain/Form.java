@@ -14,6 +14,7 @@ public class Form {
     Boolean mandatory;
     Boolean immutable;
     Boolean isVisible;
+    Boolean hasBorder = false;
     int order;
 
 
@@ -90,6 +91,14 @@ public class Form {
 
     public void setVisible(Boolean visible) {
         isVisible = visible;
+    }
+
+    public Boolean getHasBorder() {
+        return hasBorder;
+    }
+
+    public void setHasBorder(Boolean hasBorder) {
+        this.hasBorder = hasBorder;
     }
 
     public int getOrder() {
