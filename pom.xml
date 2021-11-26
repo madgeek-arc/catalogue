@@ -16,7 +16,7 @@
 	<description>Catalogue project</description>
 	<properties>
 <!--		<java.version>11</java.version>-->
-		<registry-core.version>2.3.1-SNAPSHOT</registry-core.version>
+		<registry-core.version>2.3.2-SNAPSHOT</registry-core.version>
 		<springfox.version>3.0.0</springfox.version>
 		<maven.compiler.source>8</maven.compiler.source>
 		<maven.compiler.target>8</maven.compiler.target>
