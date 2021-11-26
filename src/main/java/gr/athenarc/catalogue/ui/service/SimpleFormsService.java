@@ -14,10 +14,7 @@ import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdCreator;
-import gr.athenarc.catalogue.ui.domain.FieldGroup;
-import gr.athenarc.catalogue.ui.domain.Group;
-import gr.athenarc.catalogue.ui.domain.Survey;
-import gr.athenarc.catalogue.ui.domain.UiField;
+import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -194,6 +191,95 @@ public class SimpleFormsService implements FormsService {
 
         } while (!leftOvers.isEmpty() && retries < 10);
         return new ArrayList<>(topLevelFieldGroupMap.values());
+    }
+
+    @Override
+    public Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(String surveyId) { // TODO: refactor return type (+add chapter info)
+        Map<String, List<GroupedFields<FieldGroup>>> chapterGroupedFieldGroups = new HashMap<>();
+        Survey survey = getSurvey(surveyId);
+        List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
+        List<Group> groups = new ArrayList<>();
+        for (Chapter chapter : survey.getChapters()) {
+            chapterGroupedFieldGroups.put(chapter.getName(), getChapterModel(surveyId, chapter.getId()));
+        }
+        return chapterGroupedFieldGroups;
+    }
+
+    public List<GroupedFields<FieldGroup>> getChapterModel(String surveyId, String chapterId) {
+        List<GroupedFields<FieldGroup>> groupedFieldGroups = new ArrayList<>();
+        List<GroupedFields<UiField>> groupedFieldsList = getChapterModelFlat(surveyId, chapterId);
+
+        for (GroupedFields<UiField> groupedFields : groupedFieldsList) {
+            GroupedFields<FieldGroup> groupedFieldGroup = new GroupedFields<>();
+
+            groupedFieldGroup.setGroup(groupedFields.getGroup());
+            List<FieldGroup> fieldGroups = createFieldGroups(groupedFields.getFields());
+            groupedFieldGroup.setFields(fieldGroups);
+
+            int total = 0;
+            for (UiField f : groupedFields.getFields()) {
+                if (f.getForm().getMandatory() != null && f.getForm().getMandatory()
+                        && f.getTypeInfo().getType() != null && !f.getTypeInfo().getType().equals("composite")) {
+                    total += 1;
+                }
+            }
+
+            int topLevel = 0;
+            for (FieldGroup fg : fieldGroups) {
+                if (fg.getField().getForm().getMandatory() != null && fg.getField().getForm().getMandatory()) {
+                    topLevel += 1;
+                }
+            }
+            RequiredFields requiredFields = new RequiredFields(topLevel, total);
+            groupedFieldGroup.setRequired(requiredFields);
+
+            groupedFieldGroups.add(groupedFieldGroup);
+        }
+
+        return groupedFieldGroups;
+    }
+
+    public List<GroupedFields<UiField>> getChapterModelFlat(String surveyId, String chapterId) {
+        Survey survey = getSurvey(surveyId);
+        List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
+        List<Group> groups = new ArrayList<>();
+        for (Chapter chapter : survey.getChapters()) {
+            if (chapter.getId().equals(chapterId)) {
+                groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+            }
+        }
+
+        for (Group group : groups) {
+            GroupedFields<UiField> groupedFields = new GroupedFields<>();
+
+            groupedFields.setGroup(group);
+            groupedFields.setFields(getFieldsByGroup(group.getId()));
+
+            groupedFieldsList.add(groupedFields);
+        }
+
+        return groupedFieldsList;
+    }
+
+    @Override
+    public List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId) {
+        Survey survey = getSurvey(surveyId);
+        List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
+        List<Group> groups = new ArrayList<>();
+        for (Chapter chapter : survey.getChapters()) {
+            groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+        }
+
+        for (Group group : groups) {
+            GroupedFields<UiField> groupedFields = new GroupedFields<>();
+
+            groupedFields.setGroup(group);
+            groupedFields.setFields(getFieldsByGroup(group.getId()));
+
+            groupedFieldsList.add(groupedFields);
+        }
+
+        return groupedFieldsList;
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {

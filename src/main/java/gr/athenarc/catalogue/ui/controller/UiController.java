@@ -36,14 +36,26 @@ public class UiController {
         return formsService.getFields();
     }
 
+    @Deprecated
     @GetMapping(value = "form/model/flat", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<GroupedFields<UiField>> getFlatModel() {
         return formsService.getFlatModel();
     }
 
+    @Deprecated
     @GetMapping(value = "form/model", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<GroupedFields<FieldGroup>> getModel() {
         return formsService.getModel();
+    }
+
+    @GetMapping(value = "form/model/{surveyId}/flat", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<GroupedFields<UiField>> getSurveyModelFlat(@PathVariable("surveyId") String surveyId) {
+        return formsService.getSurveyModelFlat(surveyId);
+    }
+
+    @GetMapping(value = "form/model/{surveyId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(@PathVariable("surveyId") String surveyId) {
+        return formsService.getSurveyModel(surveyId);
     }
 
 

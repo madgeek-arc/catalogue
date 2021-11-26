@@ -70,6 +70,7 @@ public interface FormsService {
                 .collect(Collectors.toList());
     }
 
+    @Deprecated
     default List<GroupedFields<FieldGroup>> getModel() {
         List<GroupedFields<FieldGroup>> groupedFieldGroups = new ArrayList<>();
         List<GroupedFields<UiField>> groupedFieldsList = getFlatModel();
@@ -104,6 +105,7 @@ public interface FormsService {
         return groupedFieldGroups;
     }
 
+    @Deprecated
     default List<GroupedFields<UiField>> getFlatModel() {
         List<Group> groups = getGroups();
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
@@ -121,6 +123,10 @@ public interface FormsService {
 
         return groupedFieldsList;
     }
+
+    Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(String surveyId);
+
+    List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId);
 
     default List<UiField> createFields(String className, String parent) throws ClassNotFoundException {
         List<UiField> fields = new LinkedList<>();
