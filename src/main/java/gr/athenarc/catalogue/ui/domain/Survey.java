@@ -10,6 +10,7 @@ public class Survey {
     private String id;
     private String name;
     private String description;
+    private String type;
     private Date creationDate;
     private User createdBy;
     private Date modificationDate;
@@ -42,6 +43,14 @@ public class Survey {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Date getCreationDate() {

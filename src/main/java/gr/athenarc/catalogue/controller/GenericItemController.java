@@ -75,7 +75,7 @@ public class GenericItemController {
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
-    private FacetFilter createFacetFilter(Map<String, Object> allRequestParams) {
+    public static FacetFilter createFacetFilter(Map<String, Object> allRequestParams) {
         FacetFilter ff = new FacetFilter();
         ff.setKeyword(allRequestParams.get("query") != null ? (String) allRequestParams.remove("query") : "");
         ff.setFrom(allRequestParams.get("from") != null ? Integer.parseInt((String) allRequestParams.remove("from")) : 0);
