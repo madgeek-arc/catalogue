@@ -6,14 +6,14 @@ import gr.athenarc.catalogue.service.GenericItemService;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping(path = "items")
@@ -22,7 +22,7 @@ public class GenericItemController {
     private final GenericItemService genericResourceService;
 
     @Autowired
-    GenericItemController(GenericItemService genericResourceService) {
+    GenericItemController(@Qualifier("catalogueGenericItemService") GenericItemService genericResourceService) {
         this.genericResourceService = genericResourceService;
     }
 

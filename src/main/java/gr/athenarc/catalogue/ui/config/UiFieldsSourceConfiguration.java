@@ -10,6 +10,7 @@ import gr.athenarc.catalogue.service.id.StringIdCreator;
 import gr.athenarc.catalogue.ui.service.JsonFileSavedFormsService;
 import gr.athenarc.catalogue.ui.service.SimpleFormsService;
 import gr.athenarc.catalogue.ui.service.FormsService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +33,7 @@ public class UiFieldsSourceConfiguration {
             name = "ui.elements.json.enabled",
             havingValue = "false",
             matchIfMissing = true)
-    FormsService simpleUiFieldService(GenericItemService genericItemService, SearchService searchService, ResourceService resourceService, ResourceTypeService resourceTypeService, ParserService parserService) {
+    FormsService simpleUiFieldService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService, SearchService searchService, ResourceService resourceService, ResourceTypeService resourceTypeService, ParserService parserService) {
         return new SimpleFormsService(genericItemService, stringIdCreator(), searchService, resourceService, resourceTypeService, parserService);
     }
 
