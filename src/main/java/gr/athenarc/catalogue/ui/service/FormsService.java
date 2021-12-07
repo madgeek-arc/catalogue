@@ -26,6 +26,12 @@ public interface FormsService {
 
     List<UiField> getFields();
 
+    default void setFormDependsOnName(UiField field) {
+        if (field.getForm().getDependsOn() != null && field.getForm().getDependsOn().getId() != null) {
+            field.getForm().getDependsOn().setName(this.getField(field.getForm().getDependsOn().getId()).getName());
+        }
+    }
+
     /**
      * Groups Methods
      */

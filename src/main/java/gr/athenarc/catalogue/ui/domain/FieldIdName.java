@@ -1,8 +1,11 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import javax.persistence.Transient;
+
 public class FieldIdName {
 
     String id;
+    @Transient
     String name = null;
 
     public FieldIdName() {

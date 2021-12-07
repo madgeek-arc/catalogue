@@ -69,12 +69,18 @@ public class SimpleFormsService implements FormsService {
 
     @Override
     public UiField getField(String id) {
-        return genericItemService.get(FIELD_RESOURCE_TYPE_NAME, id);
+        UiField field = genericItemService.get(FIELD_RESOURCE_TYPE_NAME, id);
+        setFormDependsOnName(field);
+        return field;
     }
 
     @Override
     public Browsing<UiField> browseFields(FacetFilter filter) {
-        return genericItemService.getResults(filter);
+        Browsing<UiField> results = genericItemService.getResults(filter);
+        for (UiField field : results.getResults()) {
+            setFormDependsOnName(field);
+        }
+        return results;
     }
 
     @Override
