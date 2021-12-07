@@ -1,7 +1,5 @@
 package gr.athenarc.catalogue.ui.domain;
 
-import gr.athenarc.catalogue.domain.User;
-
 import java.util.Date;
 import java.util.List;
 
@@ -12,9 +10,9 @@ public class Survey {
     private String description;
     private String type;
     private Date creationDate;
-    private User createdBy;
+    private String createdBy;
     private Date modificationDate;
-    private User modifiedBy;
+    private String modifiedBy;
     private List<Chapter> chapters;
 
     public Survey() {
@@ -61,11 +59,11 @@ public class Survey {
         this.creationDate = creationDate;
     }
 
-    public User getCreatedBy() {
+    public String getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(User createdBy) {
+    public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
     }
 
@@ -77,11 +75,11 @@ public class Survey {
         this.modificationDate = modificationDate;
     }
 
-    public User getModifiedBy() {
+    public String getModifiedBy() {
         return modifiedBy;
     }
 
-    public void setModifiedBy(User modifiedBy) {
+    public void setModifiedBy(String modifiedBy) {
         this.modifiedBy = modifiedBy;
     }
 

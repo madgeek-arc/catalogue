@@ -123,12 +123,14 @@ public class SimpleFormsService implements FormsService {
 
     @Override
     public Survey addSurvey(Survey survey) {
+        createChapterIds(survey);
         survey = add(survey, SURVEY_RESOURCE_TYPE_NAME);
         return survey;
     }
 
     @Override
     public Survey updateSurvey(String id, Survey survey) {
+        createChapterIds(survey);
         survey = update(id, survey, SURVEY_RESOURCE_TYPE_NAME);
         return survey;
     }
@@ -342,6 +344,14 @@ public class SimpleFormsService implements FormsService {
         logger.trace(LoggingUtils.deleteResource(resourceTypeName, id, obj));
         resourceService.deleteResource(resource.getId());
 //        return obj;
+    }
+
+    private void createChapterIds(Survey survey) {
+        for (Chapter chapter : survey.getChapters()) {
+            if (chapter.getId() == null || "".equals(chapter.getId())) {
+                chapter.setId(idCreator.createId( "c-"));
+            }
+        }
     }
 
 }
