@@ -45,7 +45,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     }
 
     @PostConstruct
-    void initResourceTypesBrowseFields() {
+    void initResourceTypesBrowseFields() { // TODO: move this to a bean to avoid running multiple times ??
         browseByMap = new HashMap<>();
         labelsMap = new HashMap<>();
         for (ResourceType rt : resourceTypeService.getAllResourceType()) {
@@ -74,7 +74,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             List<String> browseBy = new ArrayList<>(browseSet);
             java.util.Collections.sort(browseBy);
             browseByMap.put(rt.getName(), browseBy);
-            logger.info("Generating browse fields for [{}]", rt.getName());
+            logger.debug("Generating browse fields for [{}]", rt.getName());
         }
     }
 
