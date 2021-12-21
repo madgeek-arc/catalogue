@@ -85,6 +85,28 @@
 
     </dependencies>
 
+	<scm>
+		<connection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</developerConnection>
+		<url>https://github.com/madgeek-arc/catalogue.git</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>true</uniqueVersion>
+			<id>omtd-releases</id>
+			<layout>default</layout>
+			<url>https://repo.openminted.eu/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<uniqueVersion>true</uniqueVersion>
+			<id>omtd-snapshots</id>
+			<layout>default</layout>
+			<url>https://repo.openminted.eu/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>omtd-snapshots</id>
@@ -118,6 +140,11 @@
 				<configuration>
 					<classifier>exec</classifier>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>3.0.0-M4</version>
 			</plugin>
 
 			<plugin>
