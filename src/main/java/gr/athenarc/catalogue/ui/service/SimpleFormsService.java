@@ -124,6 +124,9 @@ public class SimpleFormsService implements FormsService {
     @Override
     public Survey addSurvey(Survey survey) {
         createChapterIds(survey);
+//        Date date = new Date();
+//        survey.setCreationDate(date);
+//        survey.setModificationDate(date);
         survey = add(survey, SURVEY_RESOURCE_TYPE_NAME);
         return survey;
     }
@@ -131,6 +134,7 @@ public class SimpleFormsService implements FormsService {
     @Override
     public Survey updateSurvey(String id, Survey survey) {
         createChapterIds(survey);
+//        survey.setModificationDate(new Date());
         survey = update(id, survey, SURVEY_RESOURCE_TYPE_NAME);
         return survey;
     }

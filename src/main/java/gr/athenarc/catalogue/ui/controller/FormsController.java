@@ -111,8 +111,8 @@ public class FormsController {
 
 
     @PostMapping("surveys")
-    public ResponseEntity<Survey> addSurvey(@RequestBody Survey group) {
-        return new ResponseEntity<>(formsService.addSurvey(group), HttpStatus.CREATED);
+    public ResponseEntity<Survey> addSurvey(@RequestBody Survey survey) {
+        return new ResponseEntity<>(formsService.addSurvey(survey), HttpStatus.CREATED);
     }
 
     @PutMapping("surveys/{id}")
