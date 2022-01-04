@@ -351,9 +351,11 @@ public class SimpleFormsService implements FormsService {
     }
 
     private void createChapterIds(Survey survey) {
-        for (Chapter chapter : survey.getChapters()) {
-            if (chapter.getId() == null || "".equals(chapter.getId())) {
-                chapter.setId(idCreator.createId( "c-"));
+        if (survey.getChapters() != null) {
+            for (Chapter chapter : survey.getChapters()) {
+                if (chapter.getId() == null || "".equals(chapter.getId())) {
+                    chapter.setId(idCreator.createId( "c-"));
+                }
             }
         }
     }
