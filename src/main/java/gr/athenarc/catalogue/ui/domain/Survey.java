@@ -8,7 +8,9 @@ public class Survey {
     private String id;
     private String name;
     private String description;
+    private String notice;
     private String type;
+    private String subType;
     private Date creationDate;
     private String createdBy;
     private Date modificationDate;
@@ -43,12 +45,28 @@ public class Survey {
         this.description = description;
     }
 
+    public String getNotice() {
+        return notice;
+    }
+
+    public void setNotice(String notice) {
+        this.notice = notice;
+    }
+
     public String getType() {
         return type;
     }
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
     }
 
     public Date getCreationDate() {
