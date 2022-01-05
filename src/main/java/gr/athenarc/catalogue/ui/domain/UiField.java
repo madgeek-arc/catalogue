@@ -6,7 +6,7 @@ public class UiField {
     String name;
     String parentId;
     String parent;
-    String label;
+    StyledString label;
     String accessPath;
     TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
@@ -70,11 +70,11 @@ public class UiField {
         this.parent = parent;
     }
 
-    public String getLabel() {
+    public StyledString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(StyledString label) {
         this.label = label;
     }
 

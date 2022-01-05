@@ -97,7 +97,8 @@ class UiElementsTest {
         field.setName("Test Field");
         field.setParent(null);
         field.setIncludedInSnippet(true);
-        field.setLabel("Test Label");
+
+        field.setLabel(StyledString.of("Test Label"));
 
         TypeInfo typeInfo = new TypeInfo();
         typeInfo.setType("composite");
@@ -113,17 +114,16 @@ class UiElementsTest {
         form.setAffects(new ArrayList<>());
         form.setMandatory(true);
         form.setDependsOn(null);
-        form.setDescription("Field Description");
+        form.setDescription(StyledString.of("Field Description"));
         form.setGroup(groupId);
         form.setImmutable(true);
-        form.setVisible(true);
-        form.setOrder(1);
+        form.setDisplay(new Display(null, 1, true, false));
         form.setPlaceholder("Test placeholder");
-        form.setSuggestion("Test Suggestion");
+        form.setSuggestion(StyledString.of("Test Suggestion"));
         field.setForm(form);
 
         Display display = new Display();
-        display.setOrder("1");
+        display.setOrder(1);
         display.setPlacement("2");
         field.setDisplay(display);
 
