@@ -97,7 +97,7 @@ public class SimpleFormsService implements FormsService {
         for (UiField field : fields) {
             try {
                 getField(field.getId());
-                logger.info("Could not import UiField: [id=%s] - Already exists");
+                logger.info(String.format("Could not import UiField: [id=%s] - Already exists", field.getId()));
             } catch (ResourceNotFoundException e) {
                 logger.info(String.format("Importing UiField: [id=%s] [name=%s]", field.getId(), field.getName()));
                 imported.add(addField(field));
@@ -115,7 +115,7 @@ public class SimpleFormsService implements FormsService {
                 logger.info(String.format("Updating UiField: [id=%s] [name=%s]", field.getId(), field.getName()));
                 updated.add(updateField(field.getId(), field));
             } catch (ResourceNotFoundException e) {
-                logger.info("Could not update UiField: [id=%s] - Not Found");
+                logger.info(String.format("Could not update UiField: [id=%s] - Not Found", field.getId()));
             }
         }
         return updated;
