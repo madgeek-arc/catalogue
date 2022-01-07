@@ -186,8 +186,28 @@ public class JsonFileSavedFormsService implements FormsService {
     }
 
     @Override
+    public List<UiField> importFields(List<UiField> fields) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
+    public List<UiField> updateFields(List<UiField> fields) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
     public List<Group> getGroups() {
         return readGroups(directory + "/" + FILENAME_GROUPS);
+    }
+
+    @Override
+    public List<Group> importGroups(List<Group> groups) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
+    public List<Group> updateGroups(List<Group> groups) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
     @Override

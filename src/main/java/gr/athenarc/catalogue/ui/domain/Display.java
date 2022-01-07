@@ -6,14 +6,18 @@ public class Display {
     Integer order;
     Boolean isVisible;
     Boolean hasBorder = false;
+    String cssClasses;
+    String style;
 
     public Display() {}
 
-    public Display(String placement, Integer order, Boolean isVisible, Boolean hasBorder) {
+    public Display(String placement, Integer order, Boolean isVisible, Boolean hasBorder, String cssClasses, String style) {
         this.placement = placement;
         this.order = order;
         this.isVisible = isVisible;
         this.hasBorder = hasBorder;
+        this.cssClasses = cssClasses;
+        this.style = style;
     }
 
     public String getPlacement() {
@@ -46,5 +50,21 @@ public class Display {
 
     public void setHasBorder(Boolean hasBorder) {
         this.hasBorder = hasBorder;
+    }
+
+    public String getCssClasses() {
+        return cssClasses;
+    }
+
+    public void setCssClasses(String cssClasses) {
+        this.cssClasses = cssClasses;
+    }
+
+    public String getStyle() {
+        return style;
+    }
+
+    public void setStyle(String style) {
+        this.style = style;
     }
 }

@@ -26,6 +26,9 @@ public interface FormsService {
 
     List<UiField> getFields();
 
+    List<UiField> importFields(List<UiField> fields);
+    List<UiField> updateFields(List<UiField> fields);
+
     default void setFormDependsOnName(UiField field) {
         if (field.getForm().getDependsOn() != null && field.getForm().getDependsOn().getId() != null) {
             field.getForm().getDependsOn().setName(this.getField(field.getForm().getDependsOn().getId()).getName());
@@ -45,6 +48,9 @@ public interface FormsService {
     Group getGroup(String id);
 
     List<Group> getGroups();
+
+    List<Group> importGroups(List<Group> groups);
+    List<Group> updateGroups(List<Group> groups);
 
     /**
      * Survey Methods

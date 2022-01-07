@@ -92,6 +92,36 @@ public class SimpleFormsService implements FormsService {
     }
 
     @Override
+    public List<UiField> importFields(List<UiField> fields) {
+        List<UiField> imported = new ArrayList<>();
+        for (UiField field : fields) {
+            try {
+                getField(field.getId());
+                logger.info("Could not import UiField: [id=%s] - Already exists");
+            } catch (ResourceNotFoundException e) {
+                logger.info(String.format("Importing UiField: [id=%s] [name=%s]", field.getId(), field.getName()));
+                imported.add(addField(field));
+            }
+        }
+        return imported;
+    }
+
+    @Override
+    public List<UiField> updateFields(List<UiField> fields) {
+        List<UiField> updated = new ArrayList<>();
+        for (UiField field : fields) {
+            try {
+                getField(field.getId());
+                logger.info(String.format("Updating UiField: [id=%s] [name=%s]", field.getId(), field.getName()));
+                updated.add(updateField(field.getId(), field));
+            } catch (ResourceNotFoundException e) {
+                logger.info("Could not update UiField: [id=%s] - Not Found");
+            }
+        }
+        return updated;
+    }
+
+    @Override
     public Group addGroup(Group group) {
         group = add(group, GROUP_RESOURCE_TYPE_NAME);
         return group;
@@ -119,6 +149,36 @@ public class SimpleFormsService implements FormsService {
         ff.setQuantity(10000);
         ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
         return (List) genericItemService.getResults(ff).getResults();
+    }
+
+    @Override
+    public List<Group> importGroups(List<Group> groups) {
+        List<Group> imported = new ArrayList<>();
+        for (Group group : groups) {
+            try {
+                getField(group.getId());
+                logger.info("Could not import Group: [id=%s] - Already exists");
+            } catch (ResourceNotFoundException e) {
+                logger.info(String.format("Importing Group: [id=%s] [name=%s]", group.getId(), group.getName()));
+                imported.add(addGroup(group));
+            }
+        }
+        return imported;
+    }
+
+    @Override
+    public List<Group> updateGroups(List<Group> groups) {
+        List<Group> updated = new ArrayList<>();
+        for (Group group : groups) {
+            try {
+                getField(group.getId());
+                logger.info(String.format("Updating Group: [id=%s] [name=%s]", group.getId(), group.getName()));
+                updated.add(updateGroup(group.getId(), group));
+            } catch (ResourceNotFoundException e) {
+                logger.info("Could not update Group: [id=%s] - Not Found");
+            }
+        }
+        return updated;
     }
 
     @Override

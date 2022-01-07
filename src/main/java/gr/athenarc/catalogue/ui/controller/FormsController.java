@@ -32,6 +32,11 @@ public class FormsController {
         return new ResponseEntity<>(formsService.updateField(id, field), HttpStatus.OK);
     }
 
+    @PutMapping("fields")
+    public ResponseEntity<List<UiField>> updateFields(@RequestBody List<UiField> fields) {
+        return new ResponseEntity<>(formsService.updateFields(fields), HttpStatus.OK);
+    }
+
     @GetMapping("fields/{id}")
     public ResponseEntity<UiField> getField(@PathVariable("id") String id) {
         return new ResponseEntity<>(formsService.getField(id), HttpStatus.OK);
@@ -49,11 +54,8 @@ public class FormsController {
     }
 
     @PostMapping("fields/import")
-    public ResponseEntity<Void> importFields(@RequestBody List<UiField> fields) {
-        for (UiField field : fields) {
-            formsService.addField(field);
-        }
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<List<UiField>> importFields(@RequestBody List<UiField> fields) {
+        return new ResponseEntity<>(formsService.importFields(fields), HttpStatus.OK);
     }
 
     @DeleteMapping("fields/all")

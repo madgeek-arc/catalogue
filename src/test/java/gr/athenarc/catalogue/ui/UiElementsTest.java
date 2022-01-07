@@ -117,7 +117,7 @@ class UiElementsTest {
         form.setDescription(StyledString.of("Field Description"));
         form.setGroup(groupId);
         form.setImmutable(true);
-        form.setDisplay(new Display(null, 1, true, false));
+        form.setDisplay(new Display(null, 1, true, false, null, null));
         form.setPlaceholder("Test placeholder");
         form.setSuggestion(StyledString.of("Test Suggestion"));
         field.setForm(form);
