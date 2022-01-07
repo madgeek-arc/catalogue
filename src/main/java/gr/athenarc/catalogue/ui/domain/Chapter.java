@@ -8,10 +8,10 @@ public class Chapter {
     private String name;
     private String description;
     private List<String> sections;
+    private String subType;
+    private int order;
 
-    public Chapter() {
-
-    }
+    public Chapter() {}
 
     public String getId() {
         return id;
@@ -43,5 +43,21 @@ public class Chapter {
 
     public void setSections(List<String> sections) {
         this.sections = sections;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 }
