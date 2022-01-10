@@ -5,22 +5,22 @@ import java.util.List;
 
 public class SurveyModel {
 
-    Survey survey;
+    String surveyId;
     List<ChapterModel> chapterModels = new ArrayList<>();
 
     public SurveyModel() {}
 
-    public SurveyModel(Survey survey, List<ChapterModel> chapterModels) {
-        this.survey = survey;
+    public SurveyModel(String surveyId, List<ChapterModel> chapterModels) {
+        this.surveyId = surveyId;
         this.chapterModels = chapterModels;
     }
 
-    public Survey getSurvey() {
-        return survey;
+    public String getSurveyId() {
+        return surveyId;
     }
 
-    public void setSurvey(Survey survey) {
-        this.survey = survey;
+    public void setSurveyId(String surveyId) {
+        this.surveyId = surveyId;
     }
 
     public List<ChapterModel> getChapterModels() {

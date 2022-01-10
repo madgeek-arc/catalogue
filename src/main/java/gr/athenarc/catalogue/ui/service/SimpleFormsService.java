@@ -267,11 +267,11 @@ public class SimpleFormsService implements FormsService {
     }
 
     @Override
-    public SurveyModel getSurveyModel(String surveyId) { // TODO: refactor return type (+add chapter info)
+    public SurveyModel getSurveyModel(String surveyId) {
         Survey survey = getSurvey(surveyId);
 
         SurveyModel model = new SurveyModel();
-        model.setSurvey(survey);
+        model.setSurveyId(surveyId);
 
         for (Chapter chapter : survey.getChapters()) {
             ChapterModel chapterModel = new ChapterModel(chapter, getChapterModel(surveyId, chapter.getId()));

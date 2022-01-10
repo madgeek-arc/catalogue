@@ -285,6 +285,7 @@ public class JsonFileSavedFormsService implements FormsService {
     @Override
     public SurveyModel getSurveyModel(String surveyId) {
         SurveyModel model = new SurveyModel();
+        model.setSurveyId(surveyId);
         Chapter chapter = new Chapter();
         chapter.setName("Chapter");
         model.getChapterModels().add(new ChapterModel(chapter, getModel()));
