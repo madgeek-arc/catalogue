@@ -32,14 +32,15 @@ public class FormsController {
         return new ResponseEntity<>(formsService.updateField(id, field), HttpStatus.OK);
     }
 
-    @PutMapping("fields")
-    public ResponseEntity<List<UiField>> updateFields(@RequestBody List<UiField> fields) {
-        return new ResponseEntity<>(formsService.updateFields(fields), HttpStatus.OK);
-    }
-
     @GetMapping("fields/{id}")
     public ResponseEntity<UiField> getField(@PathVariable("id") String id) {
         return new ResponseEntity<>(formsService.getField(id), HttpStatus.OK);
+    }
+
+    @DeleteMapping("fields/{id}")
+    public ResponseEntity<Void> deleteField(@PathVariable("id") String id) {
+        formsService.deleteField(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("fields")
@@ -47,10 +48,9 @@ public class FormsController {
         return new ResponseEntity<>(formsService.getFields(), HttpStatus.OK);
     }
 
-    @DeleteMapping("fields/{id}")
-    public ResponseEntity<Void> deleteField(@PathVariable("id") String id) {
-        formsService.deleteField(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PutMapping("fields")
+    public ResponseEntity<List<UiField>> updateFields(@RequestBody List<UiField> fields) {
+        return new ResponseEntity<>(formsService.updateFields(fields), HttpStatus.OK);
     }
 
     @PostMapping("fields/import")
@@ -83,23 +83,25 @@ public class FormsController {
         return new ResponseEntity<>(formsService.getGroup(id), HttpStatus.OK);
     }
 
-    @GetMapping("groups")
-    public ResponseEntity<List<Group>> getGroups() {
-        return new ResponseEntity<>(formsService.getGroups(), HttpStatus.OK);
-    }
-
     @DeleteMapping("groups/{id}")
     public ResponseEntity<Void> deleteGroup(@PathVariable("id") String id) {
         formsService.deleteGroup(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping("groups")
+    public ResponseEntity<List<Group>> getGroups() {
+        return new ResponseEntity<>(formsService.getGroups(), HttpStatus.OK);
+    }
+
+    @PutMapping("groups")
+    public ResponseEntity<List<Group>> updateGroups(@RequestBody List<Group> groups) {
+        return new ResponseEntity<>(formsService.updateGroups(groups), HttpStatus.OK);
+    }
+
     @PostMapping("groups/import")
-    public ResponseEntity<Void> importGroups(@RequestBody List<Group> groups) {
-        for (Group group : groups) {
-            formsService.addGroup(group);
-        }
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<List<Group>> importGroups(@RequestBody List<Group> groups) {
+        return new ResponseEntity<>(formsService.importGroups(groups), HttpStatus.OK);
     }
 
     @DeleteMapping("groups/all")
