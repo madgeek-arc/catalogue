@@ -270,7 +270,7 @@ public class SimpleFormsService implements FormsService {
         FacetFilter filter = new FacetFilter();
         filter.setResourceType(FIELD_RESOURCE_TYPE_NAME);
         filter.setQuantity(10000);
-        filter.addFilter("group", groupId);
+        filter.addFilter("form_group", groupId);
 
         Browsing<UiField> allFields = browseFields(filter);
 
