@@ -283,6 +283,18 @@ public class JsonFileSavedFormsService implements FormsService {
     }
 
     @Override
+    public List<UiField> getFieldsByGroup(String groupId) {
+        List<UiField> allFields = getFields();
+
+        return allFields
+                .stream()
+                .filter(field -> field.getForm() != null)
+                .filter(field -> field.getForm().getGroup() != null)
+                .filter(field -> field.getForm().getGroup().equals(groupId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public SurveyModel getSurveyModel(String surveyId) {
         SurveyModel model = new SurveyModel();
         model.setSurveyId(surveyId);

@@ -18,7 +18,6 @@ import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.*;
 import java.util.function.Function;
@@ -267,6 +266,18 @@ public class SimpleFormsService implements FormsService {
     }
 
     @Override
+    public List<UiField> getFieldsByGroup(String groupId) {
+        FacetFilter filter = new FacetFilter();
+        filter.setResourceType(FIELD_RESOURCE_TYPE_NAME);
+        filter.setQuantity(10000);
+        filter.addFilter("group", groupId);
+
+        Browsing<UiField> allFields = browseFields(filter);
+
+        return allFields.getResults();
+    }
+
+    @Override
     public SurveyModel getSurveyModel(String surveyId) {
         Survey survey = getSurvey(surveyId);
 
@@ -417,7 +428,7 @@ public class SimpleFormsService implements FormsService {
         if (survey.getChapters() != null) {
             for (Chapter chapter : survey.getChapters()) {
                 if (chapter.getId() == null || "".equals(chapter.getId())) {
-                    chapter.setId(idCreator.createId( "c-"));
+                    chapter.setId(idCreator.createId("c-"));
                 }
             }
         }

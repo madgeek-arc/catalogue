@@ -71,16 +71,7 @@ public interface FormsService {
      */
     List<FieldGroup> createFieldGroups(List<UiField> fields);
 
-    default List<UiField> getFieldsByGroup(String groupId) {
-        List<UiField> allFields = getFields();
-
-        return allFields
-                .stream()
-                .filter(field -> field.getForm() != null)
-                .filter(field -> field.getForm().getGroup() != null)
-                .filter(field -> field.getForm().getGroup().equals(groupId))
-                .collect(Collectors.toList());
-    }
+    List<UiField> getFieldsByGroup(String groupId);
 
     @Deprecated
     default List<GroupedFields<FieldGroup>> getModel() {
