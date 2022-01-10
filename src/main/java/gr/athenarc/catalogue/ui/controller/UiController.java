@@ -3,6 +3,7 @@ package gr.athenarc.catalogue.ui.controller;
 import gr.athenarc.catalogue.ClasspathUtils;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.GroupedFields;
+import gr.athenarc.catalogue.ui.domain.SurveyModel;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import gr.athenarc.catalogue.ui.service.FormsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class UiController {
     }
 
     @GetMapping(value = "form/model/{surveyId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(@PathVariable("surveyId") String surveyId) {
+    public SurveyModel getSurveyModel(@PathVariable("surveyId") String surveyId) {
         return formsService.getSurveyModel(surveyId);
     }
 

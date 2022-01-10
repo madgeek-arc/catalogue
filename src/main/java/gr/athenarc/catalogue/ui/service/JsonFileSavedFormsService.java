@@ -283,10 +283,12 @@ public class JsonFileSavedFormsService implements FormsService {
     }
 
     @Override
-    public Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(String surveyId) {
-        Map<String, List<GroupedFields<FieldGroup>>> map = new HashMap<>();
-        map.put("Chapter", getModel());
-        return map;
+    public SurveyModel getSurveyModel(String surveyId) {
+        SurveyModel model = new SurveyModel();
+        Chapter chapter = new Chapter();
+        chapter.setName("Chapter");
+        model.getChapterModels().add(new ChapterModel(chapter, getModel()));
+        return model;
     }
 
     @Override

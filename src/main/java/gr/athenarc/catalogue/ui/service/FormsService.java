@@ -136,7 +136,7 @@ public interface FormsService {
         return groupedFieldsList;
     }
 
-    Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(String surveyId);
+    SurveyModel getSurveyModel(String surveyId);
 
     List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId);
 

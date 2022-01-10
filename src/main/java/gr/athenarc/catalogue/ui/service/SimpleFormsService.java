@@ -18,6 +18,7 @@ import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.*;
 import java.util.function.Function;
@@ -266,15 +267,17 @@ public class SimpleFormsService implements FormsService {
     }
 
     @Override
-    public Map<String, List<GroupedFields<FieldGroup>>> getSurveyModel(String surveyId) { // TODO: refactor return type (+add chapter info)
-        Map<String, List<GroupedFields<FieldGroup>>> chapterGroupedFieldGroups = new HashMap<>();
+    public SurveyModel getSurveyModel(String surveyId) { // TODO: refactor return type (+add chapter info)
         Survey survey = getSurvey(surveyId);
-        List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
-        List<Group> groups = new ArrayList<>();
+
+        SurveyModel model = new SurveyModel();
+        model.setSurvey(survey);
+
         for (Chapter chapter : survey.getChapters()) {
-            chapterGroupedFieldGroups.put(chapter.getName(), getChapterModel(surveyId, chapter.getId()));
+            ChapterModel chapterModel = new ChapterModel(chapter, getChapterModel(surveyId, chapter.getId()));
+            model.getChapterModels().add(chapterModel);
         }
-        return chapterGroupedFieldGroups;
+        return model;
     }
 
     public List<GroupedFields<FieldGroup>> getChapterModel(String surveyId, String chapterId) {
