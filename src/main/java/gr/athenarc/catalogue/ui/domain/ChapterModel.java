@@ -5,13 +5,13 @@ import java.util.List;
 public class ChapterModel {
 
     Chapter chapter;
-    List<GroupedFields<FieldGroup>> sections;
+    List<GroupedFields<FieldGroup>> groupedFieldsList;
 
     public ChapterModel() {}
 
-    public ChapterModel(Chapter chapter, List<GroupedFields<FieldGroup>> sections) {
+    public ChapterModel(Chapter chapter, List<GroupedFields<FieldGroup>> groupedFieldsList) {
         this.chapter = chapter;
-        this.sections = sections;
+        this.groupedFieldsList = groupedFieldsList;
     }
 
     public Chapter getChapter() {
@@ -22,11 +22,11 @@ public class ChapterModel {
         this.chapter = chapter;
     }
 
-    public List<GroupedFields<FieldGroup>> getSections() {
-        return sections;
+    public List<GroupedFields<FieldGroup>> getGroupedFieldsList() {
+        return groupedFieldsList;
     }
 
-    public void setSections(List<GroupedFields<FieldGroup>> sections) {
-        this.sections = sections;
+    public void setGroupedFieldsList(List<GroupedFields<FieldGroup>> groupedFieldsList) {
+        this.groupedFieldsList = groupedFieldsList;
     }
 }
