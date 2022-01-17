@@ -13,7 +13,7 @@ import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
-import gr.athenarc.catalogue.service.id.IdCreator;
+import gr.athenarc.catalogue.service.id.IdGenerator;
 import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -30,20 +30,20 @@ public class SimpleFormsService implements FormsService {
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
     private final GenericItemService genericItemService;
-    private final IdCreator<String> idCreator;
+    private final IdGenerator<String> idGenerator;
     public final SearchService searchService;
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
 
     public SimpleFormsService(GenericItemService genericItemService,
-                              IdCreator<String> idCreator,
+                              IdGenerator<String> idGenerator,
                               SearchService searchService,
                               ResourceService resourceService,
                               ResourceTypeService resourceTypeService,
                               ParserService parserPool) {
         this.genericItemService = genericItemService;
-        this.idCreator = idCreator;
+        this.idGenerator = idGenerator;
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
@@ -380,7 +380,7 @@ public class SimpleFormsService implements FormsService {
         try {
             id = ReflectUtils.getId(obj.getClass(), obj);
             if (id == null) {
-                id = idCreator.createId(resourceTypeName.charAt(0) + "-");
+                id = idGenerator.createId(resourceTypeName.charAt(0) + "-");
                 ReflectUtils.setId(obj.getClass(), obj, id);
             }
 
@@ -428,7 +428,7 @@ public class SimpleFormsService implements FormsService {
         if (survey.getChapters() != null) {
             for (Chapter chapter : survey.getChapters()) {
                 if (chapter.getId() == null || "".equals(chapter.getId())) {
-                    chapter.setId(idCreator.createId("c-"));
+                    chapter.setId(idGenerator.createId("c-"));
                 }
             }
         }
