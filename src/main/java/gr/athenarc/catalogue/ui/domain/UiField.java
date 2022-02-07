@@ -10,6 +10,7 @@ public class UiField {
     String accessPath;
     TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
+    boolean deprecated;
     Form form;
     Display display;
 
