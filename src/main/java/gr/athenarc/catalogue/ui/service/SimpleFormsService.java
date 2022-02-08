@@ -331,7 +331,8 @@ public class SimpleFormsService implements FormsService {
         List<Group> groups = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
             if (chapter.getId().equals(chapterId)) {
-                groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+
+                groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
             }
         }
 
@@ -353,7 +354,7 @@ public class SimpleFormsService implements FormsService {
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
         List<Group> groups = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
-            groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+            groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
         }
 
         for (Group group : groups) {
