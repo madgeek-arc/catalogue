@@ -324,6 +324,19 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         return getFlatModel();
     }
 
+    @Override
+    public Map<String, List<UiField>> getChapterFieldsMap(String surveyId) {
+        Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
+        List<UiField> fields = new ArrayList<>();
+
+        for (Group group : getGroups()) {
+            fields.addAll(getFieldsByGroup(group.getId()));
+        }
+        chapterFieldsMap.put("default", fields);
+
+        return chapterFieldsMap;
+    }
+
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));

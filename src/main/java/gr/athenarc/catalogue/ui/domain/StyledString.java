@@ -5,6 +5,7 @@ public class StyledString {
     String text;
     String cssClasses;
     String style;
+    boolean showLess;
 
     public StyledString() {
     }
@@ -37,5 +38,13 @@ public class StyledString {
 
     public void setStyle(String style) {
         this.style = style;
+    }
+
+    public boolean isShowLess() {
+        return showLess;
+    }
+
+    public void setShowLess(boolean showLess) {
+        this.showLess = showLess;
     }
 }

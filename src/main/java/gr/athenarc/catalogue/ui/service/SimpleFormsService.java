@@ -370,6 +370,21 @@ public class SimpleFormsService implements FormsService, ModelService {
         return groupedFieldsList;
     }
 
+    public Map<String, List<UiField>> getChapterFieldsMap(String id) {
+        Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
+        Model model = get(id);
+
+        for (Chapter chapter : model.getChapters()) {
+            List<UiField> fields = new ArrayList<>();
+            for (Group group : chapter.getSections()) {
+                fields.addAll(group.getFields());
+            }
+            chapterFieldsMap.put(chapter.getId(), fields);
+        }
+
+        return chapterFieldsMap;
+    }
+
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));

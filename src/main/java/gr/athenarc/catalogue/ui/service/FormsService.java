@@ -132,6 +132,8 @@ public interface FormsService {
 
     List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId);
 
+    Map<String, List<UiField>> getChapterFieldsMap(String surveyId);
+
     default List<UiField> createFields(String className, String parent) throws ClassNotFoundException {
         List<UiField> fields = new LinkedList<>();
         Class<?> clazz = Class.forName(className);
