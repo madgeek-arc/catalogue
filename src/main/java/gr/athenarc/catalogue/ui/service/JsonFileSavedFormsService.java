@@ -16,12 +16,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileSavedFormsService implements FormsService {
+public class JsonFileSavedFormsService implements FormsService, ModelService {
 
     private static final Logger logger = LogManager.getLogger(JsonFileSavedFormsService.class);
 
     private static final String FILENAME_GROUPS = "groups.json";
     private static final String FILENAME_FIELDS = "fields.json";
+    private static final String FILENAME_MODELS = "models.json";
 
     private final String directory;
     private String jsonObject;
@@ -83,6 +84,20 @@ public class JsonFileSavedFormsService implements FormsService {
         }
 
         return fields;
+    }
+
+    protected List<Model> readModels(String filepath) {
+        List<Model> models = null;
+        try {
+            jsonObject = readFile(filepath);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Model[] fieldsArray = objectMapper.readValue(jsonObject, Model[].class);
+            models = new ArrayList<>(Arrays.asList(fieldsArray));
+        } catch (IOException e) {
+            logger.error(e);
+        }
+
+        return models;
     }
 
     @Override
@@ -313,5 +328,43 @@ public class JsonFileSavedFormsService implements FormsService {
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
+    }
+
+    @Override
+    public Model add(Model model) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Model update(String id, Model model) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(String id) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Model get(String id) {
+        List<Model> allModels = readModels(directory + "/" + FILENAME_FIELDS);
+        for (Model model : allModels) {
+            if (model.getId() == id) {
+                return model;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Browsing<Model> browse(FacetFilter filter) {
+        List<Model> allModels = readModels(directory + "/" + FILENAME_MODELS);
+
+        Browsing<Model> models = new Browsing<>();
+        models.setFacets(null);
+        models.setResults(allModels.subList(filter.getFrom(), filter.getFrom() + filter.getQuantity()));
+        models.setTo(filter.getFrom() + filter.getQuantity());
+        models.setFrom(filter.getFrom());
+        return models;
     }
 }

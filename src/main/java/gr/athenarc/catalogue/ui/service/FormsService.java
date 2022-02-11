@@ -55,14 +55,15 @@ public interface FormsService {
     /**
      * Survey Methods
      */
+    @Deprecated
     Survey addSurvey(Survey survey);
-
+    @Deprecated
     Survey updateSurvey(String id, Survey survey);
-
+    @Deprecated
     void deleteSurvey(String surveyId) throws ResourceNotFoundException;
-
+    @Deprecated
     Survey getSurvey(String id);
-
+    @Deprecated
     List<Survey> getSurveys();
 
 

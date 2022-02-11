@@ -23,12 +23,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleFormsService implements FormsService {
+public class SimpleFormsService implements FormsService, ModelService {
 
     private static final Logger logger = LogManager.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
+    private static final String MODEL_RESOURCE_TYPE_NAME = "model";
     private final GenericItemService genericItemService;
     private final IdGenerator<String> idGenerator;
     public final SearchService searchService;
@@ -435,4 +436,49 @@ public class SimpleFormsService implements FormsService {
         }
     }
 
+    private void createChapterIds(Model model) {
+        if (model.getChapters() != null) {
+            for (Chapter chapter : model.getChapters()) {
+                if (chapter.getId() == null || "".equals(chapter.getId())) {
+                    chapter.setId(idGenerator.createId("c-"));
+                }
+            }
+        }
+    }
+
+    @Override
+    public Model add(Model model) {
+        createChapterIds(model);
+//        Date date = new Date();
+//        model.setCreationDate(date);
+//        model.setModificationDate(date);
+        model = add(model, MODEL_RESOURCE_TYPE_NAME);
+        return model;
+    }
+
+    @Override
+    public Model update(String id, Model model) {
+        createChapterIds(model);
+//        model.setModificationDate(new Date());
+        model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
+        return model;
+    }
+
+    @Override
+    public void delete(String surveyId) throws ResourceNotFoundException {
+        delete(surveyId, MODEL_RESOURCE_TYPE_NAME);
+    }
+
+    @Override
+    public Model get(String id) {
+        return genericItemService.get(MODEL_RESOURCE_TYPE_NAME, id);
+    }
+
+    @Override
+    public Browsing<Model> browse(FacetFilter filter) {
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(MODEL_RESOURCE_TYPE_NAME);
+        return genericItemService.getResults(ff);
+    }
 }
