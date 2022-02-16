@@ -1,26 +1,38 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
 
+@Entity
+@Table(name = "MODEL")
 public class Model {
 
+    @Id
     private String id;
     private String name;
+
+    @Column(length = 2000)
     private String description;
     private String notice;
     private String type;
     private String subType;
+
+    @Temporal(TemporalType.DATE)
     private Date creationDate;
-    private String createdBy;
+    @Temporal(TemporalType.DATE)
     private Date modificationDate;
+
+    private String createdBy;
     private String modifiedBy;
-    private List<Chapter> chapters;
+
+    @Column(columnDefinition = "boolean default false")
     private boolean locked;
 
-    public Model() {
+    @OneToMany(mappedBy="model", cascade= CascadeType.ALL)
+    private List<Chapter> chapters;
 
-    }
+    public Model() {}
 
     public String getId() {
         return id;

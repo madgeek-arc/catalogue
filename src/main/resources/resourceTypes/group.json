@@ -20,7 +20,7 @@
   "aliasGroup": "resourceTypes",
   "payloadType": "json",
   "properties": {
-    "class": "gr.athenarc.catalogue.ui.domain.Group"
+    "class": "gr.athenarc.catalogue.ui.domain.Section"
   },
   "schema": "{\n\t\"$schema\": \"https://json-schema.org/draft/2019-09/schema\"\n}"
 }

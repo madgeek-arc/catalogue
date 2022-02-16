@@ -58,18 +58,18 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         }
     }
 
-    protected List<Group> readGroups(String filepath) {
-        List<Group> groups = null;
+    protected List<Section> readGroups(String filepath) {
+        List<Section> sections = null;
         try {
             jsonObject = readFile(filepath);
             ObjectMapper objectMapper = new ObjectMapper();
-            Group[] groupsArray = objectMapper.readValue(jsonObject, Group[].class);
-            groups = new ArrayList<>(Arrays.asList(groupsArray));
+            Section[] groupsArray = objectMapper.readValue(jsonObject, Section[].class);
+            sections = new ArrayList<>(Arrays.asList(groupsArray));
         } catch (IOException e) {
             logger.error(e);
         }
 
-        return groups;
+        return sections;
     }
 
     protected List<UiField> readFields(String filepath) {
@@ -101,21 +101,21 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public Group addGroup(Group group) {
-        throw new UnsupportedOperationException("To add a group contact the administrator.");
+    public Section addGroup(Section section) {
+        throw new UnsupportedOperationException("To add a section contact the administrator.");
     }
 
     @Override
-    public Group updateGroup(String id, Group group) {
-        throw new UnsupportedOperationException("To update a group contact the administrator.");
+    public Section updateGroup(String id, Section section) {
+        throw new UnsupportedOperationException("To update a section contact the administrator.");
     }
 
     @Override
-    public Group getGroup(String groupId) {
-        List<Group> allGroups = readGroups(directory + "/" + FILENAME_GROUPS);
-        for (Group group : allGroups) {
-            if (group.getId() == groupId) {
-                return group;
+    public Section getGroup(String groupId) {
+        List<Section> allSections = readGroups(directory + "/" + FILENAME_GROUPS);
+        for (Section section : allSections) {
+            if (section.getId() == groupId) {
+                return section;
             }
         }
         return null;
@@ -211,17 +211,17 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public List<Group> getGroups() {
+    public List<Section> getGroups() {
         return readGroups(directory + "/" + FILENAME_GROUPS);
     }
 
     @Override
-    public List<Group> importGroups(List<Group> groups) {
+    public List<Section> importGroups(List<Section> sections) {
         throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
     @Override
-    public List<Group> updateGroups(List<Group> groups) {
+    public List<Section> updateGroups(List<Section> sections) {
         throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
@@ -329,8 +329,8 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
         List<UiField> fields = new ArrayList<>();
 
-        for (Group group : getGroups()) {
-            fields.addAll(getFieldsByGroup(group.getId()));
+        for (Section section : getGroups()) {
+            fields.addAll(getFieldsByGroup(section.getId()));
         }
         chapterFieldsMap.put("default", fields);
 
@@ -370,7 +370,7 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public Browsing<Model> browse(FacetFilter filter) {
+    public List<Model> browse(FacetFilter filter) {
         List<Model> allModels = readModels(directory + "/" + FILENAME_MODELS);
 
         Browsing<Model> models = new Browsing<>();
@@ -378,6 +378,6 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         models.setResults(allModels.subList(filter.getFrom(), filter.getFrom() + filter.getQuantity()));
         models.setTo(filter.getFrom() + filter.getQuantity());
         models.setFrom(filter.getFrom());
-        return models;
+        return models.getResults();
     }
 }

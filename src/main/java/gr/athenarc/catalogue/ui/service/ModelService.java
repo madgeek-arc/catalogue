@@ -1,9 +1,10 @@
 package gr.athenarc.catalogue.ui.service;
 
-import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.Model;
+
+import java.util.List;
 
 public interface ModelService {
 
@@ -15,5 +16,5 @@ public interface ModelService {
 
     Model get(String id);
 
-    Browsing<Model> browse(FacetFilter filter);
+    List<Model> browse(FacetFilter filter);
 }

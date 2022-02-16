@@ -38,19 +38,19 @@ public interface FormsService {
      * Groups Methods
      */
     // TODO: refactor crud for fields/groups
-    Group addGroup(Group group);
+    Section addGroup(Section section);
 
-    Group updateGroup(String id, Group group);
+    Section updateGroup(String id, Section section);
 
     void deleteGroup(String fieldId) throws ResourceNotFoundException;
 
-    Group getGroup(String id);
+    Section getGroup(String id);
 
-    List<Group> getGroups();
+    List<Section> getGroups();
 
-    List<Group> importGroups(List<Group> groups);
+    List<Section> importGroups(List<Section> sections);
 
-    List<Group> updateGroups(List<Group> groups);
+    List<Section> updateGroups(List<Section> sections);
 
     /**
      * Survey Methods
@@ -111,15 +111,15 @@ public interface FormsService {
 
     @Deprecated
     default List<GroupedFields<UiField>> getFlatModel() {
-        List<Group> groups = getGroups();
+        List<Section> sections = getGroups();
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
 
-        if (groups != null) {
-            for (Group group : groups) {
+        if (sections != null) {
+            for (Section section : sections) {
                 GroupedFields<UiField> groupedFields = new GroupedFields<>();
 
-                groupedFields.setGroup(group);
-                groupedFields.setFields(getFieldsByGroup(group.getId()));
+                groupedFields.setGroup(section);
+                groupedFields.setFields(getFieldsByGroup(section.getId()));
 
                 groupedFieldsList.add(groupedFields);
             }

@@ -1,10 +1,8 @@
 package gr.athenarc.catalogue.ui.controller;
 
-import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
-import eu.openminted.registry.core.domain.Paging;
 import gr.athenarc.catalogue.ui.domain.Model;
-import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.Section;
 import gr.athenarc.catalogue.ui.domain.Survey;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import gr.athenarc.catalogue.ui.service.FormsService;
@@ -12,6 +10,7 @@ import gr.athenarc.catalogue.ui.service.ModelService;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +29,7 @@ public class FormsController {
     private final ModelService modelService;
 
     @Autowired
-    public FormsController(FormsService formsService, ModelService modelService) {
+    public FormsController(FormsService formsService, @Qualifier("jpaFormsService") ModelService modelService) {
         this.formsService = formsService;
         this.modelService = modelService;
     }
@@ -82,17 +81,17 @@ public class FormsController {
 
 
     @PostMapping("groups")
-    public ResponseEntity<Group> addGroup(@RequestBody Group group) {
-        return new ResponseEntity<>(formsService.addGroup(group), HttpStatus.CREATED);
+    public ResponseEntity<Section> addGroup(@RequestBody Section section) {
+        return new ResponseEntity<>(formsService.addGroup(section), HttpStatus.CREATED);
     }
 
     @PutMapping("groups/{id}")
-    public ResponseEntity<Group> updateGroup(@PathVariable("id") String id, @RequestBody Group group) {
-        return new ResponseEntity<>(formsService.updateGroup(id, group), HttpStatus.OK);
+    public ResponseEntity<Section> updateGroup(@PathVariable("id") String id, @RequestBody Section section) {
+        return new ResponseEntity<>(formsService.updateGroup(id, section), HttpStatus.OK);
     }
 
     @GetMapping("groups/{id}")
-    public ResponseEntity<Group> getGroup(@PathVariable("id") String id) {
+    public ResponseEntity<Section> getGroup(@PathVariable("id") String id) {
         return new ResponseEntity<>(formsService.getGroup(id), HttpStatus.OK);
     }
 
@@ -103,27 +102,27 @@ public class FormsController {
     }
 
     @GetMapping("groups")
-    public ResponseEntity<List<Group>> getGroups() {
+    public ResponseEntity<List<Section>> getGroups() {
         return new ResponseEntity<>(formsService.getGroups(), HttpStatus.OK);
     }
 
     @PutMapping("groups")
-    public ResponseEntity<List<Group>> updateGroups(@RequestBody List<Group> groups) {
-        return new ResponseEntity<>(formsService.updateGroups(groups), HttpStatus.OK);
+    public ResponseEntity<List<Section>> updateGroups(@RequestBody List<Section> sections) {
+        return new ResponseEntity<>(formsService.updateGroups(sections), HttpStatus.OK);
     }
 
     @PostMapping("groups/import")
-    public ResponseEntity<List<Group>> importGroups(@RequestBody List<Group> groups) {
-        return new ResponseEntity<>(formsService.importGroups(groups), HttpStatus.OK);
+    public ResponseEntity<List<Section>> importGroups(@RequestBody List<Section> sections) {
+        return new ResponseEntity<>(formsService.importGroups(sections), HttpStatus.OK);
     }
 
     @DeleteMapping("groups/all")
-    public ResponseEntity<List<Group>> deleteAllGroups() {
-        List<Group> groups = formsService.getGroups();
-        for (Group group : groups) {
-            formsService.deleteField(group.getId());
+    public ResponseEntity<List<Section>> deleteAllGroups() {
+        List<Section> sections = formsService.getGroups();
+        for (Section section : sections) {
+            formsService.deleteField(section.getId());
         }
-        return new ResponseEntity<>(groups, HttpStatus.OK);
+        return new ResponseEntity<>(sections, HttpStatus.OK);
     }
 
 
@@ -191,7 +190,7 @@ public class FormsController {
             @ApiImplicitParam(name = "orderField", value = "Order field", dataTypeClass = String.class, paramType = "query")
     })
     @GetMapping("models")
-    public ResponseEntity<Browsing<Model>> getModels(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
+    public ResponseEntity<List<Model>> getModels(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
         FacetFilter ff = createFacetFilter(allRequestParams);
         return new ResponseEntity<>(modelService.browse(ff), HttpStatus.OK);
     }
@@ -206,7 +205,7 @@ public class FormsController {
     public ResponseEntity<List<Model>> deleteAllModels() {
         FacetFilter filter = new FacetFilter();
         filter.setQuantity(1000);
-        List<Model> models = modelService.browse(filter).getResults();
+        List<Model> models = modelService.browse(filter);
         for (Model model : models) {
             modelService.delete(model.getId());
         }

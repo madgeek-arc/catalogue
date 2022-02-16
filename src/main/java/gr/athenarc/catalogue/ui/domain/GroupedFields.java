@@ -4,19 +4,19 @@ import java.util.List;
 
 public class GroupedFields <T> {
 
-    private Group group;
+    private Section section;
     private List<T> fields;
     private RequiredFields required;
 
     public GroupedFields() {
     }
 
-    public Group getGroup() {
-        return group;
+    public Section getGroup() {
+        return section;
     }
 
-    public void setGroup(Group group) {
-        this.group = group;
+    public void setGroup(Section section) {
+        this.section = section;
     }
 
     public List<T> getFields() {

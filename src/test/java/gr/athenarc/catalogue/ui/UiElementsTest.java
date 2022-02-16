@@ -43,17 +43,17 @@ class UiElementsTest {
     @Test
     @Order(3)
     void addGroup() {
-        Group group = createGroup();
-        Group res = formsService.addGroup(group);
-        assert res.equals(group);
+        Section section = createGroup();
+        Section res = formsService.addGroup(section);
+        assert res.equals(section);
     }
 
     @Test
     @Order(4)
     void updateGroup() {
-        Group group = formsService.getGroup(groupId);
-        Group res = formsService.updateGroup(groupId, group);
-        assert res.equals(group);
+        Section section = formsService.getGroup(groupId);
+        Section res = formsService.updateGroup(groupId, section);
+        assert res.equals(section);
     }
 
     @Test
@@ -130,13 +130,13 @@ class UiElementsTest {
         return field;
     }
 
-    Group createGroup() {
-        Group group = new Group();
-        group.setId(groupId);
-        group.setName("Test Group");
-        group.setDescription("This is a group");
-        group.setOrder(1);
-        return group;
+    Section createGroup() {
+        Section section = new Section();
+        section.setId(groupId);
+        section.setName("Test Section");
+        section.setDescription("This is a section");
+        section.setOrder(1);
+        return section;
     }
 
     Survey createSurvey() {

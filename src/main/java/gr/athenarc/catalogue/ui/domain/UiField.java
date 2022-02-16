@@ -1,26 +1,46 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import gr.athenarc.catalogue.ui.converter.*;
+
+import javax.persistence.*;
 import java.util.List;
 
+@Entity
+@Table(name = "FIELD")
 public class UiField {
 
+    @Id
     String id;
     String name;
     String parentId;
     String parent;
-    StyledString label;
     String accessPath;
-    TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
     boolean deprecated;
-    Form form;
-    Display display;
+
+    @Convert(converter = StyledStringJpaConverter.class)
+    StyledString label;
+
+    @Convert(converter = TypeInfoJpaConverter.class)
+    TypeInfo typeInfo = new TypeInfo();
+
+    @Convert(converter = FormJpaConverter.class)
+    Form form = new Form();
+
+    @Convert(converter = DisplayJpaConverter.class)
+    Display display = new Display();
+
+    @OneToMany(cascade = CascadeType.ALL)
+//    @Convert(converter = ListUiFieldJpaConverter.class)
     List<UiField> subFields;
 
-    public UiField() {
-        this.form = new Form();
-        this.display = new Display();
-    }
+    @ManyToOne(fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name="section_id", nullable=false)
+    @JsonIgnore
+    Section section;
+
+    public UiField() {}
 
     public UiField(UiField field) {
         this.id = field.getId();

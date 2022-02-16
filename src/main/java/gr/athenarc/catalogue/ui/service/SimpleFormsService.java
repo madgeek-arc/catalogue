@@ -123,15 +123,15 @@ public class SimpleFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public Group addGroup(Group group) {
-        group = add(group, GROUP_RESOURCE_TYPE_NAME);
-        return group;
+    public Section addGroup(Section section) {
+        section = add(section, GROUP_RESOURCE_TYPE_NAME);
+        return section;
     }
 
     @Override
-    public Group updateGroup(String id, Group group) {
-        group = update(id, group, GROUP_RESOURCE_TYPE_NAME);
-        return group;
+    public Section updateGroup(String id, Section section) {
+        section = update(id, section, GROUP_RESOURCE_TYPE_NAME);
+        return section;
     }
 
     @Override
@@ -140,12 +140,12 @@ public class SimpleFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public Group getGroup(String id) {
+    public Section getGroup(String id) {
         return genericItemService.get(GROUP_RESOURCE_TYPE_NAME, id);
     }
 
     @Override
-    public List<Group> getGroups() {
+    public List<Section> getGroups() {
         FacetFilter ff = new FacetFilter();
         ff.setQuantity(10000);
         ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
@@ -153,30 +153,30 @@ public class SimpleFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public List<Group> importGroups(List<Group> groups) {
-        List<Group> imported = new ArrayList<>();
-        for (Group group : groups) {
+    public List<Section> importGroups(List<Section> sections) {
+        List<Section> imported = new ArrayList<>();
+        for (Section section : sections) {
             try {
-                getField(group.getId());
-                logger.info("Could not import Group: [id=%s] - Already exists");
+                getField(section.getId());
+                logger.info("Could not import Section: [id=%s] - Already exists");
             } catch (ResourceNotFoundException e) {
-                logger.info(String.format("Importing Group: [id=%s] [name=%s]", group.getId(), group.getName()));
-                imported.add(addGroup(group));
+                logger.info(String.format("Importing Section: [id=%s] [name=%s]", section.getId(), section.getName()));
+                imported.add(addGroup(section));
             }
         }
         return imported;
     }
 
     @Override
-    public List<Group> updateGroups(List<Group> groups) {
-        List<Group> updated = new ArrayList<>();
-        for (Group group : groups) {
+    public List<Section> updateGroups(List<Section> sections) {
+        List<Section> updated = new ArrayList<>();
+        for (Section section : sections) {
             try {
-                getField(group.getId());
-                logger.info(String.format("Updating Group: [id=%s] [name=%s]", group.getId(), group.getName()));
-                updated.add(updateGroup(group.getId(), group));
+                getField(section.getId());
+                logger.info(String.format("Updating Section: [id=%s] [name=%s]", section.getId(), section.getName()));
+                updated.add(updateGroup(section.getId(), section));
             } catch (ResourceNotFoundException e) {
-                logger.info("Could not update Group: [id=%s] - Not Found");
+                logger.info("Could not update Section: [id=%s] - Not Found");
             }
         }
         return updated;
@@ -329,19 +329,19 @@ public class SimpleFormsService implements FormsService, ModelService {
     public List<GroupedFields<UiField>> getChapterModelFlat(String surveyId, String chapterId) {
         Survey survey = getSurvey(surveyId);
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
-        List<Group> groups = new ArrayList<>();
+        List<Section> sections = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
             if (chapter.getId().equals(chapterId)) {
 
-                groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
+                sections.addAll(chapter.getSections().stream().map((Section id) -> getGroup(id.toString())).collect(Collectors.toList()));
             }
         }
 
-        for (Group group : groups) {
+        for (Section section : sections) {
             GroupedFields<UiField> groupedFields = new GroupedFields<>();
 
-            groupedFields.setGroup(group);
-            groupedFields.setFields(getFieldsByGroup(group.getId()));
+            groupedFields.setGroup(section);
+            groupedFields.setFields(getFieldsByGroup(section.getId()));
 
             groupedFieldsList.add(groupedFields);
         }
@@ -353,16 +353,16 @@ public class SimpleFormsService implements FormsService, ModelService {
     public List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId) {
         Survey survey = getSurvey(surveyId);
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
-        List<Group> groups = new ArrayList<>();
+        List<Section> sections = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
-            groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
+            sections.addAll(chapter.getSections().stream().map((Section id) -> getGroup(id.toString())).collect(Collectors.toList()));
         }
 
-        for (Group group : groups) {
+        for (Section section : sections) {
             GroupedFields<UiField> groupedFields = new GroupedFields<>();
 
-            groupedFields.setGroup(group);
-            groupedFields.setFields(getFieldsByGroup(group.getId()));
+            groupedFields.setGroup(section);
+            groupedFields.setFields(getFieldsByGroup(section.getId()));
 
             groupedFieldsList.add(groupedFields);
         }
@@ -376,8 +376,8 @@ public class SimpleFormsService implements FormsService, ModelService {
 
         for (Chapter chapter : model.getChapters()) {
             List<UiField> fields = new ArrayList<>();
-            for (Group group : chapter.getSections()) {
-                fields.addAll(group.getFields());
+            for (Section section : chapter.getSections()) {
+                fields.addAll(section.getFields());
             }
             chapterFieldsMap.put(chapter.getId(), fields);
         }
@@ -490,10 +490,11 @@ public class SimpleFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public Browsing<Model> browse(FacetFilter filter) {
+    public List<Model> browse(FacetFilter filter) {
         FacetFilter ff = new FacetFilter();
         ff.setQuantity(10000);
         ff.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        return genericItemService.getResults(ff);
+        Browsing<Model> browsing = genericItemService.getResults(ff);
+        return browsing.getResults();
     }
 }

@@ -15,9 +15,7 @@ public class Form {
     Boolean immutable;
     Display display;
 
-
-    public Form() {
-    }
+    public Form() {}
 
     public FieldIdName getDependsOn() {
         return dependsOn;

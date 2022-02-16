@@ -7,8 +7,7 @@ public class StyledString {
     String style;
     boolean showLess;
 
-    public StyledString() {
-    }
+    public StyledString() {}
 
     public static StyledString of(String text) {
         StyledString styledString = new StyledString();
