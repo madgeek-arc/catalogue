@@ -16,7 +16,7 @@
 	<description>Catalogue project</description>
 	<properties>
 <!--		<java.version>11</java.version>-->
-		<registry-core.version>2.2.1-SNAPSHOT</registry-core.version>
+		<registry-core.version>2.3.1-SNAPSHOT</registry-core.version>
 		<springfox.version>3.0.0</springfox.version>
 	</properties>
 	<dependencies>
@@ -34,6 +34,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.vaadin.external.google</groupId>
+					<artifactId>android-json</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>eu.openminted</groupId>
@@ -82,7 +88,32 @@
 			<version>0.9.12</version>
 		</dependency>
 
-	</dependencies>
+    </dependencies>
+
+	<repositories>
+		<repository>
+			<id>omtd-snapshots</id>
+			<layout>default</layout>
+			<url>https://repo.openminted.eu/content/repositories/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>omtd-releases</id>
+			<layout>default</layout>
+			<url>https://repo.openminted.eu/content/repositories/releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>

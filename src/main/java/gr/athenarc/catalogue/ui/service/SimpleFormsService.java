@@ -3,89 +3,71 @@ package gr.athenarc.catalogue.ui.service;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Resource;
-import eu.openminted.registry.core.service.AbstractGenericService;
+import eu.openminted.registry.core.domain.ResourceType;
 import eu.openminted.registry.core.service.ParserService;
+import eu.openminted.registry.core.service.ResourceService;
+import eu.openminted.registry.core.service.ResourceTypeService;
 import eu.openminted.registry.core.service.SearchService;
+import gr.athenarc.catalogue.LoggingUtils;
+import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdCreator;
 import gr.athenarc.catalogue.ui.domain.FieldGroup;
 import gr.athenarc.catalogue.ui.domain.Group;
+import gr.athenarc.catalogue.ui.domain.Survey;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleUiFieldService extends AbstractGenericService<UiField> implements UiFieldsService {
+public class SimpleFormsService implements FormsService {
 
-    private static final Logger logger = LogManager.getLogger(SimpleUiFieldService.class);
+    private static final Logger logger = LogManager.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
+    private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
     private final GenericItemService genericItemService;
     private final IdCreator<String> idCreator;
+    public final SearchService searchService;
+    public final ResourceService resourceService;
+    public final ResourceTypeService resourceTypeService;
+    public final ParserService parserPool;
 
-    public SimpleUiFieldService(GenericItemService genericItemService, IdCreator<String> idCreator) {
-        super(UiField.class);
+    public SimpleFormsService(GenericItemService genericItemService,
+                              IdCreator<String> idCreator,
+                              SearchService searchService,
+                              ResourceService resourceService,
+                              ResourceTypeService resourceTypeService,
+                              ParserService parserPool) {
         this.genericItemService = genericItemService;
         this.idCreator = idCreator;
-    }
-
-    @Override
-    public String getResourceType() {
-        return "";
+        this.searchService = searchService;
+        this.resourceService = resourceService;
+        this.resourceTypeService = resourceTypeService;
+        this.parserPool = parserPool;
     }
 
     @Override
     public UiField addField(UiField field) {
-        logger.trace(String.format("adding field: %s", field));
-        if (field.getId() == null) {
-            field.setId(idCreator.createId("f-"));
-        }
-        Resource resource = new Resource();
-        resource.setResourceTypeName(FIELD_RESOURCE_TYPE_NAME);
-        resource.setResourceType(resourceTypeService.getResourceType(FIELD_RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        resource = resourceService.addResource(resource);
-        return parserPool.deserialize(resource, UiField.class);
+        field = add(field, FIELD_RESOURCE_TYPE_NAME);
+        return field;
     }
 
     @Override
     public UiField updateField(String id, UiField field) throws ResourceNotFoundException {
-        logger.trace(String.format("updating field with id [%s] and body: %s", id, field));
-        if (!field.getId().equals(id)) {
-            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
-        }
-        Resource existing = null;
-        try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("field_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, FIELD_RESOURCE_TYPE_NAME);
-        }
-        existing.setPayload(parserPool.serialize(field, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.updateResource(existing);
-        return parserPool.deserialize(resource, UiField.class);
+        field = update(id, field, FIELD_RESOURCE_TYPE_NAME);
+        return field;
     }
 
     @Override
     public void deleteField(String fieldId) throws ResourceNotFoundException {
-        Resource resource = null;
-        try {
-            resource = searchService.searchId(FIELD_RESOURCE_TYPE_NAME, new SearchService.KeyValue("field_id", fieldId));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        delete(fieldId, FIELD_RESOURCE_TYPE_NAME);
     }
 
     @Override
@@ -108,50 +90,19 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
 
     @Override
     public Group addGroup(Group group) {
-        logger.trace(String.format("adding field: %s", group));
-        if (group.getId() == null) {
-            group.setId(idCreator.createId("g-"));
-        }
-        Resource resource = new Resource();
-        resource.setResourceTypeName(GROUP_RESOURCE_TYPE_NAME);
-        resource.setResourceType(resourceTypeService.getResourceType(GROUP_RESOURCE_TYPE_NAME));
-        resource.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
-        resource = resourceService.addResource(resource);
-        return parserPool.deserialize(resource, Group.class);
+        group = add(group, GROUP_RESOURCE_TYPE_NAME);
+        return group;
     }
 
     @Override
     public Group updateGroup(String id, Group group) {
-        logger.trace(String.format("updating group with id [%s] and body: %s", id, group));
-        if (!group.getId().equals(id)) {
-            throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
-        }
-        Resource existing = null;
-        try {
-            existing = searchService.searchId(getResourceType(), new SearchService.KeyValue("group_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-            throw new ResourceNotFoundException(id, GROUP_RESOURCE_TYPE_NAME);
-        }
-        existing.setPayload(parserPool.serialize(group, ParserService.ParserServiceTypes.JSON));
-        Resource resource = resourceService.updateResource(existing);
-        return parserPool.deserialize(resource, Group.class);
+        group = update(id, group, GROUP_RESOURCE_TYPE_NAME);
+        return group;
     }
 
     @Override
     public void deleteGroup(String groupId) throws ResourceNotFoundException {
-        logger.trace(String.format("deleting group with id [%s]", groupId));
-        Resource resource = null;
-        try {
-            resource = searchService.searchId(GROUP_RESOURCE_TYPE_NAME, new SearchService.KeyValue("group_id", groupId));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        if (resource == null) {
-            throw new ResourceNotFoundException();
-        } else {
-            resourceService.deleteResource(resource.getId());
-        }
+        delete(groupId, GROUP_RESOURCE_TYPE_NAME);
     }
 
     @Override
@@ -164,6 +115,36 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         FacetFilter ff = new FacetFilter();
         ff.setQuantity(10000);
         ff.setResourceType(GROUP_RESOURCE_TYPE_NAME);
+        return (List) genericItemService.getResults(ff).getResults();
+    }
+
+    @Override
+    public Survey addSurvey(Survey survey) {
+        survey = add(survey, SURVEY_RESOURCE_TYPE_NAME);
+        return survey;
+    }
+
+    @Override
+    public Survey updateSurvey(String id, Survey survey) {
+        survey = update(id, survey, SURVEY_RESOURCE_TYPE_NAME);
+        return survey;
+    }
+
+    @Override
+    public void deleteSurvey(String surveyId) throws ResourceNotFoundException {
+        delete(surveyId, SURVEY_RESOURCE_TYPE_NAME);
+    }
+
+    @Override
+    public Survey getSurvey(String id) {
+        return genericItemService.get(SURVEY_RESOURCE_TYPE_NAME, id);
+    }
+
+    @Override
+    public List<Survey> getSurveys() {
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(SURVEY_RESOURCE_TYPE_NAME);
         return (List) genericItemService.getResults(ff).getResults();
     }
 
@@ -219,6 +200,56 @@ public class SimpleUiFieldService extends AbstractGenericService<UiField> implem
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
+    }
+
+    public <T> T add(T obj, String resourceTypeName) {
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        String id = null;
+        try {
+            id = ReflectUtils.getId(obj.getClass(), obj);
+            if (id == null) {
+                id = idCreator.createId(resourceTypeName.charAt(0) + "-");
+                ReflectUtils.setId(obj.getClass(), obj, id);
+            }
+
+        } catch (NoSuchFieldException e) {
+            logger.error(e);
+        }
+
+        Resource resource = new Resource();
+        resource.setResourceTypeName(resourceTypeName);
+        resource.setResourceType(resourceType);
+        resource.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType())));
+        logger.trace(LoggingUtils.addResource(resourceTypeName, id, obj));
+        resourceService.addResource(resource);
+        return obj;
+    }
+
+    public <T> T update(String id, T obj, String resourceTypeName) {
+        Resource existing = null;
+        try {
+            if (!id.equals(ReflectUtils.getId(obj.getClass(), obj))) {
+                throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
+            }
+            existing = genericItemService.searchResource(resourceTypeName, id, true);
+            existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
+        } catch (NoSuchFieldException e) {
+            logger.error(e);
+        }
+
+        logger.trace(LoggingUtils.updateResource(resourceTypeName, id, obj));
+        resourceService.updateResource(existing);
+        return obj;
+    }
+
+    public <T> void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
+        Resource resource = null;
+        Class<?> clazz = genericItemService.getClassFromResourceType(resourceTypeName);
+        resource = genericItemService.searchResource(resourceTypeName, id, true);
+        T obj = (T) parserPool.deserialize(resource, clazz);
+        logger.trace(LoggingUtils.deleteResource(resourceTypeName, id, obj));
+        resourceService.deleteResource(resource.getId());
+//        return obj;
     }
 
 }

@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue.service.id;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -25,8 +26,6 @@ public class StringIdCreator implements IdCreator<String> {
         if (prefix == null) {
             prefix = "";
         }
-        byte[] array = new byte[Math.abs(length)];
-        new Random().nextBytes(array);
-        return prefix + new String(array, StandardCharsets.UTF_8);
+        return prefix + RandomStringUtils.randomAlphabetic(length);
     }
 }

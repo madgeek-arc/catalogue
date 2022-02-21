@@ -6,13 +6,10 @@ import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.*;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public interface UiFieldsService {
+public interface FormsService {
 
     /**
      * Fields Methods
@@ -42,6 +39,19 @@ public interface UiFieldsService {
     Group getGroup(String id);
 
     List<Group> getGroups();
+
+    /**
+     * Survey Methods
+     */
+    Survey addSurvey(Survey survey);
+
+    Survey updateSurvey(String id, Survey survey);
+
+    void deleteSurvey(String surveyId) throws ResourceNotFoundException;
+
+    Survey getSurvey(String id);
+
+    List<Survey> getSurveys();
 
 
     /**

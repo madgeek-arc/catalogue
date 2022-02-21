@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.*;
 import eu.openminted.registry.core.domain.index.IndexField;
 import eu.openminted.registry.core.service.*;
+import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
+import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,22 +92,23 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
             if (throwOnNull && res == null) {
                 throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
             }
-            ret = (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
+            ret = (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
         } catch (UnknownHostException e) {
-            throw new ResourceException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error(e);
+            throw new ServiceException(e);
         }
         return ret;
     }
 
     @Override
     public String getRaw(String resourceTypeName, String id) {
-        Resource res = searchResource(resourceTypeName, id);
+        Resource res = searchResource(resourceTypeName, id, true);
         return res.getPayload();
     }
 
     @Override
     public String addRaw(String resourceTypeName, String payload) {
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
 
@@ -120,49 +123,52 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
 
         // create Java class and set ID using reflection
         Object item = parserPool.deserialize(res, clazz);
-        ReflectUtils.setId(clazz, item, UUID.randomUUID().toString());
+        String id = UUID.randomUUID().toString();
+        ReflectUtils.setId(clazz, item, id);
 
         // return to Resource class and save
         payload = parserPool.serialize(item, ParserService.ParserServiceTypes.XML);
         res.setPayload(payload);
+        logger.info(LoggingUtils.addResource(resourceTypeName, id, res));
         resourceService.addResource(res);
         return payload;
     }
 
     @Override
     public String updateRaw(String resourceTypeName, String id, String payload) throws NoSuchFieldException {
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
 
         String existingId = ReflectUtils.getId(clazz, payload);
         if (!id.equals(existingId)) {
             throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
         }
-        Resource res = this.searchResource(resourceTypeName, id);
+        Resource res = this.searchResource(resourceTypeName, id, true);
         Date now = new Date();
         res.setModificationDate(now);
         res.setPayload(payload);
 
         // save resource
-        res = resourceService.addResource(res);
+        logger.info(LoggingUtils.updateResource(resourceTypeName, id, res));
+        res = resourceService.updateResource(res);
         return res.getPayload();
     }
 
     @Override
     public <T> T add(String resourceTypeName, T resource) {
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
 
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         Resource res = new Resource();
         res.setResourceTypeName(resourceTypeName);
-        res.setResourceType(resourceTypeService.getResourceType(resourceTypeName));
-        res.setCreationDate(new Date());
-        res.setModificationDate(new Date());
-        String ret;
+        res.setResourceType(resourceType);
 
-        ReflectUtils.setId(clazz, resource, UUID.randomUUID().toString());
-        ret = parserPool.serialize(resource, ParserService.ParserServiceTypes.XML);
-        res.setPayload(ret);
+        String id = UUID.randomUUID().toString();
+        ReflectUtils.setId(clazz, resource, id);
+        String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
+        res.setPayload(payload);
+        logger.info(LoggingUtils.addResource(resourceTypeName, id, resource));
         resourceService.addResource(res);
 
         return resource;
@@ -170,7 +176,7 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
 
     @Override
     public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException {
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
 
         String existingId = ReflectUtils.getId(clazz, resource);
@@ -178,11 +184,11 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
             throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
         }
 
-        Resource res = searchResource(resourceTypeName, id);
-        res.setModificationDate(new Date());
-        String ret;
-        ret = parserPool.serialize(resource, ParserService.ParserServiceTypes.XML);
-        res.setPayload(ret);
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        Resource res = searchResource(resourceTypeName, id, true);
+        String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
+        res.setPayload(payload);
+        logger.info(LoggingUtils.updateResource(resourceTypeName, id, resource));
         resourceService.updateResource(res);
 
         return resource;
@@ -190,15 +196,16 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
 
     @Override
     public <T> T delete(String resourceTypeName, String id) {
-        Resource res = searchResource(resourceTypeName, id);
+        Resource res = searchResource(resourceTypeName, id, true);
+        logger.info(LoggingUtils.deleteResource(resourceTypeName, id, res));
         resourceService.deleteResource(res.getId());
-        return (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
+        return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
     }
 
     @Override
     public <T> T get(String resourceTypeName, String id) {
-        Resource res = searchResource(resourceTypeName, id);
-        return (T) parserPool.deserialize(res, getResourceTypeClass(resourceTypeName));
+        Resource res = searchResource(resourceTypeName, id, true);
+        return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
     }
 
     @Override
@@ -222,7 +229,7 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
 
     @Override
     public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
-        Class<?> clazz = getResourceTypeClass(resourceTypeName);
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
         List<T> results = (List<T>) paging.getResults()
                 .parallelStream()
                 .map(res -> (T) parserPool.deserialize(res, clazz))
@@ -230,11 +237,10 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }
 
-
     @Override
     public <T> Map<String, List<T>> getResultsGrouped(FacetFilter filter, String category) {
         Map<String, List<T>> result = new HashMap<>();
-        Class<?> clazz = getResourceTypeClass(filter.getResourceType());
+        Class<?> clazz = getClassFromResourceType(filter.getResourceType());
 
         Map<String, List<Resource>> resources;
         try {
@@ -253,7 +259,8 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
         }
     }
 
-    public Class<?> getResourceTypeClass(String resourceTypeName) {
+    @Override
+    public Class<?> getClassFromResourceType(String resourceTypeName) {
         Class<?> tClass = null;
         try {
             tClass = Class.forName(resourceTypeService.getResourceType(resourceTypeName).getProperty("class"));
@@ -261,10 +268,26 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
             logger.error(e);
         } catch (NullPointerException e) {
             logger.error("Class property is not defined", e);
-            throw new ServiceException("ResourceType [" + resourceTypeName + "] does not have properties field");
+            throw new ServiceException(String.format("ResourceType [%s] does not have properties field", resourceTypeName));
         }
         return tClass;
     }
+
+    @Override
+    public Resource searchResource(String resourceTypeName, String id, boolean throwOnNull) {
+        Resource res = null;
+        try {
+            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+        } catch (UnknownHostException e) {
+            logger.error(e);
+        }
+        if (throwOnNull) {
+            return Optional.ofNullable(res)
+                    .orElseThrow(() -> new ResourceNotFoundException(id, resourceTypeName));
+        }
+        return res;
+    }
+
 
     public Map<String, List<String>> getBrowseByMap() {
         return browseByMap;
@@ -272,15 +295,5 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
 
     public void setBrowseByMap(Map<String, List<String>> browseByMap) {
         this.browseByMap = browseByMap;
-    }
-
-    private Resource searchResource(String resourceTypeName, String id) {
-        Resource res = null;
-        try {
-            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e);
-        }
-        return res;
     }
 }

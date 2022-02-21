@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import gr.athenarc.catalogue.ui.domain.FieldGroup;
-import gr.athenarc.catalogue.ui.domain.FieldIdName;
-import gr.athenarc.catalogue.ui.domain.Group;
-import gr.athenarc.catalogue.ui.domain.UiField;
+import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -19,9 +16,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileSavedUiFieldsService implements UiFieldsService {
+public class JsonFileSavedFormsService implements FormsService {
 
-    private static final Logger logger = LogManager.getLogger(JsonFileSavedUiFieldsService.class);
+    private static final Logger logger = LogManager.getLogger(JsonFileSavedFormsService.class);
 
     private static final String FILENAME_GROUPS = "groups.json";
     private static final String FILENAME_FIELDS = "fields.json";
@@ -29,7 +26,7 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     private final String directory;
     private String jsonObject;
 
-    public JsonFileSavedUiFieldsService(String directory) {
+    public JsonFileSavedFormsService(String directory) {
         if ("".equals(directory)) {
             directory = "catalogue/uiElements";
             logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
@@ -191,6 +188,31 @@ public class JsonFileSavedUiFieldsService implements UiFieldsService {
     @Override
     public List<Group> getGroups() {
         return readGroups(directory + "/" + FILENAME_GROUPS);
+    }
+
+    @Override
+    public Survey addSurvey(Survey survey) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Survey updateSurvey(String id, Survey survey) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteSurvey(String surveyId) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Survey getSurvey(String id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Survey> getSurveys() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

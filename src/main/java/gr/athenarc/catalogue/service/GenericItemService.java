@@ -29,6 +29,8 @@ public interface GenericItemService {
 
     <T> T get(String resourceTypeName, String id);
 
-    Class<?> getResourceTypeClass(String resourceTypeName);
+    Class<?> getClassFromResourceType(String resourceTypeName);
+
+    Resource searchResource(String resourceTypeName, String id, boolean throwOnNull);
 
 }
