@@ -3,7 +3,7 @@ package gr.athenarc.catalogue.ui.domain;
 import java.util.Date;
 import java.util.List;
 
-public class Survey {
+public class SurveyOld {
 
     private String id;
     private String name;
@@ -16,9 +16,8 @@ public class Survey {
     private Date modificationDate;
     private String modifiedBy;
     private List<Chapter> chapters;
-    private boolean locked;
 
-    public Survey() {
+    public SurveyOld() {
 
     }
 
@@ -108,13 +107,5 @@ public class Survey {
 
     public void setChapters(List<Chapter> chapters) {
         this.chapters = chapters;
-    }
-
-    public boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(boolean locked) {
-        this.locked = locked;
     }
 }

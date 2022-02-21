@@ -1,0 +1,85 @@
+{
+  "indexFields": [
+    {
+      "multivalued": false,
+      "name": "model_id",
+      "path": "$.id",
+      "type": "java.lang.String",
+      "primaryKey": true
+    },
+    {
+      "multivalued": false,
+      "name": "name",
+      "path": "$.name",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "description",
+      "path": "$.description",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "type",
+      "path": "$.type",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "subType",
+      "path": "$.subType",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
+      "name": "creationDate",
+      "path": "$.creationDate",
+      "type": "java.util.Date"
+    },
+    {
+      "multivalued": false,
+      "name": "modificationDate",
+      "path": "$.modificationDate",
+      "type": "java.util.Date"
+    },
+    {
+      "multivalued": true,
+      "name": "chaptersIds",
+      "path": "$.chapters[*].id",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "chaptersNames",
+      "path": "$.chapters[*].name",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "chaptersSectionsIds",
+      "path": "$.chapters[*].sections[*].id",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "chaptersSectionsNames",
+      "path": "$.chapters[*].sections[*].name",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "fields",
+      "path": "$.chapters[*].sections[*].fields",
+      "type": "java.lang.String"
+    }
+  ],
+  "indexMapperClass": "eu.openminted.registry.core.index.DefaultIndexMapper",
+  "name": "model",
+  "aliasGroup": "resourceTypes",
+  "payloadType": "json",
+  "properties": {
+    "class": "gr.athenarc.catalogue.ui.domain.Model"
+  },
+  "schema": "{\n\t\"$schema\": \"https://json-schema.org/draft/2019-09/schema\"\n}"
+}

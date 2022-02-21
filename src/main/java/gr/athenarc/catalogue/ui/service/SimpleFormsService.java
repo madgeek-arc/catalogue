@@ -23,12 +23,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleFormsService implements FormsService {
+public class SimpleFormsService implements FormsService, ModelService {
 
     private static final Logger logger = LogManager.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String GROUP_RESOURCE_TYPE_NAME = "group";
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
+    private static final String MODEL_RESOURCE_TYPE_NAME = "model";
     private final GenericItemService genericItemService;
     private final IdGenerator<String> idGenerator;
     public final SearchService searchService;
@@ -331,7 +332,8 @@ public class SimpleFormsService implements FormsService {
         List<Group> groups = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
             if (chapter.getId().equals(chapterId)) {
-                groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+
+                groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
             }
         }
 
@@ -353,7 +355,7 @@ public class SimpleFormsService implements FormsService {
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
         List<Group> groups = new ArrayList<>();
         for (Chapter chapter : survey.getChapters()) {
-            groups.addAll(chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList()));
+            groups.addAll(chapter.getSections().stream().map((Group id) -> getGroup(id.toString())).collect(Collectors.toList()));
         }
 
         for (Group group : groups) {
@@ -368,16 +370,14 @@ public class SimpleFormsService implements FormsService {
         return groupedFieldsList;
     }
 
-    public Map<String, List<UiField>> getChapterFieldsMap(String surveyId) {
+    public Map<String, List<UiField>> getChapterFieldsMap(String id) {
         Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
-        Survey survey = getSurvey(surveyId);
+        Model model = get(id);
 
-        for (Chapter chapter : survey.getChapters()) {
+        for (Chapter chapter : model.getChapters()) {
             List<UiField> fields = new ArrayList<>();
-            List<Group> groups = chapter.getSections().stream().map(this::getGroup).collect(Collectors.toList());
-
-            for (Group group : groups) {
-                fields.addAll(getFieldsByGroup(group.getId()));
+            for (Group group : chapter.getSections()) {
+                fields.addAll(group.getFields());
             }
             chapterFieldsMap.put(chapter.getId(), fields);
         }
@@ -451,4 +451,49 @@ public class SimpleFormsService implements FormsService {
         }
     }
 
+    private void createChapterIds(Model model) {
+        if (model.getChapters() != null) {
+            for (Chapter chapter : model.getChapters()) {
+                if (chapter.getId() == null || "".equals(chapter.getId())) {
+                    chapter.setId(idGenerator.createId("c-"));
+                }
+            }
+        }
+    }
+
+    @Override
+    public Model add(Model model) {
+        createChapterIds(model);
+//        Date date = new Date();
+//        model.setCreationDate(date);
+//        model.setModificationDate(date);
+        model = add(model, MODEL_RESOURCE_TYPE_NAME);
+        return model;
+    }
+
+    @Override
+    public Model update(String id, Model model) {
+        createChapterIds(model);
+//        model.setModificationDate(new Date());
+        model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
+        return model;
+    }
+
+    @Override
+    public void delete(String surveyId) throws ResourceNotFoundException {
+        delete(surveyId, MODEL_RESOURCE_TYPE_NAME);
+    }
+
+    @Override
+    public Model get(String id) {
+        return genericItemService.get(MODEL_RESOURCE_TYPE_NAME, id);
+    }
+
+    @Override
+    public Browsing<Model> browse(FacetFilter filter) {
+        FacetFilter ff = new FacetFilter();
+        ff.setQuantity(10000);
+        ff.setResourceType(MODEL_RESOURCE_TYPE_NAME);
+        return genericItemService.getResults(ff);
+    }
 }

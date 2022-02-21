@@ -7,7 +7,7 @@ public class Chapter {
     private String id;
     private String name;
     private String description;
-    private List<String> sections;
+    private List<Group> sections;
     private String subType;
     private int order;
 
@@ -37,11 +37,11 @@ public class Chapter {
         this.description = description;
     }
 
-    public List<String> getSections() {
+    public List<Group> getSections() {
         return sections;
     }
 
-    public void setSections(List<String> sections) {
+    public void setSections(List<Group> sections) {
         this.sections = sections;
     }
 

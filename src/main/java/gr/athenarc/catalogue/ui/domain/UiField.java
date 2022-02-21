@@ -1,5 +1,7 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import java.util.List;
+
 public class UiField {
 
     String id;
@@ -10,8 +12,10 @@ public class UiField {
     String accessPath;
     TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
+    boolean deprecated;
     Form form;
     Display display;
+    List<UiField> subFields;
 
     public UiField() {
         this.form = new Form();
@@ -108,5 +112,21 @@ public class UiField {
 
     public void setDisplay(Display display) {
         this.display = display;
+    }
+
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+    }
+
+    public List<UiField> getSubFields() {
+        return subFields;
+    }
+
+    public void setSubFields(List<UiField> subFields) {
+        this.subFields = subFields;
     }
 }
