@@ -7,7 +7,6 @@ import gr.athenarc.catalogue.ui.domain.*;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public interface FormsService {
 
@@ -26,6 +25,15 @@ public interface FormsService {
 
     List<UiField> getFields();
 
+    List<UiField> importFields(List<UiField> fields);
+    List<UiField> updateFields(List<UiField> fields);
+
+    default void setFormDependsOnName(UiField field) {
+        if (field.getForm().getDependsOn() != null && field.getForm().getDependsOn().getId() != null) {
+            field.getForm().getDependsOn().setName(this.getField(field.getForm().getDependsOn().getId()).getName());
+        }
+    }
+
     /**
      * Groups Methods
      */
@@ -40,17 +48,22 @@ public interface FormsService {
 
     List<Group> getGroups();
 
+    List<Group> importGroups(List<Group> groups);
+
+    List<Group> updateGroups(List<Group> groups);
+
     /**
      * Survey Methods
      */
+    @Deprecated
     Survey addSurvey(Survey survey);
-
+    @Deprecated
     Survey updateSurvey(String id, Survey survey);
-
+    @Deprecated
     void deleteSurvey(String surveyId) throws ResourceNotFoundException;
-
+    @Deprecated
     Survey getSurvey(String id);
-
+    @Deprecated
     List<Survey> getSurveys();
 
 
@@ -59,17 +72,9 @@ public interface FormsService {
      */
     List<FieldGroup> createFieldGroups(List<UiField> fields);
 
-    default List<UiField> getFieldsByGroup(String groupId) {
-        List<UiField> allFields = getFields();
+    List<UiField> getFieldsByGroup(String groupId);
 
-        return allFields
-                .stream()
-                .filter(field -> field.getForm() != null)
-                .filter(field -> field.getForm().getGroup() != null)
-                .filter(field -> field.getForm().getGroup().equals(groupId))
-                .collect(Collectors.toList());
-    }
-
+    @Deprecated
     default List<GroupedFields<FieldGroup>> getModel() {
         List<GroupedFields<FieldGroup>> groupedFieldGroups = new ArrayList<>();
         List<GroupedFields<UiField>> groupedFieldsList = getFlatModel();
@@ -104,6 +109,7 @@ public interface FormsService {
         return groupedFieldGroups;
     }
 
+    @Deprecated
     default List<GroupedFields<UiField>> getFlatModel() {
         List<Group> groups = getGroups();
         List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
@@ -121,6 +127,12 @@ public interface FormsService {
 
         return groupedFieldsList;
     }
+
+    SurveyModel getSurveyModel(String surveyId);
+
+    List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId);
+
+    Map<String, List<UiField>> getChapterFieldsMap(String surveyId);
 
     default List<UiField> createFields(String className, String parent) throws ClassNotFoundException {
         List<UiField> fields = new LinkedList<>();

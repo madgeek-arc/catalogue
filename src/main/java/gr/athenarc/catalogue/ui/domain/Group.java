@@ -1,11 +1,14 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import java.util.List;
+
 public class Group {
 
     String id;
     String name;
     String description;
     int order;
+    List<UiField> fields;
 
     public Group() {
     }
@@ -40,5 +43,13 @@ public class Group {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public List<UiField> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<UiField> fields) {
+        this.fields = fields;
     }
 }

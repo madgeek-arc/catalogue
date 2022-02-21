@@ -3,11 +3,8 @@ package gr.athenarc.catalogue.service.id;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
-
 @Service
-public class StringIdCreator implements IdCreator<String> {
+public class StringIdGenerator implements IdGenerator<String> {
 
     public static final int DEFAULT_LENGTH = 8;
 

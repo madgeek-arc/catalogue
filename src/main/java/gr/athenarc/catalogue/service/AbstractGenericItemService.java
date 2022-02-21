@@ -10,10 +10,8 @@ import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -21,10 +19,8 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
-public class SimpleGenericItemService implements GenericItemService, ResourcePayloadService {
-
-    private static final Logger logger = LogManager.getLogger(SimpleGenericItemService.class);
+public abstract class AbstractGenericItemService implements GenericItemService {
+    private static final Logger logger = LogManager.getLogger(AbstractGenericItemService.class);
 
     public final SearchService searchService;
     public final ResourceService resourceService;
@@ -38,11 +34,10 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
     private Map<String, List<String>> browseByMap;
     private Map<String, Map<String, String>> labelsMap;
 
-    @Autowired
-    public SimpleGenericItemService(SearchService searchService,
-                                    ResourceService resourceService,
-                                    ResourceTypeService resourceTypeService,
-                                    ParserService parserPool) {
+    protected AbstractGenericItemService(SearchService searchService,
+                                         ResourceService resourceService,
+                                         ResourceTypeService resourceTypeService,
+                                         ParserService parserPool) {
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
@@ -50,7 +45,7 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
     }
 
     @PostConstruct
-    void initResourceTypesBrowseFields() {
+    void initResourceTypesBrowseFields() { // TODO: move this to a bean to avoid running multiple times ??
         browseByMap = new HashMap<>();
         labelsMap = new HashMap<>();
         for (ResourceType rt : resourceTypeService.getAllResourceType()) {
@@ -79,7 +74,7 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
             List<String> browseBy = new ArrayList<>(browseSet);
             java.util.Collections.sort(browseBy);
             browseByMap.put(rt.getName(), browseBy);
-            logger.info("Generating browse fields for [{}]", rt.getName());
+            logger.debug("Generating browse fields for [{}]", rt.getName());
         }
     }
 
@@ -98,60 +93,6 @@ public class SimpleGenericItemService implements GenericItemService, ResourcePay
             throw new ServiceException(e);
         }
         return ret;
-    }
-
-    @Override
-    public String getRaw(String resourceTypeName, String id) {
-        Resource res = searchResource(resourceTypeName, id, true);
-        return res.getPayload();
-    }
-
-    @Override
-    public String addRaw(String resourceTypeName, String payload) {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
-        payload = payload.replaceAll("[\n\t]", "");
-
-        Resource res = new Resource();
-        res.setResourceTypeName(resourceTypeName);
-        res.setResourceType(resourceType);
-        Date now = new Date();
-        res.setCreationDate(now);
-        res.setModificationDate(now);
-        res.setPayload(payload);
-        res.setPayloadFormat(resourceType.getPayloadType());
-
-        // create Java class and set ID using reflection
-        Object item = parserPool.deserialize(res, clazz);
-        String id = UUID.randomUUID().toString();
-        ReflectUtils.setId(clazz, item, id);
-
-        // return to Resource class and save
-        payload = parserPool.serialize(item, ParserService.ParserServiceTypes.XML);
-        res.setPayload(payload);
-        logger.info(LoggingUtils.addResource(resourceTypeName, id, res));
-        resourceService.addResource(res);
-        return payload;
-    }
-
-    @Override
-    public String updateRaw(String resourceTypeName, String id, String payload) throws NoSuchFieldException {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        payload = payload.replaceAll("[\n\t]", "");
-
-        String existingId = ReflectUtils.getId(clazz, payload);
-        if (!id.equals(existingId)) {
-            throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
-        }
-        Resource res = this.searchResource(resourceTypeName, id, true);
-        Date now = new Date();
-        res.setModificationDate(now);
-        res.setPayload(payload);
-
-        // save resource
-        logger.info(LoggingUtils.updateResource(resourceTypeName, id, res));
-        res = resourceService.updateResource(res);
-        return res.getPayload();
     }
 
     @Override

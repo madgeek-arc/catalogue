@@ -1,10 +1,9 @@
 package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ClasspathUtils;
-import gr.athenarc.catalogue.ui.domain.FieldGroup;
-import gr.athenarc.catalogue.ui.domain.GroupedFields;
-import gr.athenarc.catalogue.ui.domain.UiField;
+import gr.athenarc.catalogue.ui.domain.*;
 import gr.athenarc.catalogue.ui.service.FormsService;
+import gr.athenarc.catalogue.ui.service.ModelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +19,13 @@ import java.util.stream.Collectors;
 public class UiController {
 
     private final FormsService formsService;
+    private final ModelService modelService;
 
     @Autowired
-    public UiController(FormsService formsService) {
+    public UiController(FormsService formsService, ModelService modelService) {
         this.formsService = formsService;
+        this.modelService = modelService;
+
     }
 
     @GetMapping(value = "{className}/fields/create", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -36,14 +38,15 @@ public class UiController {
         return formsService.getFields();
     }
 
-    @GetMapping(value = "form/model/flat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<GroupedFields<UiField>> getFlatModel() {
-        return formsService.getFlatModel();
+    @GetMapping(value = "form/model/{id}/flat", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<GroupedFields<UiField>> getModelFlat(@PathVariable("id") String id) {
+        return formsService.getSurveyModelFlat(id);
     }
 
-    @GetMapping(value = "form/model", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<GroupedFields<FieldGroup>> getModel() {
-        return formsService.getModel();
+    @GetMapping(value = "form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Model getSurveyModel(@PathVariable("id") String id) {
+        return modelService.get(id);
+//        return formsService.getSurveyModel(surveyId);
     }
 
 

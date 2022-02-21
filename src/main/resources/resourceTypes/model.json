@@ -2,7 +2,7 @@
   "indexFields": [
     {
       "multivalued": false,
-      "name": "survey_id",
+      "name": "model_id",
       "path": "$.id",
       "type": "java.lang.String",
       "primaryKey": true
@@ -45,29 +45,41 @@
     },
     {
       "multivalued": true,
-      "name": "chapterIds",
+      "name": "chaptersIds",
       "path": "$.chapters[*].id",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
-      "name": "chapterNames",
-      "path": "$.chapters[*].id",
+      "name": "chaptersNames",
+      "path": "$.chapters[*].name",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
-      "name": "chapterSections",
-      "path": "$.chapters[*].sections",
+      "name": "chaptersSectionsIds",
+      "path": "$.chapters[*].sections[*].id",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "chaptersSectionsNames",
+      "path": "$.chapters[*].sections[*].name",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "fields",
+      "path": "$.chapters[*].sections[*].fields",
       "type": "java.lang.String"
     }
   ],
   "indexMapperClass": "eu.openminted.registry.core.index.DefaultIndexMapper",
-  "name": "survey",
+  "name": "model",
   "aliasGroup": "resourceTypes",
   "payloadType": "json",
   "properties": {
-    "class": "gr.athenarc.catalogue.ui.domain.Survey"
+    "class": "gr.athenarc.catalogue.ui.domain.Model"
   },
   "schema": "{\n\t\"$schema\": \"https://json-schema.org/draft/2019-09/schema\"\n}"
 }

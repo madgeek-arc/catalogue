@@ -1,0 +1,20 @@
+package gr.athenarc.catalogue.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(value = HttpStatus.CONFLICT)
+public class ResourceAlreadyExistsException extends RuntimeException {
+
+    public ResourceAlreadyExistsException() {
+        super("Resource Already Exists");
+    }
+
+    public ResourceAlreadyExistsException(String id) {
+        super(String.format("Resource with [id=%s] already exists", id));
+    }
+
+    public ResourceAlreadyExistsException(String id, String resourceType) {
+        super(String.format("[resourceType=%s] with [id=%s] already exists",resourceType, id));
+    }
+}

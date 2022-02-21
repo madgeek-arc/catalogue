@@ -1,6 +1,6 @@
 package gr.athenarc.catalogue.service.id;
 
-public interface IdCreator<T> {
+public interface IdGenerator<T> {
 
     T createId();
 

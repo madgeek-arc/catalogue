@@ -6,14 +6,14 @@ import gr.athenarc.catalogue.service.GenericItemService;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping(path = "items")
@@ -22,7 +22,7 @@ public class GenericItemController {
     private final GenericItemService genericResourceService;
 
     @Autowired
-    GenericItemController(GenericItemService genericResourceService) {
+    GenericItemController(@Qualifier("catalogueGenericItemService") GenericItemService genericResourceService) {
         this.genericResourceService = genericResourceService;
     }
 
@@ -50,12 +50,12 @@ public class GenericItemController {
     }
 
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "query", value = "Keyword to refine the search", dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "from", value = "Starting index in the result set", dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "quantity", value = "Quantity to be fetched", dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "resourceType", value = "Resource type name", dataType = "string", paramType = "query", required = true),
-            @ApiImplicitParam(name = "order", value = "asc / desc", dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "orderField", value = "Order field", dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = "query", value = "Keyword to refine the search", dataTypeClass = String.class, paramType = "query"),
+            @ApiImplicitParam(name = "from", value = "Starting index in the result set", dataTypeClass = String.class, paramType = "query"),
+            @ApiImplicitParam(name = "quantity", value = "Quantity to be fetched", dataTypeClass = String.class, paramType = "query"),
+            @ApiImplicitParam(name = "resourceType", value = "Resource type name", dataTypeClass = String.class, paramType = "query", required = true),
+            @ApiImplicitParam(name = "order", value = "asc / desc", dataTypeClass = String.class, paramType = "query"),
+            @ApiImplicitParam(name = "orderField", value = "Order field", dataTypeClass = String.class, paramType = "query")
     })
     @GetMapping()
     public ResponseEntity<Paging<?>> browseByResourceType(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
@@ -75,7 +75,7 @@ public class GenericItemController {
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
-    private FacetFilter createFacetFilter(Map<String, Object> allRequestParams) {
+    public static FacetFilter createFacetFilter(Map<String, Object> allRequestParams) {
         FacetFilter ff = new FacetFilter();
         ff.setKeyword(allRequestParams.get("query") != null ? (String) allRequestParams.remove("query") : "");
         ff.setFrom(allRequestParams.get("from") != null ? Integer.parseInt((String) allRequestParams.remove("from")) : 0);

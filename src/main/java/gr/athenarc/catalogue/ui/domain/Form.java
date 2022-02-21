@@ -8,13 +8,12 @@ public class Form {
     FieldIdName dependsOn;
     List<FieldIdName> affects = null;
     String group;
-    String description;
-    String suggestion;
+    StyledString description;
+    StyledString suggestion;
     String placeholder;
     Boolean mandatory;
     Boolean immutable;
-    Boolean isVisible;
-    int order;
+    Display display;
 
 
     public Form() {
@@ -44,19 +43,19 @@ public class Form {
         this.group = group;
     }
 
-    public String getDescription() {
+    public StyledString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(StyledString description) {
         this.description = description;
     }
 
-    public String getSuggestion() {
+    public StyledString getSuggestion() {
         return suggestion;
     }
 
-    public void setSuggestion(String suggestion) {
+    public void setSuggestion(StyledString suggestion) {
         this.suggestion = suggestion;
     }
 
@@ -84,19 +83,11 @@ public class Form {
         this.immutable = immutable;
     }
 
-    public Boolean getVisible() {
-        return isVisible;
+    public Display getDisplay() {
+        return display;
     }
 
-    public void setVisible(Boolean visible) {
-        isVisible = visible;
-    }
-
-    public int getOrder() {
-        return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
+    public void setDisplay(Display display) {
+        this.display = display;
     }
 }

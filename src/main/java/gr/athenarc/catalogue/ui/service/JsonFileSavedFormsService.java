@@ -16,12 +16,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileSavedFormsService implements FormsService {
+public class JsonFileSavedFormsService implements FormsService, ModelService {
 
     private static final Logger logger = LogManager.getLogger(JsonFileSavedFormsService.class);
 
     private static final String FILENAME_GROUPS = "groups.json";
     private static final String FILENAME_FIELDS = "fields.json";
+    private static final String FILENAME_MODELS = "models.json";
 
     private final String directory;
     private String jsonObject;
@@ -83,6 +84,20 @@ public class JsonFileSavedFormsService implements FormsService {
         }
 
         return fields;
+    }
+
+    protected List<Model> readModels(String filepath) {
+        List<Model> models = null;
+        try {
+            jsonObject = readFile(filepath);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Model[] fieldsArray = objectMapper.readValue(jsonObject, Model[].class);
+            models = new ArrayList<>(Arrays.asList(fieldsArray));
+        } catch (IOException e) {
+            logger.error(e);
+        }
+
+        return models;
     }
 
     @Override
@@ -186,8 +201,28 @@ public class JsonFileSavedFormsService implements FormsService {
     }
 
     @Override
+    public List<UiField> importFields(List<UiField> fields) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
+    public List<UiField> updateFields(List<UiField> fields) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
     public List<Group> getGroups() {
         return readGroups(directory + "/" + FILENAME_GROUPS);
+    }
+
+    @Override
+    public List<Group> importGroups(List<Group> groups) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
+    }
+
+    @Override
+    public List<Group> updateGroups(List<Group> groups) {
+        throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
     @Override
@@ -262,9 +297,87 @@ public class JsonFileSavedFormsService implements FormsService {
         return new ArrayList<>(topLevelFieldGroupMap.values());
     }
 
+    @Override
+    public List<UiField> getFieldsByGroup(String groupId) {
+        List<UiField> allFields = getFields();
+
+        return allFields
+                .stream()
+                .filter(field -> field.getForm() != null)
+                .filter(field -> field.getForm().getGroup() != null)
+                .filter(field -> field.getForm().getGroup().equals(groupId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public SurveyModel getSurveyModel(String surveyId) {
+        SurveyModel model = new SurveyModel();
+        model.setSurveyId(surveyId);
+        Chapter chapter = new Chapter();
+        chapter.setName("Chapter");
+        model.getChapterModels().add(new ChapterModel(chapter, getModel()));
+        return model;
+    }
+
+    @Override
+    public List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId) {
+        return getFlatModel();
+    }
+
+    @Override
+    public Map<String, List<UiField>> getChapterFieldsMap(String surveyId) {
+        Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
+        List<UiField> fields = new ArrayList<>();
+
+        for (Group group : getGroups()) {
+            fields.addAll(getFieldsByGroup(group.getId()));
+        }
+        chapterFieldsMap.put("default", fields);
+
+        return chapterFieldsMap;
+    }
+
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
         return sorted;
+    }
+
+    @Override
+    public Model add(Model model) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Model update(String id, Model model) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(String id) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Model get(String id) {
+        List<Model> allModels = readModels(directory + "/" + FILENAME_FIELDS);
+        for (Model model : allModels) {
+            if (model.getId() == id) {
+                return model;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Browsing<Model> browse(FacetFilter filter) {
+        List<Model> allModels = readModels(directory + "/" + FILENAME_MODELS);
+
+        Browsing<Model> models = new Browsing<>();
+        models.setFacets(null);
+        models.setResults(allModels.subList(filter.getFrom(), filter.getFrom() + filter.getQuantity()));
+        models.setTo(filter.getFrom() + filter.getQuantity());
+        models.setFrom(filter.getFrom());
+        return models;
     }
 }

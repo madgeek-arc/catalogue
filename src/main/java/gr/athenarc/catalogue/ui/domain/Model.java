@@ -3,7 +3,7 @@ package gr.athenarc.catalogue.ui.domain;
 import java.util.Date;
 import java.util.List;
 
-public class Survey {
+public class Model {
 
     private String id;
     private String name;
@@ -18,7 +18,7 @@ public class Survey {
     private List<Chapter> chapters;
     private boolean locked;
 
-    public Survey() {
+    public Model() {
 
     }
 
