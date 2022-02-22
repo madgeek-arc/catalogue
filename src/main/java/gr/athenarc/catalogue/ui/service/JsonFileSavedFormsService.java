@@ -114,7 +114,7 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     public Group getGroup(String groupId) {
         List<Group> allGroups = readGroups(directory + "/" + FILENAME_GROUPS);
         for (Group group : allGroups) {
-            if (group.getId() == groupId) {
+            if (group.getId().equals(groupId)) {
                 return group;
             }
         }
@@ -150,7 +150,7 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     public UiField getField(String id) {
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
         for (UiField field : allFields) {
-            if (field.getId() == id) {
+            if (field.getId().equals(id)) {
                 return field;
             }
         }

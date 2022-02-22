@@ -8,7 +8,7 @@ import gr.athenarc.catalogue.ui.domain.*;
 import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
 
-public interface FormsService {
+public interface FormsService extends ModelService {
 
     /**
      * Fields Methods
