@@ -15,7 +15,7 @@ public class Chapter {
     private String id;
     private String name;
 
-    @Column(length = 2000)
+    @Column(length = 5000)
     private String description;
 
     private String subType;
@@ -24,7 +24,7 @@ public class Chapter {
     @Column(name = "order_value", columnDefinition = "integer default 0")
     private int order;
 
-    @OneToMany(mappedBy = "chapter", cascade= CascadeType.ALL)
+    @OneToMany(mappedBy = "chapter", cascade= CascadeType.ALL, fetch=FetchType.EAGER)
 //    @Convert(converter = JpaConverter.class)
     private List<Section> sections;
 
@@ -81,5 +81,13 @@ public class Chapter {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public Model getModel() {
+        return model;
+    }
+
+    public void setModel(Model model) {
+        this.model = model;
     }
 }

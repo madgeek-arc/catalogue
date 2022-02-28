@@ -1,15 +1,13 @@
 package gr.athenarc.catalogue.ui.service;
 
+import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.dao.ChapterRepository;
 import gr.athenarc.catalogue.ui.dao.SectionRepository;
 import gr.athenarc.catalogue.ui.dao.ModelRepository;
 import gr.athenarc.catalogue.ui.dao.UiFieldRepository;
-import gr.athenarc.catalogue.ui.domain.Chapter;
-import gr.athenarc.catalogue.ui.domain.Model;
-import gr.athenarc.catalogue.ui.domain.Section;
-import gr.athenarc.catalogue.ui.domain.UiField;
+import gr.athenarc.catalogue.ui.domain.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Primary
@@ -45,11 +44,14 @@ public class JpaFormsService implements ModelService {
         for (Chapter chapter : model.getChapters()) {
             for (Section section : chapter.getSections()) {
                 for (UiField field : section.getFields()) {
-                    uiFieldRepository.save(field);
+                    field.setSection(section);
+//                    uiFieldRepository.save(field);
                 }
-                sectionRepository.save(section);
+                section.setChapter(chapter);
+//                sectionRepository.save(section);
             }
-            chapterRepository.save(chapter);
+            chapter.setModel(model);
+//            chapterRepository.save(chapter);
         }
 
         return modelRepository.save(model);

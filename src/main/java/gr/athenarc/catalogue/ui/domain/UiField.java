@@ -20,23 +20,28 @@ public class UiField {
     boolean deprecated;
 
     @Convert(converter = StyledStringJpaConverter.class)
+    @Column(length = 5000)
     StyledString label;
 
     @Convert(converter = TypeInfoJpaConverter.class)
+    @Column(length = 5000)
     TypeInfo typeInfo = new TypeInfo();
 
     @Convert(converter = FormJpaConverter.class)
+    @Column(length = 5000)
     Form form = new Form();
 
     @Convert(converter = DisplayJpaConverter.class)
+    @Column(length = 5000)
     Display display = new Display();
 
-    @OneToMany(cascade = CascadeType.ALL)
-//    @Convert(converter = ListUiFieldJpaConverter.class)
+//    @OneToMany(cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Convert(converter = ListUiFieldJpaConverter.class)
+    @Column(length = 1000000)
     List<UiField> subFields;
 
     @ManyToOne(fetch=FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name="section_id", nullable=false)
+    @JoinColumn(name="section_id", nullable=true)
     @JsonIgnore
     Section section;
 
@@ -148,5 +153,13 @@ public class UiField {
 
     public void setSubFields(List<UiField> subFields) {
         this.subFields = subFields;
+    }
+
+    public Section getSection() {
+        return section;
+    }
+
+    public void setSection(Section section) {
+        this.section = section;
     }
 }

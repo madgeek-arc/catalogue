@@ -1,6 +1,7 @@
 package gr.athenarc.catalogue.ui.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import gr.athenarc.catalogue.ui.converter.StyledStringJpaConverter;
 import gr.athenarc.catalogue.ui.service.JpaConverter;
 
 import javax.persistence.*;
@@ -15,14 +16,14 @@ public class Section {
     String id;
     String name;
 
-    @Column(length = 2000)
+    @Column(length = 5000)
     String description;
 
     @Min(0)
     @Column(name = "order_value", columnDefinition = "integer default 0")
     int order = 0;
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 //@Convert(converter = JpaConverter.class)
     List<UiField> fields;
 
@@ -71,5 +72,13 @@ public class Section {
 
     public void setFields(List<UiField> fields) {
         this.fields = fields;
+    }
+
+    public Chapter getChapter() {
+        return chapter;
+    }
+
+    public void setChapter(Chapter chapter) {
+        this.chapter = chapter;
     }
 }

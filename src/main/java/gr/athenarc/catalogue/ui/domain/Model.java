@@ -1,5 +1,7 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import gr.athenarc.catalogue.ui.converter.StyledStringJpaConverter;
+
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
@@ -12,8 +14,9 @@ public class Model {
     private String id;
     private String name;
 
-    @Column(length = 2000)
+    @Column(length = 5000)
     private String description;
+    @Column(length = 2000)
     private String notice;
     private String type;
     private String subType;
@@ -29,7 +32,7 @@ public class Model {
     @Column(columnDefinition = "boolean default false")
     private boolean locked;
 
-    @OneToMany(mappedBy="model", cascade= CascadeType.ALL)
+    @OneToMany(mappedBy="model", cascade= CascadeType.ALL, fetch=FetchType.EAGER)
     private List<Chapter> chapters;
 
     public Model() {}
