@@ -28,23 +28,8 @@ public class UiController {
 
     }
 
-    @GetMapping(value = "{className}/fields/create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<UiField> createFields(@PathVariable("className") String name) throws ClassNotFoundException {
-        return formsService.createFields(name, null);
-    }
-
-    @GetMapping(value = "{className}/fields", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<UiField> getFields(@PathVariable("className") String name) {
-        return formsService.getFields();
-    }
-
-    @GetMapping(value = "form/model/{id}/flat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<GroupedFields<UiField>> getModelFlat(@PathVariable("id") String id) {
-        return formsService.getSurveyModelFlat(id);
-    }
-
     @GetMapping(value = "form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Model getSurveyModel(@PathVariable("id") String id) {
+    public Model getFormModel(@PathVariable("id") String id) {
         return modelService.get(id);
 //        return formsService.getSurveyModel(surveyId);
     }
