@@ -2,6 +2,7 @@ package gr.athenarc.catalogue.controller;
 
 import eu.openminted.registry.core.controllers.GenericController;
 import eu.openminted.registry.core.exception.ServerError;
+import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,4 +27,11 @@ public class GenericExceptionController extends GenericController {
         return new ServerError(req.getRequestURL().toString(), ex);
     }
 
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    @ResponseBody
+    ServerError handleAlreadyExists(HttpServletRequest req, Exception ex) {
+        logger.info(ex);
+        return new ServerError(req.getRequestURL().toString(), ex);
+    }
 }
