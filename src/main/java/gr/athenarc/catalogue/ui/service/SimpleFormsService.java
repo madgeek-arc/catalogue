@@ -10,6 +10,7 @@ import eu.openminted.registry.core.service.ResourceTypeService;
 import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
+import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
@@ -394,15 +395,21 @@ public class SimpleFormsService implements FormsService, ModelService {
     public <T> T add(T obj, String resourceTypeName) {
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         String id = null;
+        T existing = null;
         try {
             id = ReflectUtils.getId(obj.getClass(), obj);
             if (id == null) {
                 id = idGenerator.createId(resourceTypeName.charAt(0) + "-");
                 ReflectUtils.setId(obj.getClass(), obj, id);
             }
-
+            existing = genericItemService.get(resourceTypeName, id);
         } catch (NoSuchFieldException e) {
             logger.error(e);
+        } catch (ResourceNotFoundException e) {
+            // skip
+        }
+        if (existing != null) {
+            throw new ResourceAlreadyExistsException(id, resourceTypeName);
         }
 
         Resource resource = new Resource();
