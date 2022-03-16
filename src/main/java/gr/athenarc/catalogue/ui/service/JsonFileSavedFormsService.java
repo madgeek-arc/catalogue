@@ -150,7 +150,7 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     public UiField getField(String id) {
         List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
         for (UiField field : allFields) {
-            if (field.getId().equals(id)) {
+            if (Objects.equals(field.getId(), id)) {
                 return field;
             }
         }
@@ -360,9 +360,9 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
 
     @Override
     public Model get(String id) {
-        List<Model> allModels = readModels(directory + "/" + FILENAME_FIELDS);
+        List<Model> allModels = readModels(directory + "/" + FILENAME_MODELS);
         for (Model model : allModels) {
-            if (model.getId() == id) {
+            if (Objects.equals(model.getId(), id)) {
                 return model;
             }
         }
@@ -375,8 +375,9 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
 
         Browsing<Model> models = new Browsing<>();
         models.setFacets(null);
-        models.setResults(allModels.subList(filter.getFrom(), filter.getFrom() + filter.getQuantity()));
-        models.setTo(filter.getFrom() + filter.getQuantity());
+        int to = Math.min(allModels.size(), filter.getFrom() + filter.getQuantity());
+        models.setResults(allModels.subList(filter.getFrom(), to));
+        models.setTo(to);
         models.setFrom(filter.getFrom());
         return models;
     }
