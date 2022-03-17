@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>gr.athenarc</groupId>
 	<artifactId>catalogue</artifactId>
-	<version>2.0.3</version>
+	<version>2.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>catalogue</name>
 	<description>Catalogue project</description>
@@ -89,7 +89,7 @@
 		<connection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</developerConnection>
 		<url>https://github.com/madgeek-arc/catalogue.git</url>
-		<tag>catalogue-2.0.3</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
