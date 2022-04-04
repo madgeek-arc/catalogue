@@ -39,8 +39,8 @@ public class ResourcePayloadController {
     @PutMapping("{id}")
     public <T> ResponseEntity<?> update(@PathVariable("id") String id,
                                         @RequestParam("resourceType") String resourceType,
-                                        @RequestBody T resource) throws NoSuchFieldException {
-        return new ResponseEntity<>(resourcePayloadService.updateRaw(resourceType, id, (String) resource), createContentType(resourceType), HttpStatus.OK);
+                                        @RequestBody String resource) throws NoSuchFieldException {
+        return new ResponseEntity<>(resourcePayloadService.updateRaw(resourceType, id, resource), createContentType(resourceType), HttpStatus.OK);
     }
 
     private HttpHeaders createContentType(String resourceTypeName) {
