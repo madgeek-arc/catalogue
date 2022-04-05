@@ -12,8 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping(path = "items")
@@ -46,7 +45,8 @@ public class GenericItemController {
 
     @DeleteMapping("{id}")
     public <T> ResponseEntity<?> delete(@PathVariable("id") String id, @RequestParam("resourceType") String resourceType) {
-        return new ResponseEntity<>(genericResourceService.delete(resourceType, id), HttpStatus.OK);
+        T deleted = genericResourceService.delete(resourceType, id);
+        return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
 
     @ApiImplicitParams({
@@ -90,6 +90,13 @@ public class GenericItemController {
             order.put("order", orderDirection);
             sort.put(orderField, order);
             ff.setOrderBy(sort);
+        }
+
+        if (!allRequestParams.isEmpty()) {
+            Set<Map.Entry<String, Object>> filterSet = allRequestParams.entrySet();
+            for (Map.Entry<String, Object> entry : filterSet) {
+                ff.addFilter(entry.getKey(), entry.getValue());
+            }
         }
         return ff;
     }
