@@ -498,9 +498,7 @@ public class SimpleFormsService implements FormsService, ModelService {
 
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
-        FacetFilter ff = new FacetFilter();
-        ff.setQuantity(10000);
-        ff.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        return genericItemService.getResults(ff);
+        filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
+        return genericItemService.getResults(filter);
     }
 }
