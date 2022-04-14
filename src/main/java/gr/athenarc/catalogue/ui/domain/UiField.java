@@ -10,6 +10,7 @@ public class UiField {
     String parent;
     StyledString label;
     String accessPath;
+    String kind;
     TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
     boolean deprecated;
@@ -88,6 +89,14 @@ public class UiField {
 
     public void setAccessPath(String accessPath) {
         this.accessPath = accessPath;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     public boolean isIncludedInSnippet() {
