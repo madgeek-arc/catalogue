@@ -35,104 +35,29 @@ public interface FormsService extends ModelService {
     }
 
     /**
-     * Groups Methods
+     * Sections Methods
      */
-    // TODO: refactor crud for fields/groups
-    Group addGroup(Group group);
+    // TODO: refactor crud for fields/Sections
+    Section addSection(Section section);
 
-    Group updateGroup(String id, Group group);
+    Section updateSection(String id, Section section);
 
-    void deleteGroup(String fieldId) throws ResourceNotFoundException;
+    void deleteSection(String fieldId) throws ResourceNotFoundException;
 
-    Group getGroup(String id);
+    Section getSection(String id);
 
-    List<Group> getGroups();
+    List<Section> getSections();
 
-    List<Group> importGroups(List<Group> groups);
+    List<Section> importSections(List<Section> sections);
 
-    List<Group> updateGroups(List<Group> groups);
-
-    /**
-     * Survey Methods
-     */
-    @Deprecated
-    Survey addSurvey(Survey survey);
-    @Deprecated
-    Survey updateSurvey(String id, Survey survey);
-    @Deprecated
-    void deleteSurvey(String surveyId) throws ResourceNotFoundException;
-    @Deprecated
-    Survey getSurvey(String id);
-    @Deprecated
-    List<Survey> getSurveys();
+    List<Section> updateSections(List<Section> sections);
 
 
     /**
      * Models Methods
      */
-    List<FieldGroup> createFieldGroups(List<UiField> fields);
 
-    List<UiField> getFieldsByGroup(String groupId);
-
-    @Deprecated
-    default List<GroupedFields<FieldGroup>> getModel() {
-        List<GroupedFields<FieldGroup>> groupedFieldGroups = new ArrayList<>();
-        List<GroupedFields<UiField>> groupedFieldsList = getFlatModel();
-
-        for (GroupedFields<UiField> groupedFields : groupedFieldsList) {
-            GroupedFields<FieldGroup> groupedFieldGroup = new GroupedFields<>();
-
-            groupedFieldGroup.setGroup(groupedFields.getGroup());
-            List<FieldGroup> fieldGroups = createFieldGroups(groupedFields.getFields());
-            groupedFieldGroup.setFields(fieldGroups);
-
-            int total = 0;
-            for (UiField f : groupedFields.getFields()) {
-                if (f.getForm().getMandatory() != null && f.getForm().getMandatory()
-                        && f.getTypeInfo().getType() != null && !f.getTypeInfo().getType().equals("composite")) {
-                    total += 1;
-                }
-            }
-
-            int topLevel = 0;
-            for (FieldGroup fg : fieldGroups) {
-                if (fg.getField().getForm().getMandatory() != null && fg.getField().getForm().getMandatory()) {
-                    topLevel += 1;
-                }
-            }
-            RequiredFields requiredFields = new RequiredFields(topLevel, total);
-            groupedFieldGroup.setRequired(requiredFields);
-
-            groupedFieldGroups.add(groupedFieldGroup);
-        }
-
-        return groupedFieldGroups;
-    }
-
-    @Deprecated
-    default List<GroupedFields<UiField>> getFlatModel() {
-        List<Group> groups = getGroups();
-        List<GroupedFields<UiField>> groupedFieldsList = new ArrayList<>();
-
-        if (groups != null) {
-            for (Group group : groups) {
-                GroupedFields<UiField> groupedFields = new GroupedFields<>();
-
-                groupedFields.setGroup(group);
-                groupedFields.setFields(getFieldsByGroup(group.getId()));
-
-                groupedFieldsList.add(groupedFields);
-            }
-        }
-
-        return groupedFieldsList;
-    }
-
-    SurveyModel getSurveyModel(String surveyId);
-
-    List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId);
-
-    Map<String, List<UiField>> getChapterFieldsMap(String surveyId);
+    List<UiField> getFieldsBySection(String sectionId);
 
     default List<UiField> createFields(String className, String parent) throws ClassNotFoundException {
         List<UiField> fields = new LinkedList<>();

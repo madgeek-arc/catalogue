@@ -2,10 +2,8 @@ package gr.athenarc.catalogue.ui.controller;
 
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
-import eu.openminted.registry.core.domain.Paging;
 import gr.athenarc.catalogue.ui.domain.Model;
-import gr.athenarc.catalogue.ui.domain.Group;
-import gr.athenarc.catalogue.ui.domain.Survey;
+import gr.athenarc.catalogue.ui.domain.Section;
 import gr.athenarc.catalogue.ui.domain.UiField;
 import gr.athenarc.catalogue.ui.service.FormsService;
 import gr.athenarc.catalogue.ui.service.ModelService;
@@ -81,91 +79,49 @@ public class FormsController {
     }
 
 
-    @PostMapping("groups")
-    public ResponseEntity<Group> addGroup(@RequestBody Group group) {
-        return new ResponseEntity<>(formsService.addGroup(group), HttpStatus.CREATED);
+    @PostMapping("sections")
+    public ResponseEntity<Section> addSection(@RequestBody Section section) {
+        return new ResponseEntity<>(formsService.addSection(section), HttpStatus.CREATED);
     }
 
-    @PutMapping("groups/{id}")
-    public ResponseEntity<Group> updateGroup(@PathVariable("id") String id, @RequestBody Group group) {
-        return new ResponseEntity<>(formsService.updateGroup(id, group), HttpStatus.OK);
+    @PutMapping("sections/{id}")
+    public ResponseEntity<Section> updateSection(@PathVariable("id") String id, @RequestBody Section section) {
+        return new ResponseEntity<>(formsService.updateSection(id, section), HttpStatus.OK);
     }
 
-    @GetMapping("groups/{id}")
-    public ResponseEntity<Group> getGroup(@PathVariable("id") String id) {
-        return new ResponseEntity<>(formsService.getGroup(id), HttpStatus.OK);
+    @GetMapping("sections/{id}")
+    public ResponseEntity<Section> getSection(@PathVariable("id") String id) {
+        return new ResponseEntity<>(formsService.getSection(id), HttpStatus.OK);
     }
 
-    @DeleteMapping("groups/{id}")
-    public ResponseEntity<Void> deleteGroup(@PathVariable("id") String id) {
-        formsService.deleteGroup(id);
+    @DeleteMapping("sections/{id}")
+    public ResponseEntity<Void> deleteSection(@PathVariable("id") String id) {
+        formsService.deleteSection(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("groups")
-    public ResponseEntity<List<Group>> getGroups() {
-        return new ResponseEntity<>(formsService.getGroups(), HttpStatus.OK);
+    @GetMapping("sections")
+    public ResponseEntity<List<Section>> getSections() {
+        return new ResponseEntity<>(formsService.getSections(), HttpStatus.OK);
     }
 
-    @PutMapping("groups")
-    public ResponseEntity<List<Group>> updateGroups(@RequestBody List<Group> groups) {
-        return new ResponseEntity<>(formsService.updateGroups(groups), HttpStatus.OK);
+    @PutMapping("sections")
+    public ResponseEntity<List<Section>> updateSections(@RequestBody List<Section> sections) {
+        return new ResponseEntity<>(formsService.updateSections(sections), HttpStatus.OK);
     }
 
-    @PostMapping("groups/import")
-    public ResponseEntity<List<Group>> importGroups(@RequestBody List<Group> groups) {
-        return new ResponseEntity<>(formsService.importGroups(groups), HttpStatus.OK);
+    @PostMapping("sections/import")
+    public ResponseEntity<List<Section>> importSections(@RequestBody List<Section> sections) {
+        return new ResponseEntity<>(formsService.importSections(sections), HttpStatus.OK);
     }
 
-    @DeleteMapping("groups/all")
-    public ResponseEntity<List<Group>> deleteAllGroups() {
-        List<Group> groups = formsService.getGroups();
-        for (Group group : groups) {
-            formsService.deleteField(group.getId());
+    @DeleteMapping("sections/all")
+    public ResponseEntity<List<Section>> deleteAllSections() {
+        List<Section> sections = formsService.getSections();
+        for (Section section : sections) {
+            formsService.deleteField(section.getId());
         }
-        return new ResponseEntity<>(groups, HttpStatus.OK);
-    }
-
-
-    @Deprecated
-    @PostMapping("surveys")
-    public ResponseEntity<Survey> addSurvey(@RequestBody Survey survey) {
-        return new ResponseEntity<>(formsService.addSurvey(survey), HttpStatus.CREATED);
-    }
-
-    @Deprecated
-    @PutMapping("surveys/{id}")
-    public ResponseEntity<Survey> updateSurvey(@PathVariable("id") String id, @RequestBody Survey survey) {
-        return new ResponseEntity<>(formsService.updateSurvey(id, survey), HttpStatus.OK);
-    }
-
-    @Deprecated
-    @GetMapping("surveys/{id}")
-    public ResponseEntity<Survey> getSurvey(@PathVariable("id") String id) {
-        return new ResponseEntity<>(formsService.getSurvey(id), HttpStatus.OK);
-    }
-
-    @Deprecated
-    @GetMapping("surveys")
-    public ResponseEntity<List<Survey>> getSurveys() {
-        return new ResponseEntity<>(formsService.getSurveys(), HttpStatus.OK);
-    }
-
-    @Deprecated
-    @DeleteMapping("surveys/{id}")
-    public ResponseEntity<Void> deleteSurvey(@PathVariable("id") String id) {
-        formsService.deleteSurvey(id);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @Deprecated
-    @DeleteMapping("surveys/all")
-    public ResponseEntity<List<Survey>> deleteAllSurveys() {
-        List<Survey> surveys = formsService.getSurveys();
-        for (Survey survey : surveys) {
-            formsService.deleteSurvey(survey.getId());
-        }
-        return new ResponseEntity<>(surveys, HttpStatus.OK);
+        return new ResponseEntity<>(sections, HttpStatus.OK);
     }
 
     @PostMapping("models")

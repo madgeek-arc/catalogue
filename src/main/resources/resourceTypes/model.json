@@ -45,32 +45,50 @@
     },
     {
       "multivalued": true,
-      "name": "chaptersIds",
-      "path": "$.chapters[*].id",
+      "name": "allSectionIds",
+      "path": "$.sections[*]..subSections[*].id",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
-      "name": "chaptersNames",
-      "path": "$.chapters[*].name",
+      "name": "allSectionNames",
+      "path": "$.sections[*]..subSections[*].name",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
-      "name": "chaptersSectionsIds",
-      "path": "$.chapters[*].sections[*].id",
+      "name": "sectionIds",
+      "path": "$.sections[*].id",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
-      "name": "chaptersSectionsNames",
-      "path": "$.chapters[*].sections[*].name",
+      "name": "sectionNames",
+      "path": "$.sections[*].name",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "subSectionsIds",
+      "path": "$.sections[*].subSections[*].id",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "subSectionsNames",
+      "path": "$.sections[*].subSections[*].name",
       "type": "java.lang.String"
     },
     {
       "multivalued": true,
       "name": "fields",
-      "path": "$.chapters[*].sections[*].fields",
+      "path": "$..fields[*].id",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": true,
+      "name": "fieldNames",
+      "path": "$..fields[*].name",
       "type": "java.lang.String"
     }
   ],

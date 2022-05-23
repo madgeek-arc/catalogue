@@ -15,11 +15,11 @@ public class Model {
     private String createdBy;
     private Date modificationDate;
     private String modifiedBy;
-    private List<Chapter> chapters;
+    private List<Section> sections;
     private boolean locked;
 
     public Model() {
-
+        // no arg constructor
     }
 
     public String getId() {
@@ -102,12 +102,12 @@ public class Model {
         this.modifiedBy = modifiedBy;
     }
 
-    public List<Chapter> getChapters() {
-        return chapters;
+    public List<Section> getSections() {
+        return sections;
     }
 
-    public void setChapters(List<Chapter> chapters) {
-        this.chapters = chapters;
+    public void setSections(List<Section> sections) {
+        this.sections = sections;
     }
 
     public boolean isLocked() {

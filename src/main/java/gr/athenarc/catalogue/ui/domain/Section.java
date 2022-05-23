@@ -2,16 +2,19 @@ package gr.athenarc.catalogue.ui.domain;
 
 import java.util.List;
 
-public class Chapter {
+public class Section {
 
     private String id;
     private String name;
     private String description;
-    private List<Group> sections;
     private String subType;
     private int order;
+    private List<Section> subSections;
+    private List<UiField> fields;
 
-    public Chapter() {}
+    public Section() {
+        // no arg constructor
+    }
 
     public String getId() {
         return id;
@@ -37,14 +40,6 @@ public class Chapter {
         this.description = description;
     }
 
-    public List<Group> getSections() {
-        return sections;
-    }
-
-    public void setSections(List<Group> sections) {
-        this.sections = sections;
-    }
-
     public String getSubType() {
         return subType;
     }
@@ -59,5 +54,21 @@ public class Chapter {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public List<Section> getSubSections() {
+        return subSections;
+    }
+
+    public void setSubSections(List<Section> subSections) {
+        this.subSections = subSections;
+    }
+
+    public List<UiField> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<UiField> fields) {
+        this.fields = fields;
     }
 }
