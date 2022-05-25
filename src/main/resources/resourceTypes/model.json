@@ -21,6 +21,12 @@
     },
     {
       "multivalued": false,
+      "name": "resourceType",
+      "path": "$.resourceType",
+      "type": "java.lang.String"
+    },
+    {
+      "multivalued": false,
       "name": "type",
       "path": "$.type",
       "type": "java.lang.String"

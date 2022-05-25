@@ -11,6 +11,7 @@ public class Model {
     private String notice;
     private String type;
     private String subType;
+    private String resourceType;
     private Date creationDate;
     private String createdBy;
     private Date modificationDate;
@@ -68,6 +69,14 @@ public class Model {
 
     public void setSubType(String subType) {
         this.subType = subType;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
     }
 
     public Date getCreationDate() {
