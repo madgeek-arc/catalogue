@@ -13,7 +13,7 @@ public class Form {
     String placeholder;
     Boolean mandatory;
     Boolean immutable;
-    Display display;
+    Display display = new Display();
 
 
     public Form() {
