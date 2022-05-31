@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SimpleFormsService implements FormsService, ModelService {
@@ -37,19 +36,25 @@ public class SimpleFormsService implements FormsService, ModelService {
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
+    public final FormDisplayService formDisplayService;
+
+    private Map<String, Form> formMap;
+    private Map<String, Display> displayMap;
 
     public SimpleFormsService(GenericItemService genericItemService,
                               IdGenerator<String> idGenerator,
                               SearchService searchService,
                               ResourceService resourceService,
                               ResourceTypeService resourceTypeService,
-                              ParserService parserPool) {
+                              ParserService parserPool,
+                              FormDisplayService formDisplayService) {
         this.genericItemService = genericItemService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
+        this.formDisplayService = formDisplayService;
     }
 
     @Override
@@ -292,12 +297,48 @@ public class SimpleFormsService implements FormsService, ModelService {
 
     @Override
     public Model get(String id) {
-        return genericItemService.get(MODEL_RESOURCE_TYPE_NAME, id);
+        Model model = genericItemService.get(MODEL_RESOURCE_TYPE_NAME, id);
+        enrichModel(model);
+        return model;
     }
 
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
         return genericItemService.getResults(filter);
+    }
+
+    void enrichModel(Model model) { // TODO: refactor
+        this.formMap = formDisplayService.getUiFieldIdFormMap();
+        this.displayMap = formDisplayService.getUiFieldIdDisplayMap();
+        if (model != null && model.getSections() != null) {
+            for (Section section : model.getSections()) {
+                enrichFields(section.getFields());
+            }
+        }
+    }
+
+    private void enrichFields(List<UiField> fields) {
+        if (fields != null) {
+            for (UiField field : fields) {
+                Form form = getFieldForm(field.getId());
+                if (form != null) {
+                    field.setForm(form);
+                }
+                Display display = getFieldDisplay(field.getId());
+                if (display != null) {
+                    field.setDisplay(getFieldDisplay(field.getId()));
+                }
+                enrichFields(field.getSubFields());
+            }
+        }
+    }
+
+    private Form getFieldForm(String fieldId) {
+        return formMap.get(fieldId);
+    }
+
+    private Display getFieldDisplay(String fieldId) {
+        return displayMap.get(fieldId);
     }
 }
