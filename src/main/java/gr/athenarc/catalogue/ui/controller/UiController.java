@@ -1,6 +1,7 @@
 package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ClasspathUtils;
+import gr.athenarc.catalogue.config.CatalogueLibConfiguration;
 import gr.athenarc.catalogue.ui.domain.*;
 import gr.athenarc.catalogue.ui.service.FormsService;
 import gr.athenarc.catalogue.ui.service.ModelService;
@@ -20,12 +21,14 @@ public class UiController {
 
     private final FormsService formsService;
     private final ModelService modelService;
+    private final CatalogueLibConfiguration catalogueLibConfiguration;
 
     @Autowired
-    public UiController(FormsService formsService, ModelService modelService) {
+    public UiController(FormsService formsService, ModelService modelService,
+                        CatalogueLibConfiguration catalogueLibConfiguration) {
         this.formsService = formsService;
         this.modelService = modelService;
-
+        this.catalogueLibConfiguration = catalogueLibConfiguration;
     }
 
     @GetMapping(value = "form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -37,7 +40,7 @@ public class UiController {
 
     @GetMapping(value = "vocabularies/map", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, List<String>> getVocabularies() {
-        return getEnumsMap("gr.athenarc.xsd2java");
+        return getEnumsMap(catalogueLibConfiguration.generatedClassesPackageName());
     }
 
     private Map<String, List<String>> getEnumsMap(String packageName) {
