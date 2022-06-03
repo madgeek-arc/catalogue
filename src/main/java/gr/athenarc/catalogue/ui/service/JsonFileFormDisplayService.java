@@ -2,8 +2,8 @@ package gr.athenarc.catalogue.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.athenarc.catalogue.ui.domain.*;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Service
 public class JsonFileFormDisplayService implements FormDisplayService {
 
-    private static final Logger logger = LogManager.getLogger(JsonFileFormDisplayService.class);
+    private static final Logger logger = LoggerFactory.getLogger(JsonFileFormDisplayService.class);
 
     @Value("${ui.elements.json.form:}")
     private String formsDirectory;
@@ -98,7 +98,7 @@ public class JsonFileFormDisplayService implements FormDisplayService {
             ObjectMapper objectMapper = new ObjectMapper();
             objects = objectMapper.readValue(jsonObject, clazz);
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return objects;
@@ -112,7 +112,7 @@ public class JsonFileFormDisplayService implements FormDisplayService {
             UiFieldForm[] sectionsArray = objectMapper.readValue(jsonObject, UiFieldForm[].class);
             forms = new ArrayList<>(Arrays.asList(sectionsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return forms;
@@ -126,7 +126,7 @@ public class JsonFileFormDisplayService implements FormDisplayService {
             UiFieldDisplay[] sectionsArray = objectMapper.readValue(jsonObject, UiFieldDisplay[].class);
             displays = new ArrayList<>(Arrays.asList(sectionsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return displays;

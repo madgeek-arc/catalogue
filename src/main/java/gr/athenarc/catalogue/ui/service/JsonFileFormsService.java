@@ -5,8 +5,8 @@ import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.*;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class JsonFileFormsService implements FormsService, ModelService {
 
-    private static final Logger logger = LogManager.getLogger(JsonFileFormsService.class);
+    private static final Logger logger = LoggerFactory.getLogger(JsonFileFormsService.class);
 
     private static final String FILENAME_SECTIONS = "sections.json";
     private static final String FILENAME_FIELDS = "fields.json";
@@ -66,7 +66,7 @@ public class JsonFileFormsService implements FormsService, ModelService {
             Section[] sectionsArray = objectMapper.readValue(jsonObject, Section[].class);
             sections = new ArrayList<>(Arrays.asList(sectionsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return sections;
@@ -80,7 +80,7 @@ public class JsonFileFormsService implements FormsService, ModelService {
             UiField[] fieldsArray = objectMapper.readValue(jsonObject, UiField[].class);
             fields = new ArrayList<>(Arrays.asList(fieldsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return fields;
@@ -94,7 +94,7 @@ public class JsonFileFormsService implements FormsService, ModelService {
             Model[] fieldsArray = objectMapper.readValue(jsonObject, Model[].class);
             models = new ArrayList<>(Arrays.asList(fieldsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return models;

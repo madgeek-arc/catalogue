@@ -16,8 +16,8 @@ import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdGenerator;
 import gr.athenarc.catalogue.ui.domain.*;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import java.util.*;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 public class SimpleFormsService implements FormsService, ModelService {
 
-    private static final Logger logger = LogManager.getLogger(SimpleFormsService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
     private static final String SECTION_RESOURCE_TYPE_NAME = "section";
     private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
@@ -218,7 +218,7 @@ public class SimpleFormsService implements FormsService, ModelService {
             }
             existing = genericItemService.get(resourceTypeName, id);
         } catch (NoSuchFieldException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         } catch (ResourceNotFoundException e) {
             // skip
         }
@@ -244,7 +244,7 @@ public class SimpleFormsService implements FormsService, ModelService {
             existing = genericItemService.searchResource(resourceTypeName, id, true);
             existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
         } catch (NoSuchFieldException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         logger.trace(LoggingUtils.updateResource(resourceTypeName, id, obj));
