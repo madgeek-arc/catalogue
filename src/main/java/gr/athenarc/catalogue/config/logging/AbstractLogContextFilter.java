@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import java.io.IOException;
-import java.util.UUID;
 
 @Component
 public abstract class AbstractLogContextFilter implements Filter {

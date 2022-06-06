@@ -1,9 +1,10 @@
 package gr.athenarc.catalogue.controller;
 
 import eu.openminted.registry.core.controllers.GenericController;
-import eu.openminted.registry.core.exception.ServerError;
+import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
 import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.athenarc.catalogue.exception.ServerError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,7 @@ public class GenericExceptionController extends GenericController {
     @ResponseBody
     ServerError handleNotFound(HttpServletRequest req, Exception ex) {
         logger.info(ex.getMessage(), ex);
-        return new ServerError(req.getRequestURL().toString(), ex);
+        return new ServerError(HttpStatus.NOT_FOUND, LogTransactionsFilter.getTransactionId(), req.getRequestURL().toString(), ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -32,6 +33,6 @@ public class GenericExceptionController extends GenericController {
     @ResponseBody
     ServerError handleAlreadyExists(HttpServletRequest req, Exception ex) {
         logger.info(ex.getMessage(), ex);
-        return new ServerError(req.getRequestURL().toString(), ex);
+        return new ServerError(HttpStatus.CONFLICT, LogTransactionsFilter.getTransactionId(), req.getRequestURL().toString(), ex.getMessage());
     }
 }
