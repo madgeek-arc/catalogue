@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue.config.logging;
 
+import gr.athenarc.catalogue.RequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,17 +20,7 @@ public class LogRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        logger.info(getUrlWithParams(request));
+        logger.info(RequestUtils.getUrlWithParams(request));
         filterChain.doFilter(request, response);
-    }
-
-    private String getUrlWithParams(HttpServletRequest request) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(request.getRequestURI());
-        if (request.getQueryString() != null) {
-            sb.append('?');
-            sb.append(request.getQueryString());
-        }
-        return sb.toString();
     }
 }

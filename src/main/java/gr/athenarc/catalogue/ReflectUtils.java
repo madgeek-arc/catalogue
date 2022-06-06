@@ -16,7 +16,7 @@ public class ReflectUtils {
             idField.setAccessible(true);
             idField.set(resource, id);
         } catch (NoSuchFieldException e) {
-            logger.error("Could not find 'id' field in class [" + clazz.getName() + "]");
+            logger.error(String.format("Could not find 'id' field in class [%s]", clazz.getName()));
         } catch (IllegalAccessException e) {
             logger.error(e.getMessage(), e);
         }
@@ -29,7 +29,7 @@ public class ReflectUtils {
             idField.setAccessible(true);
             id = (String) idField.get(resource);
         } catch (NoSuchFieldException e) {
-            logger.error("Could not find 'id' field in class [" + clazz.getName() + "]");
+            logger.error(String.format("Could not find 'id' field in class [%s]", clazz.getName()));
             throw e;
         } catch (IllegalAccessException e) {
             logger.error(e.getMessage(), e);

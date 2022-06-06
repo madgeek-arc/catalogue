@@ -25,7 +25,7 @@ public class GenericExceptionController extends GenericController {
     @ResponseBody
     ServerError handleNotFound(HttpServletRequest req, Exception ex) {
         logger.info(ex.getMessage(), ex);
-        return new ServerError(HttpStatus.NOT_FOUND, LogTransactionsFilter.getTransactionId(), req.getRequestURL().toString(), ex.getMessage());
+        return new ServerError(HttpStatus.NOT_FOUND, req, ex);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -33,6 +33,6 @@ public class GenericExceptionController extends GenericController {
     @ResponseBody
     ServerError handleAlreadyExists(HttpServletRequest req, Exception ex) {
         logger.info(ex.getMessage(), ex);
-        return new ServerError(HttpStatus.CONFLICT, LogTransactionsFilter.getTransactionId(), req.getRequestURL().toString(), ex.getMessage());
+        return new ServerError(HttpStatus.CONFLICT, req, ex);
     }
 }

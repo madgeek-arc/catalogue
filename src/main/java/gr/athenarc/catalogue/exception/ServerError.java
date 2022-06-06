@@ -1,7 +1,10 @@
 package gr.athenarc.catalogue.exception;
 
+import gr.athenarc.catalogue.RequestUtils;
+import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
 import org.springframework.http.HttpStatus;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
 public class ServerError {
@@ -37,6 +40,22 @@ public class ServerError {
         this.transactionId = transactionId;
         this.url = url;
         this.message = message;
+    }
+
+    public ServerError(HttpStatus status, HttpServletRequest req, Exception exception) {
+        timestamp = new Date();
+        this.status = status.value();
+        this.transactionId = LogTransactionsFilter.getTransactionId();
+        this.url = RequestUtils.getUrlWithParams(req);
+        this.message = exception.getMessage();
+    }
+
+    public ServerError(HttpStatus status, String transactionId, HttpServletRequest req, Exception exception) {
+        timestamp = new Date();
+        this.status = status.value();
+        this.transactionId = transactionId;
+        this.url = RequestUtils.getUrlWithParams(req);
+        this.message = exception.getMessage();
     }
 
     public int getStatus() {

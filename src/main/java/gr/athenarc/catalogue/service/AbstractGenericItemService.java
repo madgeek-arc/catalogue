@@ -162,7 +162,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         try {
             browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
         } catch (UnknownHostException e) {
-            logger.error("getResults", e);
             throw new ServiceException(e);
         }
         return browsing;
