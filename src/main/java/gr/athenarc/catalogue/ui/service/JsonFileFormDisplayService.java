@@ -75,9 +75,9 @@ public class JsonFileFormDisplayService implements FormDisplayService {
     protected String readFile(String filename) throws IOException {
         File file = new File(filename);
         if (!file.exists()) {
-            logger.error(String.format("File [%s] does not exist", file.getAbsolutePath()));
+            logger.error("File [{}] does not exist", file.getAbsolutePath());
         } else if (!file.canRead()) {
-            logger.error(String.format("File [%s] is not readable", file.getAbsolutePath()));
+            logger.error("File [{}] is not readable", file.getAbsolutePath());
         }
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             StringBuilder sb = new StringBuilder();

@@ -35,16 +35,16 @@ public class JsonFileFormsService implements FormsService, ModelService {
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
-            logger.error(String.format("Directory for UI elements has been created: [%s]. Please place the necessary files inside...", dir.getAbsolutePath()));
+            logger.error("Directory for UI elements has been created: [{}]. Please place the necessary files inside...", dir.getAbsolutePath());
         }
     }
 
     protected String readFile(String filename) throws IOException {
         File file = new File(filename);
         if (!file.exists()) {
-            logger.error(String.format("File [%s] does not exist", file.getAbsolutePath()));
+            logger.error("File [{}] does not exist", file.getAbsolutePath());
         } else if (!file.canRead()) {
-            logger.error(String.format("File [%s] is not readable", file.getAbsolutePath()));
+            logger.error("File [{}] is not readable", file.getAbsolutePath());
         }
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             StringBuilder sb = new StringBuilder();
