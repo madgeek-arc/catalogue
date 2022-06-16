@@ -21,8 +21,8 @@ class UiElementsTest {
     FormsService formsService;
 
     final String fieldId = "f-test";
-    final String groupId = "g-test";
-    final String surveyId = "s-test";
+    final String sectionId = "g-test";
+    final String modelId = "s-test";
 
     @Test
     @Order(1)
@@ -42,46 +42,46 @@ class UiElementsTest {
 
     @Test
     @Order(3)
-    void addGroup() {
-        Group group = createGroup();
-        Group res = formsService.addGroup(group);
-        assert res.equals(group);
+    void addSection() {
+        Section section = createSection();
+        Section res = formsService.addSection(section);
+        assert res.equals(section);
     }
 
     @Test
     @Order(4)
-    void updateGroup() {
-        Group group = formsService.getGroup(groupId);
-        Group res = formsService.updateGroup(groupId, group);
-        assert res.equals(group);
+    void updateSection() {
+        Section section = formsService.getSection(sectionId);
+        Section res = formsService.updateSection(sectionId, section);
+        assert res.equals(section);
     }
 
     @Test
     @Order(5)
-    void addSurvey() {
-        Survey survey = createSurvey();
-        Survey res = formsService.addSurvey(survey);
-        assert res.equals(survey);
+    void addModel() {
+        Model model = createModel();
+        Model res = formsService.add(model);
+        assert res.equals(model);
     }
 
     @Test
     @Order(6)
-    void updateSurvey() {
-        Survey survey = formsService.getSurvey(surveyId);
-        Survey res = formsService.updateSurvey(surveyId, survey);
-        assert res.equals(survey);
+    void updateModel() {
+        Model model = formsService.get(modelId);
+        Model res = formsService.update(modelId, model);
+        assert res.equals(model);
     }
 
     @Test
     @Order(7)
-    void deleteSurvey() {
-        formsService.deleteSurvey(surveyId);
+    void deleteModel() {
+        formsService.delete(modelId);
     }
 
     @Test
     @Order(8)
-    void deleteGroup() {
-        formsService.deleteGroup(groupId);
+    void deleteSection() {
+        formsService.deleteSection(sectionId);
     }
 
     @Test
@@ -115,7 +115,7 @@ class UiElementsTest {
         form.setMandatory(true);
         form.setDependsOn(null);
         form.setDescription(StyledString.of("Field Description"));
-        form.setGroup(groupId);
+        form.setGroup(sectionId);
         form.setImmutable(true);
         form.setDisplay(new Display(null, 1, true, false, null, null));
         form.setPlaceholder("Test placeholder");
@@ -130,26 +130,26 @@ class UiElementsTest {
         return field;
     }
 
-    Group createGroup() {
-        Group group = new Group();
-        group.setId(groupId);
-        group.setName("Test Group");
-        group.setDescription("This is a group");
-        group.setOrder(1);
-        return group;
+    Section createSection() {
+        Section section = new Section();
+        section.setId(sectionId);
+        section.setName("Test Section");
+        section.setDescription("This is a section");
+        section.setOrder(1);
+        return section;
     }
 
-    Survey createSurvey() {
-        Survey survey = new Survey();
-        survey.setId(surveyId);
-        survey.setName("Test Survey");
-        survey.setDescription("This is a survey");
-        survey.setCreatedBy(null);
-        survey.setCreationDate(new Date());
-        survey.setModifiedBy(null);
-        survey.setModificationDate(new Date());
-        survey.setChapters(null);
-        return survey;
+    Model createModel() {
+        Model model = new Model();
+        model.setId(modelId);
+        model.setName("Test Model");
+        model.setDescription("This is a model");
+        model.setCreatedBy(null);
+        model.setCreationDate(new Date());
+        model.setModifiedBy(null);
+        model.setModificationDate(new Date());
+        model.setSections(null);
+        return model;
     }
 
 }

@@ -8,8 +8,8 @@ import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractGenericItemService implements GenericItemService {
-    private static final Logger logger = LogManager.getLogger(AbstractGenericItemService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractGenericItemService.class);
 
     public final SearchService searchService;
     public final ResourceService resourceService;
@@ -89,7 +89,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             }
             ret = (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
         } catch (UnknownHostException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
             throw new ServiceException(e);
         }
         return ret;
@@ -162,7 +162,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         try {
             browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
         } catch (UnknownHostException e) {
-            logger.fatal("getResults", e);
             throw new ServiceException(e);
         }
         return browsing;
@@ -195,7 +194,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             }
             return result;
         } catch (Exception e) {
-            logger.fatal(e);
+            logger.error(e.getMessage(), e);
             throw new ServiceException(e);
         }
     }
@@ -206,7 +205,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         try {
             tClass = Class.forName(resourceTypeService.getResourceType(resourceTypeName).getProperty("class"));
         } catch (ClassNotFoundException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         } catch (NullPointerException e) {
             logger.error("Class property is not defined", e);
             throw new ServiceException(String.format("ResourceType [%s] does not have properties field", resourceTypeName));
@@ -220,7 +219,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         try {
             res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
         } catch (UnknownHostException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
         if (throwOnNull) {
             return Optional.ofNullable(res)

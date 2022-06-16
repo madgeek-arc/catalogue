@@ -1,7 +1,7 @@
 package gr.athenarc.catalogue;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class ClasspathUtils {
 
-    private static final Logger logger = LogManager.getLogger(ClasspathUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClasspathUtils.class);
 
     public static <T> T[] toArray(Collection<T> collection) {
         T[] classes = null;
@@ -75,7 +75,7 @@ public class ClasspathUtils {
         try {
             return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
         } catch (ClassNotFoundException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
         return null;
     }

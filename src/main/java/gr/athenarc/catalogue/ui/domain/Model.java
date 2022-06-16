@@ -11,15 +11,16 @@ public class Model {
     private String notice;
     private String type;
     private String subType;
+    private String resourceType;
     private Date creationDate;
     private String createdBy;
     private Date modificationDate;
     private String modifiedBy;
-    private List<Chapter> chapters;
+    private List<Section> sections;
     private boolean locked;
 
     public Model() {
-
+        // no arg constructor
     }
 
     public String getId() {
@@ -70,6 +71,14 @@ public class Model {
         this.subType = subType;
     }
 
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
+    }
+
     public Date getCreationDate() {
         return creationDate;
     }
@@ -102,12 +111,12 @@ public class Model {
         this.modifiedBy = modifiedBy;
     }
 
-    public List<Chapter> getChapters() {
-        return chapters;
+    public List<Section> getSections() {
+        return sections;
     }
 
-    public void setChapters(List<Chapter> chapters) {
-        this.chapters = chapters;
+    public void setSections(List<Section> sections) {
+        this.sections = sections;
     }
 
     public boolean isLocked() {

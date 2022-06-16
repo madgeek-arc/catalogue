@@ -6,8 +6,9 @@ import eu.openminted.registry.core.service.ResourceTypeService;
 import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdGenerator;
+import gr.athenarc.catalogue.ui.service.FormDisplayService;
 import gr.athenarc.catalogue.ui.service.FormsService;
-import gr.athenarc.catalogue.ui.service.JsonFileSavedFormsService;
+import gr.athenarc.catalogue.ui.service.JsonFileFormsService;
 import gr.athenarc.catalogue.ui.service.SimpleFormsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,7 +26,7 @@ public class UiFieldsSourceConfiguration {
             havingValue = "true",
             matchIfMissing = false)
     FormsService jsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String jsonDir) {
-        return new JsonFileSavedFormsService(jsonDir);
+        return new JsonFileFormsService(jsonDir);
     }
 
     @Bean
@@ -37,7 +38,7 @@ public class UiFieldsSourceConfiguration {
     FormsService simpleUiFieldService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService,
                                       SearchService searchService, ResourceService resourceService,
                                       ResourceTypeService resourceTypeService, ParserService parserService,
-                                      IdGenerator<String> idGenerator) {
-        return new SimpleFormsService(genericItemService, idGenerator, searchService, resourceService, resourceTypeService, parserService);
+                                      IdGenerator<String> idGenerator, FormDisplayService formDisplayService) {
+        return new SimpleFormsService(genericItemService, idGenerator, searchService, resourceService, resourceTypeService, parserService, formDisplayService);
     }
 }

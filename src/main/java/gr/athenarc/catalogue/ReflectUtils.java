@@ -1,14 +1,14 @@
 package gr.athenarc.catalogue;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.lang.reflect.Field;
 
 public class ReflectUtils {
 
-    private static final Logger logger = LogManager.getLogger(ReflectUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(ReflectUtils.class);
 
     public static void setId(@NotNull Class<?> clazz, @NotNull Object resource, @NotNull String id) {
         try {
@@ -16,9 +16,9 @@ public class ReflectUtils {
             idField.setAccessible(true);
             idField.set(resource, id);
         } catch (NoSuchFieldException e) {
-            logger.error("Could not find 'id' field in class [" + clazz.getName() + "]");
+            logger.error("Could not find 'id' field in class [{}]", clazz.getName());
         } catch (IllegalAccessException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -29,10 +29,10 @@ public class ReflectUtils {
             idField.setAccessible(true);
             id = (String) idField.get(resource);
         } catch (NoSuchFieldException e) {
-            logger.error("Could not find 'id' field in class [" + clazz.getName() + "]");
+            logger.error("Could not find 'id' field in class [{}]", clazz.getName());
             throw e;
         } catch (IllegalAccessException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
         return id;
     }

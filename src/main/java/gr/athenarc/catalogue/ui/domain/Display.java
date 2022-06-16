@@ -3,18 +3,18 @@ package gr.athenarc.catalogue.ui.domain;
 public class Display {
 
     String placement;
-    Integer order;
-    Boolean isVisible;
+    Integer order = 0;
+    Boolean visible = true;
     Boolean hasBorder = false;
     String cssClasses;
     String style;
 
     public Display() {}
 
-    public Display(String placement, Integer order, Boolean isVisible, Boolean hasBorder, String cssClasses, String style) {
+    public Display(String placement, Integer order, Boolean visible, Boolean hasBorder, String cssClasses, String style) {
         this.placement = placement;
         this.order = order;
-        this.isVisible = isVisible;
+        this.visible = visible;
         this.hasBorder = hasBorder;
         this.cssClasses = cssClasses;
         this.style = style;
@@ -37,11 +37,11 @@ public class Display {
     }
 
     public Boolean getVisible() {
-        return isVisible;
+        return visible;
     }
 
     public void setVisible(Boolean visible) {
-        isVisible = visible;
+        this.visible = visible;
     }
 
     public Boolean getHasBorder() {

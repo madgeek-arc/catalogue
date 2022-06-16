@@ -5,8 +5,8 @@ import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.*;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,18 +16,18 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileSavedFormsService implements FormsService, ModelService {
+public class JsonFileFormsService implements FormsService, ModelService {
 
-    private static final Logger logger = LogManager.getLogger(JsonFileSavedFormsService.class);
+    private static final Logger logger = LoggerFactory.getLogger(JsonFileFormsService.class);
 
-    private static final String FILENAME_GROUPS = "groups.json";
+    private static final String FILENAME_SECTIONS = "sections.json";
     private static final String FILENAME_FIELDS = "fields.json";
     private static final String FILENAME_MODELS = "models.json";
 
     private final String directory;
     private String jsonObject;
 
-    public JsonFileSavedFormsService(String directory) {
+    public JsonFileFormsService(String directory) {
         if ("".equals(directory)) {
             directory = "catalogue/uiElements";
             logger.warn("'ui.elements.json.dir' was not set. Using default: " + directory);
@@ -35,16 +35,16 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         this.directory = directory;
         File dir = new File(directory);
         if (dir.mkdirs()) {
-            logger.error(String.format("Directory for UI elements has been created: [%s]. Please place the necessary files inside...", dir.getAbsolutePath()));
+            logger.error("Directory for UI elements has been created: [{}]. Please place the necessary files inside...", dir.getAbsolutePath());
         }
     }
 
     protected String readFile(String filename) throws IOException {
         File file = new File(filename);
         if (!file.exists()) {
-            logger.error(String.format("File [%s] does not exist", file.getAbsolutePath()));
+            logger.error("File [{}] does not exist", file.getAbsolutePath());
         } else if (!file.canRead()) {
-            logger.error(String.format("File [%s] is not readable", file.getAbsolutePath()));
+            logger.error("File [{}] is not readable", file.getAbsolutePath());
         }
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             StringBuilder sb = new StringBuilder();
@@ -58,18 +58,18 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
         }
     }
 
-    protected List<Group> readGroups(String filepath) {
-        List<Group> groups = null;
+    protected List<Section> readSections(String filepath) {
+        List<Section> sections = null;
         try {
             jsonObject = readFile(filepath);
             ObjectMapper objectMapper = new ObjectMapper();
-            Group[] groupsArray = objectMapper.readValue(jsonObject, Group[].class);
-            groups = new ArrayList<>(Arrays.asList(groupsArray));
+            Section[] sectionsArray = objectMapper.readValue(jsonObject, Section[].class);
+            sections = new ArrayList<>(Arrays.asList(sectionsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
-        return groups;
+        return sections;
     }
 
     protected List<UiField> readFields(String filepath) {
@@ -80,7 +80,7 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
             UiField[] fieldsArray = objectMapper.readValue(jsonObject, UiField[].class);
             fields = new ArrayList<>(Arrays.asList(fieldsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return fields;
@@ -94,36 +94,36 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
             Model[] fieldsArray = objectMapper.readValue(jsonObject, Model[].class);
             models = new ArrayList<>(Arrays.asList(fieldsArray));
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
 
         return models;
     }
 
     @Override
-    public Group addGroup(Group group) {
-        throw new UnsupportedOperationException("To add a group contact the administrator.");
+    public Section addSection(Section section) {
+        throw new UnsupportedOperationException("To add a section contact the administrator.");
     }
 
     @Override
-    public Group updateGroup(String id, Group group) {
-        throw new UnsupportedOperationException("To update a group contact the administrator.");
+    public Section updateSection(String id, Section section) {
+        throw new UnsupportedOperationException("To update a section contact the administrator.");
     }
 
     @Override
-    public Group getGroup(String groupId) {
-        List<Group> allGroups = readGroups(directory + "/" + FILENAME_GROUPS);
-        for (Group group : allGroups) {
-            if (group.getId().equals(groupId)) {
-                return group;
+    public Section getSection(String sectionId) {
+        List<Section> allSections = readSections(directory + "/" + FILENAME_SECTIONS);
+        for (Section section : allSections) {
+            if (section.getId().equals(sectionId)) {
+                return section;
             }
         }
         return null;
     }
 
     @Override
-    public void deleteGroup(String fieldId) throws ResourceNotFoundException {
-        throw new UnsupportedOperationException("To delete a group contact the administrator.");
+    public void deleteSection(String fieldId) throws ResourceNotFoundException {
+        throw new UnsupportedOperationException("To delete a section contact the administrator.");
     }
 
     @Override
@@ -211,130 +211,30 @@ public class JsonFileSavedFormsService implements FormsService, ModelService {
     }
 
     @Override
-    public List<Group> getGroups() {
-        return readGroups(directory + "/" + FILENAME_GROUPS);
+    public List<Section> getSections() {
+        return readSections(directory + "/" + FILENAME_SECTIONS);
     }
 
     @Override
-    public List<Group> importGroups(List<Group> groups) {
+    public List<Section> importSections(List<Section> sections) {
         throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
     @Override
-    public List<Group> updateGroups(List<Group> groups) {
+    public List<Section> updateSections(List<Section> sections) {
         throw new UnsupportedOperationException("Please contact the administrator.");
     }
 
     @Override
-    public Survey addSurvey(Survey survey) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Survey updateSurvey(String id, Survey survey) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void deleteSurvey(String surveyId) throws ResourceNotFoundException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Survey getSurvey(String id) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<Survey> getSurveys() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<FieldGroup> createFieldGroups(List<UiField> fields) {
-        Map<String, FieldGroup> topLevelFieldGroupMap;
-        Set<String> fieldIds = fields.stream().map(UiField::getId).collect(Collectors.toSet());
-        topLevelFieldGroupMap = fields
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(field -> field.getParentId() == null)
-                .filter(field -> "composite".equals(field.getTypeInfo().getType()))
-                .map(FieldGroup::new)
-                .collect(Collectors.toMap(f -> (f.getField().getId()), Function.identity()));
-
-        List<UiField> leftOvers = sortFieldsByParentId(fields);
-
-        Map<String, FieldGroup> tempFieldGroups = new HashMap<>();
-        tempFieldGroups.putAll(topLevelFieldGroupMap);
-        int retries = 0;
-        do {
-            retries++;
-            fields = leftOvers;
-            leftOvers = new ArrayList<>();
-            for (UiField field : fields) {
-                FieldGroup fieldGroup = new FieldGroup(field, new ArrayList<>());
-
-                // Fix problem when Parent ID is defined but Field with that ID is not contained to this group of fields.
-                if (!fieldIds.contains(field.getParentId())) {
-                    field = new UiField(field);
-                    field.setParentId(null);
-                }
-
-                if (field.getParentId() == null) {
-                    topLevelFieldGroupMap.putIfAbsent(field.getId(), fieldGroup);
-                } else if (topLevelFieldGroupMap.containsKey(field.getParentId())) {
-                    topLevelFieldGroupMap.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
-                    tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
-                } else if (tempFieldGroups.containsKey(field.getParentId())) {
-                    tempFieldGroups.get(field.getParentId()).getSubFieldGroups().add(fieldGroup);
-                    tempFieldGroups.putIfAbsent(field.getId(), fieldGroup);
-                } else {
-                    leftOvers.add(field);
-                }
-            }
-
-        } while (!leftOvers.isEmpty() && retries < 10);
-        return new ArrayList<>(topLevelFieldGroupMap.values());
-    }
-
-    @Override
-    public List<UiField> getFieldsByGroup(String groupId) {
+    public List<UiField> getFieldsBySection(String sectionId) {
         List<UiField> allFields = getFields();
 
         return allFields
                 .stream()
                 .filter(field -> field.getForm() != null)
                 .filter(field -> field.getForm().getGroup() != null)
-                .filter(field -> field.getForm().getGroup().equals(groupId))
+                .filter(field -> field.getForm().getGroup().equals(sectionId))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public SurveyModel getSurveyModel(String surveyId) {
-        SurveyModel model = new SurveyModel();
-        model.setSurveyId(surveyId);
-        Chapter chapter = new Chapter();
-        chapter.setName("Chapter");
-        model.getChapterModels().add(new ChapterModel(chapter, getModel()));
-        return model;
-    }
-
-    @Override
-    public List<GroupedFields<UiField>> getSurveyModelFlat(String surveyId) {
-        return getFlatModel();
-    }
-
-    @Override
-    public Map<String, List<UiField>> getChapterFieldsMap(String surveyId) {
-        Map<String, List<UiField>> chapterFieldsMap = new HashMap<>();
-        List<UiField> fields = new ArrayList<>();
-
-        for (Group group : getGroups()) {
-            fields.addAll(getFieldsByGroup(group.getId()));
-        }
-        chapterFieldsMap.put("default", fields);
-
-        return chapterFieldsMap;
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
