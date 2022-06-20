@@ -1,7 +1,10 @@
 package gr.athenarc.catalogue.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.Display;
+import gr.athenarc.catalogue.ui.domain.Form;
+import gr.athenarc.catalogue.ui.domain.UiFieldDisplay;
+import gr.athenarc.catalogue.ui.domain.UiFieldForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,24 +25,21 @@ public class JsonFileFormDisplayService implements FormDisplayService {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonFileFormDisplayService.class);
 
-    @Value("${ui.elements.json.form:}")
-    private String formsDirectory;
-    @Value("${ui.elements.json.display:}")
-    private String displayDirectory;
+    private final String formsDirectory;
+    private final String displayDirectory;
 
-    public JsonFileFormDisplayService() {
-        if ("".equals(formsDirectory)) {
-            formsDirectory = "catalogue/uiElements";
+    public JsonFileFormDisplayService(@Value("${ui.elements.json.form:}") String formsDirectory,
+                                      @Value("${ui.elements.json.display:}") String displayDirectory) {
+        if (formsDirectory == null || "".equals(formsDirectory)) {
+            formsDirectory = null;
             logger.warn("'ui.elements.json.form' was not set. Using default: " + formsDirectory);
         }
-        if ("".equals(displayDirectory)) {
-            displayDirectory = "catalogue/uiElements";
+        if (displayDirectory == null || "".equals(displayDirectory)) {
+            displayDirectory = null;
             logger.warn("'ui.elements.json.display' was not set. Using default: " + displayDirectory);
         }
-//        File dir = new File(formsDirectory);
-//        if (dir.mkdirs()) {
-//            logger.error(String.format("Directory for UI elements has been created: [%s]. Please place the necessary files inside...", dir.getAbsolutePath()));
-//        }
+        this.formsDirectory = formsDirectory;
+        this.displayDirectory = displayDirectory;
     }
 
     @Override
@@ -92,6 +92,9 @@ public class JsonFileFormDisplayService implements FormDisplayService {
     }
 
     protected <T> T[] readObjects(String filepath, Class<T[]> clazz) {
+        if (filepath == null || "".equals(filepath)) {
+            logger.warn("Filepath not set...");
+        }
         T[] objects = null;
         try {
             String jsonObject = readFile(filepath);
