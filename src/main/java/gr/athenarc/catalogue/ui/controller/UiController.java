@@ -3,7 +3,6 @@ package gr.athenarc.catalogue.ui.controller;
 import gr.athenarc.catalogue.ClasspathUtils;
 import gr.athenarc.catalogue.config.CatalogueLibConfiguration;
 import gr.athenarc.catalogue.ui.domain.*;
-import gr.athenarc.catalogue.ui.service.FormsService;
 import gr.athenarc.catalogue.ui.service.ModelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,14 +18,12 @@ import java.util.stream.Collectors;
 @RequestMapping("ui")
 public class UiController {
 
-    private final FormsService formsService;
     private final ModelService modelService;
     private final CatalogueLibConfiguration catalogueLibConfiguration;
 
     @Autowired
-    public UiController(FormsService formsService, ModelService modelService,
+    public UiController(ModelService modelService,
                         CatalogueLibConfiguration catalogueLibConfiguration) {
-        this.formsService = formsService;
         this.modelService = modelService;
         this.catalogueLibConfiguration = catalogueLibConfiguration;
     }

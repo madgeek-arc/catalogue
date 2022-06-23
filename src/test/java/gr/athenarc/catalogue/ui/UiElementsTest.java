@@ -1,7 +1,7 @@
 package gr.athenarc.catalogue.ui;
 
 import gr.athenarc.catalogue.ui.domain.*;
-import gr.athenarc.catalogue.ui.service.FormsService;
+import gr.athenarc.catalogue.ui.service.ModelService;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import java.util.List;
 class UiElementsTest {
 
     @Autowired
-    FormsService formsService;
+    ModelService modelService;
 
     final String fieldId = "f-test";
     final String sectionId = "g-test";
@@ -26,68 +26,24 @@ class UiElementsTest {
 
     @Test
     @Order(1)
-    void addField() {
-        UiField field = createField();
-        UiField res = formsService.addField(field);
-        assert res.equals(field);
+    void addModel() {
+        Model model = createModel();
+        Model res = modelService.add(model);
+        assert res.equals(model);
     }
 
     @Test
     @Order(2)
-    void updateField() {
-        UiField field = formsService.getField(fieldId);
-        UiField res = formsService.updateField(fieldId, field);
-        assert res.equals(field);
+    void updateModel() {
+        Model model = modelService.get(modelId);
+        Model res = modelService.update(modelId, model);
+        assert res.equals(model);
     }
 
     @Test
     @Order(3)
-    void addSection() {
-        Section section = createSection();
-        Section res = formsService.addSection(section);
-        assert res.equals(section);
-    }
-
-    @Test
-    @Order(4)
-    void updateSection() {
-        Section section = formsService.getSection(sectionId);
-        Section res = formsService.updateSection(sectionId, section);
-        assert res.equals(section);
-    }
-
-    @Test
-    @Order(5)
-    void addModel() {
-        Model model = createModel();
-        Model res = formsService.add(model);
-        assert res.equals(model);
-    }
-
-    @Test
-    @Order(6)
-    void updateModel() {
-        Model model = formsService.get(modelId);
-        Model res = formsService.update(modelId, model);
-        assert res.equals(model);
-    }
-
-    @Test
-    @Order(7)
     void deleteModel() {
-        formsService.delete(modelId);
-    }
-
-    @Test
-    @Order(8)
-    void deleteSection() {
-        formsService.deleteSection(sectionId);
-    }
-
-    @Test
-    @Order(9)
-    void deleteField() {
-        formsService.deleteField(fieldId);
+        modelService.delete(modelId);
     }
 
     UiField createField() {
