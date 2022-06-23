@@ -5,6 +5,7 @@ import gr.athenarc.catalogue.ui.domain.Display;
 import gr.athenarc.catalogue.ui.domain.Form;
 import gr.athenarc.catalogue.ui.domain.UiFieldDisplay;
 import gr.athenarc.catalogue.ui.domain.UiFieldForm;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,8 +49,28 @@ public class JsonFileFormDisplayService implements FormDisplayService {
     }
 
     @Override
+    public UiFieldForm saveForm(String fieldId, Form form) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
+    public void deleteForm(String fieldId) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
     public Display getDisplay(String fieldId) {
         return null;
+    }
+
+    @Override
+    public UiFieldDisplay saveDisplay(String fieldId, Display display) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
+    public void deleteDisplay(String fieldId) {
+        throw new NotImplementedException("Method not supported..");
     }
 
     @Override
