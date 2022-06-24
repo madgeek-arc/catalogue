@@ -4,6 +4,7 @@ import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Paging;
 import eu.openminted.registry.core.domain.Resource;
+import eu.openminted.registry.core.service.SearchService;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -32,5 +33,7 @@ public interface GenericItemService {
     Class<?> getClassFromResourceType(String resourceTypeName);
 
     Resource searchResource(String resourceTypeName, String id, boolean throwOnNull);
+
+    Resource searchResource(String resourceTypeName, SearchService.KeyValue... keyValues);
 
 }

@@ -228,6 +228,16 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         return res;
     }
 
+    @Override
+    public Resource searchResource(String resourceTypeName, SearchService.KeyValue... keyValues) {
+        Resource res = null;
+        try {
+            res = searchService.searchId(resourceTypeName, keyValues);
+        } catch (UnknownHostException e) {
+            logger.error(e.getMessage(), e);
+        }
+        return res;
+    }
 
     public Map<String, List<String>> getBrowseByMap() {
         return browseByMap;
