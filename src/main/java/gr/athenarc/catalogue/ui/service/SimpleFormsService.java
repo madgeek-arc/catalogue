@@ -162,12 +162,14 @@ public class SimpleFormsService implements ModelService {
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        return genericItemService.getResults(filter);
+        Browsing<Model> models = genericItemService.getResults(filter);
+        models.getResults().forEach(this::enrichModel);
+        return models;
     }
 
     void enrichModel(Model model) { // TODO: refactor
-        this.formMap = formDisplayService.getUiFieldIdFormMap();
-        this.displayMap = formDisplayService.getUiFieldIdDisplayMap();
+        this.formMap = formDisplayService.getUiFieldIdFormMap(model.getId());
+        this.displayMap = formDisplayService.getUiFieldIdDisplayMap(model.getId());
         if (model != null && model.getSections() != null) {
             for (Section section : model.getSections()) {
                 enrichFields(section.getFields());
@@ -192,10 +194,10 @@ public class SimpleFormsService implements ModelService {
     }
 
     private Form getFieldForm(String fieldId) {
-        return formMap.get(fieldId);
+        return formMap != null ? formMap.get(fieldId) : null;
     }
 
     private Display getFieldDisplay(String fieldId) {
-        return displayMap.get(fieldId);
+        return displayMap != null ? displayMap.get(fieldId) : null;
     }
 }

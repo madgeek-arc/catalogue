@@ -19,17 +19,17 @@ public class UiFieldsSourceConfiguration {
 
     @Bean
     @ConditionalOnProperty(
-            name = "ui.elements.json.enabled",
+            name = "ui.elements.json.model.enabled",
             havingValue = "true",
             matchIfMissing = false)
-    ModelService jsonFileSavedUiFieldsService(@Value("${ui.elements.json.dir}") String jsonDir) {
+    ModelService jsonFileSavedUiFieldsService(@Value("${ui.elements.json.model.dir}") String jsonDir) {
         return new JsonFileFormsService(jsonDir);
     }
 
     @Bean
     @Autowired
     @ConditionalOnProperty(
-            name = "ui.elements.json.enabled",
+            name = "ui.elements.json.model.enabled",
             havingValue = "false",
             matchIfMissing = true)
     ModelService simpleUiFieldService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService,
@@ -37,5 +37,25 @@ public class UiFieldsSourceConfiguration {
                                       ResourceTypeService resourceTypeService, ParserService parserService,
                                       IdGenerator<String> idGenerator, FormDisplayService formDisplayService) {
         return new SimpleFormsService(genericItemService, idGenerator, searchService, resourceService, resourceTypeService, parserService, formDisplayService);
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            name = "ui.elements.json.form-display.enabled",
+            havingValue = "true",
+            matchIfMissing = false)
+    FormDisplayService jsonFileFormDisplayService(@Value("${ui.elements.json.form-display.forms-dir}") String formsDir,
+                                                  @Value("${ui.elements.json.form-display.forms-dir}") String displaysDir) {
+        return new JsonFileFormDisplayService(formsDir, displaysDir);
+    }
+
+    @Bean
+    @Autowired
+    @ConditionalOnProperty(
+            name = "ui.elements.json.form-display.enabled",
+            havingValue = "false",
+            matchIfMissing = true)
+    FormDisplayService registryFormDisplayService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService) {
+        return new RegistryFormDisplayService(genericItemService);
     }
 }

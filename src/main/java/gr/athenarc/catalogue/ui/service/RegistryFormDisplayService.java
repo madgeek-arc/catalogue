@@ -22,32 +22,32 @@ public class RegistryFormDisplayService implements FormDisplayService {
     }
 
     @Override
-    public Form getForm(String fieldId) {
+    public Form getForm(String fieldId, String modelId) {
         return genericItemService.get(camelCaseToSnakeCase(Form.class.getName()), fieldId);
     }
 
     @Override
-    public UiFieldForm saveForm(String fieldId, Form form) {
+    public UiFieldForm saveForm(String fieldId, String modelId, Form form) {
         return null;
     }
 
     @Override
-    public void deleteForm(String fieldId) {
+    public void deleteForm(String fieldId, String modelId) {
 
     }
 
     @Override
-    public Display getDisplay(String fieldId) {
+    public Display getDisplay(String fieldId, String modelId) {
         return null;
     }
 
     @Override
-    public UiFieldDisplay saveDisplay(String fieldId, Display display) {
+    public UiFieldDisplay saveDisplay(String fieldId, String modelId, Display display) {
         return null;
     }
 
     @Override
-    public void deleteDisplay(String fieldId) {
+    public void deleteDisplay(String fieldId, String modelId) {
 
     }
 
@@ -62,12 +62,12 @@ public class RegistryFormDisplayService implements FormDisplayService {
     }
 
     @Override
-    public Map<String, Form> getUiFieldIdFormMap() {
+    public Map<String, Form> getUiFieldIdFormMap(String modelId) {
         return null;
     }
 
     @Override
-    public Map<String, Display> getUiFieldIdDisplayMap() {
+    public Map<String, Display> getUiFieldIdDisplayMap(String modelId) {
         return null;
     }
 
