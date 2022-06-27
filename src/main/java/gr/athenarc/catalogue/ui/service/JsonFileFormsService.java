@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.Model;
+import gr.athenarc.catalogue.ui.domain.Section;
+import gr.athenarc.catalogue.ui.domain.UiField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,15 +15,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class JsonFileFormsService implements FormsService, ModelService {
+public class JsonFileFormsService implements ModelService {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonFileFormsService.class);
 
-    private static final String FILENAME_SECTIONS = "sections.json";
-    private static final String FILENAME_FIELDS = "fields.json";
     private static final String FILENAME_MODELS = "models.json";
 
     private final String directory;
@@ -98,143 +97,6 @@ public class JsonFileFormsService implements FormsService, ModelService {
         }
 
         return models;
-    }
-
-    @Override
-    public Section addSection(Section section) {
-        throw new UnsupportedOperationException("To add a section contact the administrator.");
-    }
-
-    @Override
-    public Section updateSection(String id, Section section) {
-        throw new UnsupportedOperationException("To update a section contact the administrator.");
-    }
-
-    @Override
-    public Section getSection(String sectionId) {
-        List<Section> allSections = readSections(directory + "/" + FILENAME_SECTIONS);
-        for (Section section : allSections) {
-            if (section.getId().equals(sectionId)) {
-                return section;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void deleteSection(String fieldId) throws ResourceNotFoundException {
-        throw new UnsupportedOperationException("To delete a section contact the administrator.");
-    }
-
-    @Override
-    public UiField addField(UiField field) {
-        throw new UnsupportedOperationException("To add a field contact the administrator.");
-    }
-
-    @Override
-    public UiField updateField(String id, UiField field) {
-        throw new UnsupportedOperationException("To update a field contact the administrator.");
-    }
-
-    @Override
-    public void deleteField(String fieldId) {
-        throw new UnsupportedOperationException("To delete a field contact the administrator.");
-    }
-
-    @Override
-    public Browsing<UiField> browseFields(FacetFilter filter) {
-        throw new UnsupportedOperationException("Browsing is not supported. Please use getFields() method instead.");
-    }
-
-    @Override
-    public UiField getField(String id) {
-        List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
-        for (UiField field : allFields) {
-            if (Objects.equals(field.getId(), id)) {
-                return field;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public List<UiField> getFields() { // TODO: refactor
-        List<UiField> allFields = readFields(directory + "/" + FILENAME_FIELDS);
-
-        Map<String, UiField> fieldMap = new HashMap<>();
-        for (UiField field : allFields) {
-            fieldMap.put(field.getId(), field);
-        }
-        for (UiField f : allFields) {
-            if (f.getForm().getDependsOn() != null) {
-                // f -> dependsOn
-                FieldIdName dependsOn = f.getForm().getDependsOn();
-
-                // affectingField is the field that 'f' dependsOn
-                // meaning the field that affects 'f'
-                UiField affectingField = fieldMap.get(dependsOn.getId());
-                dependsOn.setName(affectingField.getName());
-
-                FieldIdName affects = new FieldIdName(f.getId(), f.getName());
-                if (affectingField.getForm().getAffects() == null) {
-                    affectingField.getForm().setAffects(new ArrayList<>());
-                }
-                affectingField.getForm().getAffects().add(affects);
-
-            }
-        }
-
-        for (UiField field : allFields) {
-            String accessPath = field.getName();
-            UiField parentField = field;
-            while (parentField != null && parentField.getParent() != null) {
-                accessPath = String.join(".", parentField.getParent(), accessPath);
-                if (parentField.getParentId() == null) {
-                    break;
-                }
-                parentField = getField(parentField.getParentId());
-            }
-
-            field.setAccessPath(accessPath);
-        }
-        return allFields;
-    }
-
-    @Override
-    public List<UiField> importFields(List<UiField> fields) {
-        throw new UnsupportedOperationException("Please contact the administrator.");
-    }
-
-    @Override
-    public List<UiField> updateFields(List<UiField> fields) {
-        throw new UnsupportedOperationException("Please contact the administrator.");
-    }
-
-    @Override
-    public List<Section> getSections() {
-        return readSections(directory + "/" + FILENAME_SECTIONS);
-    }
-
-    @Override
-    public List<Section> importSections(List<Section> sections) {
-        throw new UnsupportedOperationException("Please contact the administrator.");
-    }
-
-    @Override
-    public List<Section> updateSections(List<Section> sections) {
-        throw new UnsupportedOperationException("Please contact the administrator.");
-    }
-
-    @Override
-    public List<UiField> getFieldsBySection(String sectionId) {
-        List<UiField> allFields = getFields();
-
-        return allFields
-                .stream()
-                .filter(field -> field.getForm() != null)
-                .filter(field -> field.getForm().getGroup() != null)
-                .filter(field -> field.getForm().getGroup().equals(sectionId))
-                .collect(Collectors.toList());
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {

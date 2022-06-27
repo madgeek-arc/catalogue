@@ -10,13 +10,19 @@ import java.util.Map;
 
 public interface FormDisplayService {
 
-    Form getForm(String fieldId);
-    Display getDisplay(String fieldId);
+    Form getForm(String modelId, String fieldId);
+    UiFieldForm saveForm(String modelId, String fieldId, Form form);
+    void deleteForm(String modelId, String fieldId);
+
+    Display getDisplay(String modelId, String fieldId);
+    UiFieldDisplay saveDisplay(String modelId, String fieldId, Display display);
+    void deleteDisplay(String modelId, String fieldId);
+
 
     List<UiFieldForm> getForms();
     List<UiFieldDisplay> getDisplays();
 
-    Map<String, Form> getUiFieldIdFormMap();
-    Map<String, Display> getUiFieldIdDisplayMap();
+    Map<String, Form> getUiFieldIdFormMap(String modelId);
+    Map<String, Display> getUiFieldIdDisplayMap(String modelId);
 
 }

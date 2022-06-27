@@ -5,10 +5,10 @@ import gr.athenarc.catalogue.ui.domain.Display;
 import gr.athenarc.catalogue.ui.domain.Form;
 import gr.athenarc.catalogue.ui.domain.UiFieldDisplay;
 import gr.athenarc.catalogue.ui.domain.UiFieldForm;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
 public class JsonFileFormDisplayService implements FormDisplayService {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonFileFormDisplayService.class);
@@ -43,13 +42,33 @@ public class JsonFileFormDisplayService implements FormDisplayService {
     }
 
     @Override
-    public Form getForm(String fieldId) {
+    public Form getForm(String modelId, String fieldId) {
         return null;
     }
 
     @Override
-    public Display getDisplay(String fieldId) {
+    public UiFieldForm saveForm(String modelId, String fieldId, Form form) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
+    public void deleteForm(String modelId, String fieldId) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
+    public Display getDisplay(String modelId, String fieldId) {
         return null;
+    }
+
+    @Override
+    public UiFieldDisplay saveDisplay(String modelId, String fieldId, Display display) {
+        throw new NotImplementedException("Method not supported..");
+    }
+
+    @Override
+    public void deleteDisplay(String modelId, String fieldId) {
+        throw new NotImplementedException("Method not supported..");
     }
 
     @Override
@@ -63,13 +82,19 @@ public class JsonFileFormDisplayService implements FormDisplayService {
     }
 
     @Override
-    public Map<String, Form> getUiFieldIdFormMap() {
-        return getForms().stream().collect(Collectors.toMap(UiFieldForm::getId, UiFieldForm::getForm));
+    public Map<String, Form> getUiFieldIdFormMap(String modelId) {
+        return getForms()
+                .stream()
+                .filter(form -> form.getModelId().equals(modelId))
+                .collect(Collectors.toMap(UiFieldForm::getId, UiFieldForm::getForm));
     }
 
     @Override
-    public Map<String, Display> getUiFieldIdDisplayMap() {
-        return getDisplays().stream().collect(Collectors.toMap(UiFieldDisplay::getId, UiFieldDisplay::getDisplay));
+    public Map<String, Display> getUiFieldIdDisplayMap(String modelId) {
+        return getDisplays()
+                .stream()
+                .filter(form -> form.getModelId().equals(modelId))
+                .collect(Collectors.toMap(UiFieldDisplay::getId, UiFieldDisplay::getDisplay));
     }
 
     protected String readFile(String filename) throws IOException {

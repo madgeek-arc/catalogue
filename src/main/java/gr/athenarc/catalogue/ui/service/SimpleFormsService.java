@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SimpleFormsService implements FormsService, ModelService {
+public class SimpleFormsService implements ModelService {
 
     private static final Logger logger = LoggerFactory.getLogger(SimpleFormsService.class);
     private static final String FIELD_RESOURCE_TYPE_NAME = "field";
@@ -55,149 +55,6 @@ public class SimpleFormsService implements FormsService, ModelService {
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
         this.formDisplayService = formDisplayService;
-    }
-
-    @Override
-    public UiField addField(UiField field) {
-        field = add(field, FIELD_RESOURCE_TYPE_NAME);
-        return field;
-    }
-
-    @Override
-    public UiField updateField(String id, UiField field) throws ResourceNotFoundException {
-        field = update(id, field, FIELD_RESOURCE_TYPE_NAME);
-        return field;
-    }
-
-    @Override
-    public void deleteField(String fieldId) throws ResourceNotFoundException {
-        delete(fieldId, FIELD_RESOURCE_TYPE_NAME);
-    }
-
-    @Override
-    public UiField getField(String id) {
-        UiField field = genericItemService.get(FIELD_RESOURCE_TYPE_NAME, id);
-        setFormDependsOnName(field);
-        return field;
-    }
-
-    @Override
-    public Browsing<UiField> browseFields(FacetFilter filter) {
-        Browsing<UiField> results = genericItemService.getResults(filter);
-        for (UiField field : results.getResults()) {
-            setFormDependsOnName(field);
-        }
-        return results;
-    }
-
-    @Override
-    public List<UiField> getFields() {
-        FacetFilter ff = new FacetFilter();
-        ff.setQuantity(10000);
-        ff.setResourceType(FIELD_RESOURCE_TYPE_NAME);
-        return browseFields(ff).getResults();
-    }
-
-    @Override
-    public List<UiField> importFields(List<UiField> fields) {
-        List<UiField> imported = new ArrayList<>();
-        for (UiField field : fields) {
-            try {
-                getField(field.getId());
-                logger.info("Could not import UiField: [id={}] - Already exists", field.getId());
-            } catch (ResourceNotFoundException e) {
-                logger.info("Importing UiField: [id={}] [name={}]", field.getId(), field.getName());
-                imported.add(addField(field));
-            }
-        }
-        return imported;
-    }
-
-    @Override
-    public List<UiField> updateFields(List<UiField> fields) {
-        List<UiField> updated = new ArrayList<>();
-        for (UiField field : fields) {
-            try {
-                getField(field.getId());
-                logger.info("Updating UiField: [id={}] [name={}]", field.getId(), field.getName());
-                updated.add(updateField(field.getId(), field));
-            } catch (ResourceNotFoundException e) {
-                logger.info("Could not update UiField: [id={}] - Not Found", field.getId());
-            }
-        }
-        return updated;
-    }
-
-    @Override
-    public Section addSection(Section section) {
-        section = add(section, SECTION_RESOURCE_TYPE_NAME);
-        return section;
-    }
-
-    @Override
-    public Section updateSection(String id, Section section) {
-        section = update(id, section, SECTION_RESOURCE_TYPE_NAME);
-        return section;
-    }
-
-    @Override
-    public void deleteSection(String sectionId) throws ResourceNotFoundException {
-        delete(sectionId, SECTION_RESOURCE_TYPE_NAME);
-    }
-
-    @Override
-    public Section getSection(String id) {
-        return genericItemService.get(SECTION_RESOURCE_TYPE_NAME, id);
-    }
-
-    @Override
-    public List<Section> getSections() {
-        FacetFilter ff = new FacetFilter();
-        ff.setQuantity(10000);
-        ff.setResourceType(SECTION_RESOURCE_TYPE_NAME);
-        return (List) genericItemService.getResults(ff).getResults();
-    }
-
-    @Override
-    public List<Section> importSections(List<Section> sections) {
-        List<Section> imported = new ArrayList<>();
-        for (Section section : sections) {
-            try {
-                getField(section.getId());
-                logger.info("Could not import Section: [id={}] - Already exists", section.getId());
-            } catch (ResourceNotFoundException e) {
-                logger.info("Importing Section: [id={}] [name={}]", section.getId(), section.getName());
-                imported.add(addSection(section));
-            }
-        }
-        return imported;
-    }
-
-    @Override
-    public List<Section> updateSections(List<Section> sections) {
-        List<Section> updated = new ArrayList<>();
-        for (Section section : sections) {
-            try {
-                getField(section.getId());
-                logger.info("Updating Section: [id={}] [name={}]", section.getId(), section.getName());
-                updated.add(updateSection(section.getId(), section));
-            } catch (ResourceNotFoundException e) {
-                logger.info("Could not update Section: [id={}] - Not Found", section.getId());
-            }
-        }
-        return updated;
-    }
-
-    @Override
-    public List<UiField> getFieldsBySection(String sectionId) {
-        FacetFilter filter = new FacetFilter();
-        filter.setResourceType(FIELD_RESOURCE_TYPE_NAME);
-        filter.setQuantity(10000);
-        filter.addFilter("form_section", sectionId);
-
-        Browsing<UiField> allFields = browseFields(filter);
-
-        return allFields.getResults();
     }
 
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
@@ -305,12 +162,14 @@ public class SimpleFormsService implements FormsService, ModelService {
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        return genericItemService.getResults(filter);
+        Browsing<Model> models = genericItemService.getResults(filter);
+        models.getResults().forEach(this::enrichModel);
+        return models;
     }
 
     void enrichModel(Model model) { // TODO: refactor
-        this.formMap = formDisplayService.getUiFieldIdFormMap();
-        this.displayMap = formDisplayService.getUiFieldIdDisplayMap();
+        this.formMap = formDisplayService.getUiFieldIdFormMap(model.getId());
+        this.displayMap = formDisplayService.getUiFieldIdDisplayMap(model.getId());
         if (model != null && model.getSections() != null) {
             for (Section section : model.getSections()) {
                 enrichFields(section.getFields());
@@ -335,10 +194,10 @@ public class SimpleFormsService implements FormsService, ModelService {
     }
 
     private Form getFieldForm(String fieldId) {
-        return formMap.get(fieldId);
+        return formMap != null ? formMap.get(fieldId) : null;
     }
 
     private Display getFieldDisplay(String fieldId) {
-        return displayMap.get(fieldId);
+        return displayMap != null ? displayMap.get(fieldId) : null;
     }
 }

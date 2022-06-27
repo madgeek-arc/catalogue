@@ -1,57 +1,13 @@
 package gr.athenarc.catalogue.ui.service;
 
-import eu.openminted.registry.core.domain.Browsing;
-import eu.openminted.registry.core.domain.FacetFilter;
-import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.UiField;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface FormsService extends ModelService {
-
-    /**
-     * Fields Methods
-     */
-    UiField addField(UiField field);
-
-    UiField updateField(String id, UiField field) throws ResourceNotFoundException;
-
-    void deleteField(String fieldId) throws ResourceNotFoundException;
-
-    Browsing<UiField> browseFields(FacetFilter filter);
-
-    UiField getField(String id);
-
-    List<UiField> getFields();
-
-    List<UiField> importFields(List<UiField> fields);
-    List<UiField> updateFields(List<UiField> fields);
-
-    default void setFormDependsOnName(UiField field) {
-        if (field.getForm().getDependsOn() != null && field.getForm().getDependsOn().getId() != null) {
-            field.getForm().getDependsOn().setName(this.getField(field.getForm().getDependsOn().getId()).getName());
-        }
-    }
-
-    /**
-     * Sections Methods
-     */
-    // TODO: refactor crud for fields/Sections
-    Section addSection(Section section);
-
-    Section updateSection(String id, Section section);
-
-    void deleteSection(String fieldId) throws ResourceNotFoundException;
-
-    Section getSection(String id);
-
-    List<Section> getSections();
-
-    List<Section> importSections(List<Section> sections);
-
-    List<Section> updateSections(List<Section> sections);
-
 
     /**
      * Models Methods
