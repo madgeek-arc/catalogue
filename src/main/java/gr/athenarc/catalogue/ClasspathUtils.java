@@ -50,7 +50,7 @@ public class ClasspathUtils {
 
     public static Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
         Set<Class<?>> allClasses = ClasspathUtils.findAllClasses(packageName);
-        logger.info("Classes found in '" + packageName + "': " + allClasses.size());
+        logger.info("Classes found in '{}': {}", packageName, allClasses.size());
         Set<Class<?>> classes = new HashSet<>();
         for (Class<?> c : allClasses) {
             if (!c.isInterface()) {
@@ -79,7 +79,7 @@ public class ClasspathUtils {
         return null;
     }
 
-    private static Set<Class<?>> getSubclassesUsingReflections(String packageName, Class<Object> superClass) {
+    private static Set<Class<?>> getSubclassesUsingReflections(String packageName, Class superClass) {
         Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
         Set<Class<?>> classes;
         try {
