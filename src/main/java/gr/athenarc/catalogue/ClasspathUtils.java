@@ -1,5 +1,6 @@
 package gr.athenarc.catalogue;
 
+import org.reflections.ReflectionsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.reflections.Reflections;
@@ -46,7 +47,14 @@ public class ClasspathUtils {
 
     public static Set<Class<?>> findAllClasses(String packageName) {
         Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
-        return new HashSet<>(reflections.getSubTypesOf(Object.class));
+        Set<Class<?>> classes;
+        try {
+            classes = reflections.getSubTypesOf(Object.class);
+        } catch (ReflectionsException e) {
+            classes = new HashSet<>();
+            logger.warn("Package '{}' does not contain classes", packageName);
+        }
+        return new HashSet<>(classes);
     }
 
     public static Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
