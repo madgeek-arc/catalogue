@@ -41,20 +41,11 @@ public class ClasspathUtils {
     }
 
     public static Set<Class<?>> findAllEnums(String packageName) {
-        Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
-        return new HashSet<>(reflections.getSubTypesOf(Enum.class));
+        return new HashSet<>(getSubclassesUsingReflections(packageName, Enum.class));
     }
 
     public static Set<Class<?>> findAllClasses(String packageName) {
-        Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
-        Set<Class<?>> classes;
-        try {
-            classes = reflections.getSubTypesOf(Object.class);
-        } catch (ReflectionsException e) {
-            classes = new HashSet<>();
-            logger.warn("Package '{}' does not contain classes", packageName);
-        }
-        return new HashSet<>(classes);
+        return new HashSet<>(getSubclassesUsingReflections(packageName, Object.class));
     }
 
     public static Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
@@ -86,6 +77,18 @@ public class ClasspathUtils {
             logger.error(e.getMessage(), e);
         }
         return null;
+    }
+
+    private static Set<Class<?>> getSubclassesUsingReflections(String packageName, Class<Object> superClass) {
+        Reflections reflections = new Reflections(packageName, new SubTypesScanner(false));
+        Set<Class<?>> classes;
+        try {
+            classes = reflections.getSubTypesOf(superClass);
+        } catch (ReflectionsException e) {
+            classes = new HashSet<>();
+            logger.warn("Package '{}' does not contain classes", packageName);
+        }
+        return classes;
     }
 
     private ClasspathUtils() {
