@@ -170,6 +170,7 @@
 					</execution>
 				</executions>
 				<configuration>
+					<failOnNoSchemas>false</failOnNoSchemas>
 					<xjbSources>${basedir}/src/main/resources/xjb</xjbSources>
 					<sources>${basedir}/src/main/resources/schema</sources>
 					<packageName>gr.athenarc.xsd2java</packageName>
@@ -194,6 +195,15 @@
 				</dependencies>
 			</plugin>
 		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<excludes>
+					<exclude>**/registry.properties</exclude>
+				</excludes>
+			</resource>
+		</resources>
 	</build>
 
 </project>
