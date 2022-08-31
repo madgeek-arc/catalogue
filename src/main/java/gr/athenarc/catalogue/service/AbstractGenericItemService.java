@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -98,15 +99,25 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     @Override
     public <T> T add(String resourceTypeName, T resource) {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        resource = (T) objectMapper.convertValue(resource, clazz);
+        if (!clazz.isInstance(resource)) {
+            resource = (T) objectMapper.convertValue(resource, clazz);
+        }
 
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         Resource res = new Resource();
         res.setResourceTypeName(resourceTypeName);
         res.setResourceType(resourceType);
 
-        String id = UUID.randomUUID().toString();
-        ReflectUtils.setId(clazz, resource, id);
+        String id = null;
+        try {
+            id = ReflectUtils.getId(clazz, resource);
+        } catch (Exception e) {
+            logger.warn("Could not find field 'id'.", e);
+        }
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+            ReflectUtils.setId(clazz, resource, id);
+        }
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
         logger.info(LoggingUtils.addResource(resourceTypeName, id, resource));
@@ -116,7 +127,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     }
 
     @Override
-    public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException {
+    public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
 

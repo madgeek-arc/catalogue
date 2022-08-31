@@ -1,7 +1,6 @@
 package gr.athenarc.catalogue.controller;
 
 import eu.openminted.registry.core.controllers.GenericController;
-import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
 import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.exception.ServerError;

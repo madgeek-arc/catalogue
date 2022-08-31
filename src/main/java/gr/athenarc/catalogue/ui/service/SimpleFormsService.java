@@ -20,7 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SimpleFormsService implements ModelService {
@@ -78,6 +81,8 @@ public class SimpleFormsService implements ModelService {
             logger.error(e.getMessage(), e);
         } catch (ResourceNotFoundException e) {
             // skip
+        } catch (InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
         if (existing != null) {
             throw new ResourceAlreadyExistsException(id, resourceTypeName);
@@ -102,6 +107,8 @@ public class SimpleFormsService implements ModelService {
             existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
         } catch (NoSuchFieldException e) {
             logger.error(e.getMessage(), e);
+        } catch (InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
 
         logger.trace(LoggingUtils.updateResource(resourceTypeName, id, obj));

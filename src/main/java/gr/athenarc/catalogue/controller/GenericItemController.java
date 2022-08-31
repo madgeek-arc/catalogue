@@ -12,7 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping(path = "items")
@@ -37,7 +40,7 @@ public class GenericItemController {
     public <T> ResponseEntity<?> update(@PathVariable("id") String id,
                                         @RequestParam("resourceType") String resourceType,
                                         @RequestParam(value = "raw", defaultValue = "false") boolean raw,
-                                        @RequestBody T resource) throws NoSuchFieldException {
+                                        @RequestBody T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         T createdResource;
         createdResource = genericResourceService.update(resourceType, id, resource);
         return new ResponseEntity<>(createdResource, HttpStatus.OK);

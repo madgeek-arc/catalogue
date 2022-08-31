@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.UUID;
 
@@ -66,7 +67,7 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
     }
 
     @Override
-    public String updateRaw(String resourceTypeName, String id, String payload) throws NoSuchFieldException {
+    public String updateRaw(String resourceTypeName, String id, String payload) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
 

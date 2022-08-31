@@ -2,7 +2,7 @@ package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ClasspathUtils;
 import gr.athenarc.catalogue.config.CatalogueLibConfiguration;
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.service.ModelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

@@ -7,6 +7,7 @@ import eu.openminted.registry.core.domain.Resource;
 import eu.openminted.registry.core.service.SearchService;
 
 import javax.validation.constraints.NotNull;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public interface GenericItemService {
 
     <T> T add(String resourceTypeName, T resource);
 
-    <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException;
+    <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException;
 
     <T> T delete(String resourceTypeName, String id);
 

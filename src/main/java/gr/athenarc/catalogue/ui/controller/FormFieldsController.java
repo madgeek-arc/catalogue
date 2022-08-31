@@ -1,6 +1,9 @@
 package gr.athenarc.catalogue.ui.controller;
 
-import gr.athenarc.catalogue.ui.domain.*;
+import gr.athenarc.catalogue.ui.domain.Display;
+import gr.athenarc.catalogue.ui.domain.Form;
+import gr.athenarc.catalogue.ui.domain.UiFieldDisplay;
+import gr.athenarc.catalogue.ui.domain.UiFieldForm;
 import gr.athenarc.catalogue.ui.service.FormDisplayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

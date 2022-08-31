@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.InvocationTargetException;
+
 @RestController
 @RequestMapping("payloads")
 public class ResourcePayloadController {
@@ -39,7 +41,7 @@ public class ResourcePayloadController {
     @PutMapping("{id}")
     public <T> ResponseEntity<?> update(@PathVariable("id") String id,
                                         @RequestParam("resourceType") String resourceType,
-                                        @RequestBody String resource) throws NoSuchFieldException {
+                                        @RequestBody String resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         return new ResponseEntity<>(resourcePayloadService.updateRaw(resourceType, id, resource), createContentType(resourceType), HttpStatus.OK);
     }
 

@@ -1,10 +1,10 @@
 package gr.athenarc.catalogue;
 
+import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
+import org.reflections.scanners.SubTypesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
