@@ -39,7 +39,7 @@ public class FormFieldsController {
         return new ResponseEntity<>(formDisplayService.saveForm(model, field, form), HttpStatus.OK);
     }
 
-    @GetMapping("{model}/fields/{field}form")
+    @GetMapping("{model}/fields/{field}/form")
     public ResponseEntity<Form> getForm(@PathVariable("model") String model, @PathVariable("field") String field) {
         return new ResponseEntity<>(formDisplayService.getForm(model, field), HttpStatus.OK);
     }
