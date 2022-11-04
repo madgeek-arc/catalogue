@@ -15,7 +15,7 @@
 	<description>Catalogue project</description>
 	<properties>
 		<java.version>11</java.version>
-		<registry-core.version>2.4.4</registry-core.version>
+		<registry-core.version>2.4.6</registry-core.version>
 		<springfox.version>3.0.0</springfox.version>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
