@@ -8,10 +8,6 @@ import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import gr.athenarc.catalogue.ui.domain.Model;
-import gr.athenarc.catalogue.ui.domain.Section;
-import gr.athenarc.catalogue.ui.domain.UiField;
-import gr.athenarc.catalogue.ui.service.ModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +26,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     public final SearchService searchService;
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
-    public final ModelService modelService;
     public final ParserService parserPool;
     public final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -43,12 +38,10 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     protected AbstractGenericItemService(SearchService searchService,
                                          ResourceService resourceService,
                                          ResourceTypeService resourceTypeService,
-                                         ModelService modelService,
                                          ParserService parserPool) {
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
-        this.modelService = modelService;
         this.parserPool = parserPool;
     }
 
@@ -105,7 +98,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> T add(String resourceTypeName, T resource) {
-        resource = validate(resource, resourceTypeName);
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         if (!clazz.isInstance(resource)) {
             resource = (T) objectMapper.convertValue(resource, clazz);
@@ -136,7 +128,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
-        validate(resource, resourceTypeName);
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         resource = (T) objectMapper.convertValue(resource, clazz);
 
@@ -265,93 +256,5 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     public void setBrowseByMap(Map<String, List<String>> browseByMap) {
         this.browseByMap = browseByMap;
-    }
-
-    private <T> T validate(T resource, String resourceTypeName) {
-        FacetFilter ff = new FacetFilter();
-        ff.addFilter("resourceType", resourceTypeName);
-        List<Model> models = modelService.browse(ff).getResults();
-        if (models == null || models.size() != 1) {
-            throw new RuntimeException(String.format("Found more than one models for [resourceType=%s]", resourceTypeName));
-        }
-        Model model = models.get(0);
-        return (T) validateSections(resource, model.getSections());
-    }
-
-    private Object validateSections(Object obj, List<Section> sections) {
-        for (Section section : sections) {
-            if (section.getSubSections() != null) {
-                validateSections(obj, section.getSubSections());
-            }
-            if (section.getFields() != null) {
-                validateFields(obj, section.getFields(), true);
-            }
-        }
-        return obj;
-    }
-
-    private boolean validateFields(Object object, List<UiField> fields, boolean mandatory) {
-        boolean empty = true;
-        for (UiField field : fields) {
-            if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
-                if (object == null) {
-                    break;
-                } else if (object instanceof List) {
-                    for (Object ans : (List) object) {
-                        empty = empty && validateFields(((LinkedHashMap) ans).get(field.getName()), field.getSubFields(), field.getForm().getMandatory());
-                    }
-                } else {
-                    empty = validateFields(((LinkedHashMap) object).get(field.getName()), field.getSubFields(), field.getForm().getMandatory());
-                }
-
-                if ("composite".equals(field.getTypeInfo().getType()) && empty) {
-                    if (object instanceof LinkedHashMap) {
-                        ((LinkedHashMap) object).put(field.getName(), null);
-                    } else {
-                        object = null;
-                    }
-                }
-            }
-            if (mandatory && field.getForm().getMandatory()) {
-                checkMandatoryField(object, field);
-            }
-            if (containsValue(object)) {
-                empty = false;
-            }
-        }
-        return empty;
-    }
-
-    private void checkMandatoryField(Object answer, UiField field) {
-        if (answer == null) {
-            throw new RuntimeException(String.format("Mandatory field %s is empty.", field.getName()));
-        } else if (answer instanceof List) {
-            if (((List) answer).isEmpty()) {
-                throw new RuntimeException(String.format("Mandatory field %s is empty.", field.getName()));
-            }
-        } else if (((LinkedHashMap) answer).get(field.getName()) == null || ((LinkedHashMap) answer).get(field.getName()).equals("")) {
-            throw new RuntimeException(String.format("Mandatory field %s is empty.", field.getName()));
-        }
-    }
-
-    private boolean containsValue(Object obj) {
-        boolean contains = false;
-        if (obj instanceof LinkedHashMap) {
-            for (Object key : ((LinkedHashMap) obj).keySet()) {
-                if (((LinkedHashMap) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap) obj).get(key) instanceof List) {
-                    contains = contains || containsValue(((LinkedHashMap) obj).get(key));
-                } else if (((LinkedHashMap) obj).get(key) != null && !((LinkedHashMap) obj).get(key).equals("")) {
-                    return true;
-                }
-            }
-        } else if (obj instanceof List) {
-            for (Object item : (List) obj) {
-                contains = contains || containsValue(item);
-                if (contains) {
-                    break;
-                }
-            }
-        }
-        return contains;
     }
 }

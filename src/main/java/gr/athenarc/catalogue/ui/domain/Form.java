@@ -5,8 +5,8 @@ import java.util.List;
 
 public class Form {
 
-    FieldIdName dependsOn;
-    List<FieldIdName> affects = null;
+    FieldIdNameValue dependsOn;
+    List<FieldIdNameValue> affects = null;
     String group;
     StyledString description;
     StyledString suggestion;
@@ -19,19 +19,19 @@ public class Form {
     public Form() {
     }
 
-    public FieldIdName getDependsOn() {
+    public FieldIdNameValue getDependsOn() {
         return dependsOn;
     }
 
-    public void setDependsOn(FieldIdName dependsOn) {
+    public void setDependsOn(FieldIdNameValue dependsOn) {
         this.dependsOn = dependsOn;
     }
 
-    public List<FieldIdName> getAffects() {
+    public List<FieldIdNameValue> getAffects() {
         return affects;
     }
 
-    public void setAffects(List<FieldIdName> affects) {
+    public void setAffects(List<FieldIdNameValue> affects) {
         this.affects = affects;
     }
 

@@ -9,12 +9,9 @@ import eu.openminted.registry.core.service.SearchService;
 import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
-import gr.athenarc.catalogue.ui.service.FormsService;
-import gr.athenarc.catalogue.ui.service.ModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +28,8 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
     public CatalogueGenericItemService(SearchService searchService,
                                        ResourceService resourceService,
                                        ResourceTypeService resourceTypeService,
-                                       @Lazy ModelService modelService,
                                        ParserService parserPool) {
-        super(searchService, resourceService, resourceTypeService, modelService, parserPool);
+        super(searchService, resourceService, resourceTypeService, parserPool);
     }
 
     @Override
