@@ -8,14 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("ui")
 public class UiController {
 
     private final ModelService modelService;
@@ -28,14 +26,14 @@ public class UiController {
         this.catalogueLibConfiguration = catalogueLibConfiguration;
     }
 
-    @GetMapping(value = "form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "ui/form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Model getFormModel(@PathVariable("id") String id) {
         return modelService.get(id);
 //        return formsService.getSurveyModel(surveyId);
     }
 
 
-    @GetMapping(value = "vocabularies/map", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "ui/vocabularies/map", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, List<String>> getVocabularies() {
         return getEnumsMap(catalogueLibConfiguration.generatedClassesPackageName());
     }
