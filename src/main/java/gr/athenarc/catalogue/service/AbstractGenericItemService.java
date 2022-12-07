@@ -49,6 +49,8 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     void initResourceTypesBrowseFields() { // TODO: move this to a bean to avoid running multiple times ??
         browseByMap = new HashMap<>();
         labelsMap = new HashMap<>();
+        Map<String, Set<String>> aliasGroupBrowse = new HashMap<>();
+        Map<String, Map<String, String>> aliasGroupLabels = new HashMap<>();
         for (ResourceType rt : resourceTypeService.getAllResourceType()) {
             Set<String> browseSet = new HashSet<>();
             Map<String, Set<String>> sets = new HashMap<>();
@@ -72,10 +74,23 @@ public abstract class AbstractGenericItemService implements GenericItemService {
                     browseSet.retainAll(entry.getValue());
                 }
             }
+            if (rt.getAliasGroup() != null) {
+                if (aliasGroupBrowse.get(rt.getAliasGroup()) == null) {
+                    aliasGroupBrowse.put(rt.getAliasGroup(), browseSet);
+                    aliasGroupLabels.put(rt.getAliasGroup(), labels);
+                } else {
+                    aliasGroupBrowse.get(rt.getAliasGroup()).retainAll(browseSet);
+                    aliasGroupLabels.get(rt.getAliasGroup()).keySet().retainAll(labels.keySet());
+                }
+            }
             List<String> browseBy = new ArrayList<>(browseSet);
             java.util.Collections.sort(browseBy);
             browseByMap.put(rt.getName(), browseBy);
             logger.debug("Generating browse fields for [{}]", rt.getName());
+        }
+        for (String alias : aliasGroupBrowse.keySet()) {
+            browseByMap.put(alias, aliasGroupBrowse.get(alias).stream().sorted().collect(Collectors.toList()));
+            labelsMap.put(alias, aliasGroupLabels.get(alias));
         }
     }
 
@@ -181,10 +196,18 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     @Override
     public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        List<T> results = (List<T>) paging.getResults()
-                .parallelStream()
-                .map(res -> (T) parserPool.deserialize(res, clazz))
-                .collect(Collectors.toList());
+        List<T> results;
+        if (clazz != null) { // all resources are from the same resourceType
+            results = (List<T>) paging.getResults()
+                    .parallelStream()
+                    .map(res -> (T) parserPool.deserialize(res, clazz))
+                    .collect(Collectors.toList());
+        } else { // mixed resources
+            results = (List<T>) paging.getResults()
+                    .stream()
+                    .map(resource -> (T) parserPool.deserialize(resource, getClassFromResourceType(resource.getResourceTypeName())))
+                    .collect(Collectors.toList());
+        }
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }
 
@@ -214,7 +237,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     public Class<?> getClassFromResourceType(String resourceTypeName) {
         Class<?> tClass = null;
         try {
-            tClass = Class.forName(resourceTypeService.getResourceType(resourceTypeName).getProperty("class"));
+            ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+            if (resourceType == null) { // search was performed using alias
+                return null;
+            }
+            tClass = Class.forName(resourceType.getProperty("class"));
         } catch (ClassNotFoundException e) {
             logger.error(e.getMessage(), e);
         } catch (NullPointerException e) {
