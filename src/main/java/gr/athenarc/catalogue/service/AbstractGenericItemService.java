@@ -172,7 +172,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     @Override
     public <T> T get(String resourceTypeName, String id) {
         Resource res = searchResource(resourceTypeName, id, true);
-        return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
+        return (T) parserPool.deserialize(res, getClassFromResourceType(res.getResourceTypeName()));
     }
 
     @Override
@@ -255,7 +255,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     public Resource searchResource(String resourceTypeName, String id, boolean throwOnNull) {
         Resource res = null;
         try {
-            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(resourceTypeName + "_id", id));
+            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue("resource_internal_id", id));
         } catch (UnknownHostException e) {
             logger.error(e.getMessage(), e);
         }
