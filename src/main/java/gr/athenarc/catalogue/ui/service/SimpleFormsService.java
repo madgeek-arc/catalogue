@@ -21,18 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SimpleFormsService implements ModelService {
 
     private static final Logger logger = LoggerFactory.getLogger(SimpleFormsService.class);
-    private static final String FIELD_RESOURCE_TYPE_NAME = "field";
-    private static final String SECTION_RESOURCE_TYPE_NAME = "section";
-    private static final String SURVEY_RESOURCE_TYPE_NAME = "survey";
-    private static final String MODEL_RESOURCE_TYPE_NAME = "model";
+
     private final GenericItemService genericItemService;
     private final IdGenerator<String> idGenerator;
     public final SearchService searchService;
@@ -60,6 +55,7 @@ public class SimpleFormsService implements ModelService {
         this.formDisplayService = formDisplayService;
     }
 
+    @Deprecated
     private List<UiField> sortFieldsByParentId(List<UiField> fields) {
         List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
         sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
@@ -126,30 +122,24 @@ public class SimpleFormsService implements ModelService {
 //        return obj;
     }
 
-    private void createChapterIds(Model model) {
-        if (model.getSections() != null) {
-            for (Section section : model.getSections()) {
-                if (section.getId() == null || "".equals(section.getId())) {
-                    section.setId(idGenerator.createId("section-"));
-                }
-            }
-        }
-    }
-
     @Override
     public Model add(Model model) {
-        createChapterIds(model);
-//        Date date = new Date();
-//        model.setCreationDate(date);
-//        model.setModificationDate(date);
+        createSectionIds(model);
+
+        Date date = new Date();
+        model.setCreationDate(date);
+        model.setModificationDate(date);
+
+        validateIds(model);
         model = add(model, MODEL_RESOURCE_TYPE_NAME);
         return model;
     }
 
     @Override
     public Model update(String id, Model model) {
-        createChapterIds(model);
-//        model.setModificationDate(new Date());
+        createSectionIds(model);
+        model.setModificationDate(new Date());
+        validateIds(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
         return model;
     }
@@ -173,6 +163,40 @@ public class SimpleFormsService implements ModelService {
         models.getResults().forEach(this::enrichModel);
         return models;
     }
+
+    @Override
+    public List<UiField> getAllFields(Model model) {
+        List<UiField> allFields = new ArrayList<>();
+        model.getSections().forEach(section -> allFields.addAll(getSectionFields(section)));
+        return allFields;
+    }
+
+    @Override
+    public List<UiField> getSectionFields(Section section) {
+        List<UiField> fields = new ArrayList<>();
+        if (section.getSubSections() != null) {
+            for (Section s : section.getSubSections()) {
+                fields.addAll(getSectionFields(s));
+            }
+        }
+        if (section.getFields() != null) {
+            fields.addAll(getFieldsRecursive(section.getFields()));
+        }
+        return fields;
+    }
+
+    @Override
+    public List<UiField> getFieldsRecursive(List<UiField> fields) {
+        List<UiField> allFields = new ArrayList<>();
+        for (UiField field : fields) {
+            allFields.add(field);
+            if (field.getSubFields() != null) {
+                allFields.addAll(getFieldsRecursive(field.getSubFields()));
+            }
+        }
+        return allFields;
+    }
+
 
     void enrichModel(Model model) { // TODO: refactor
         this.formMap = formDisplayService.getUiFieldIdFormMap(model.getId());
@@ -206,5 +230,28 @@ public class SimpleFormsService implements ModelService {
 
     private Display getFieldDisplay(String fieldId) {
         return displayMap != null ? displayMap.get(fieldId) : null;
+    }
+
+    private void validateIds(Model model) {
+        List<UiField> allFields = getAllFields(model);
+        Set<String> ids = new HashSet<>();
+        Set<String> uniqueIds = allFields
+                .stream()
+                .map(UiField::getId)
+                .filter(f -> !ids.add(f))
+                .collect(Collectors.toSet());
+        if (!uniqueIds.isEmpty()) {
+            throw new RuntimeException(String.format("Duplicate IDs found: [%s]", String.join(", ", uniqueIds)));
+        }
+    }
+
+    private void createSectionIds(Model model) {
+        if (model.getSections() != null) {
+            for (Section section : model.getSections()) {
+                if (section.getId() == null || "".equals(section.getId())) {
+                    section.setId(idGenerator.createId("section-"));
+                }
+            }
+        }
     }
 }

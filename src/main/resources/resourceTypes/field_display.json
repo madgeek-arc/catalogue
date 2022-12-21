@@ -9,6 +9,13 @@
     },
     {
       "multivalued": false,
+      "name": "ui_field_display_id",
+      "path": "$.id",
+      "type": "java.lang.String",
+      "primaryKey": true
+    },
+    {
+      "multivalued": false,
       "name": "model",
       "path": "$.modelId",
       "type": "java.lang.String"
