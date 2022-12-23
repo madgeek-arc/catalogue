@@ -131,6 +131,7 @@ public class SimpleFormsService implements ModelService {
         model.setModificationDate(date);
 
         validateIds(model);
+        createParents(model);
         model = add(model, MODEL_RESOURCE_TYPE_NAME);
         return model;
     }
@@ -140,6 +141,7 @@ public class SimpleFormsService implements ModelService {
         createSectionIds(model);
         model.setModificationDate(new Date());
         validateIds(model);
+        createParents(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
         return model;
     }
@@ -251,6 +253,22 @@ public class SimpleFormsService implements ModelService {
                 if (section.getId() == null || "".equals(section.getId())) {
                     section.setId(idGenerator.createId("section-"));
                 }
+            }
+        }
+    }
+
+    private void createParents(Model model) {
+        for (Section section : model.getSections()) {
+            getSectionFields(section).forEach(this::createFieldParents);
+        }
+    }
+
+    private void createFieldParents(UiField parent) {
+        if (parent != null && parent.getSubFields() != null) {
+            for (UiField field : parent.getSubFields()) {
+                field.setParentId(parent.getId());
+                field.setParent(parent.getName());
+                createFieldParents(field);
             }
         }
     }
