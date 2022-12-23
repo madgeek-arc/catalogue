@@ -55,7 +55,9 @@ public class FormsController {
     public ResponseEntity<Browsing<Model>> getModels(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
         String resourceType = (String) allRequestParams.get("resourceType");
         FacetFilter ff = createFacetFilter(allRequestParams);
-        ff.addFilter("resourceType", resourceType);
+        if (resourceType != null && !"".equals(resourceType)) {
+            ff.addFilter("resourceType", resourceType);
+        }
         return new ResponseEntity<>(modelService.browse(ff), HttpStatus.OK);
     }
 
