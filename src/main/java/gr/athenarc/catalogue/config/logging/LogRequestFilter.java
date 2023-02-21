@@ -21,7 +21,7 @@ public class LogRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String url = RequestUtils.getUrlWithParams(request);
-        logger.info("{}: {}", request.getMethod(), url);
+        logger.info(url);
         filterChain.doFilter(request, response);
     }
 }
