@@ -177,13 +177,13 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> Browsing<T> cqlQuery(FacetFilter filter) {
-        filter.setBrowseBy(browseByMap.get(filter.getResourceType()));
+        filter.getBrowseBy().addAll(browseByMap.get(filter.getResourceType()));
         return convertToBrowsing(searchService.cqlQuery(filter), filter.getResourceType());
     }
 
     @Override
     public <T> Browsing<T> getResults(FacetFilter filter) {
-        filter.setBrowseBy(browseByMap.get(filter.getResourceType()));
+        filter.getBrowseBy().addAll(browseByMap.get(filter.getResourceType()));
         Browsing<T> browsing;
         try {
             browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
@@ -205,7 +205,16 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         } else { // mixed resources
             results = (List<T>) paging.getResults()
                     .stream()
-                    .map(resource -> (T) parserPool.deserialize(resource, getClassFromResourceType(resource.getResourceTypeName())))
+                    .map(resource -> {
+                        T item = null;
+                        try {
+                            item = (T) parserPool.deserialize(resource, getClassFromResourceType(resource.getResourceTypeName()));
+                        } catch (Exception e) {
+                            logger.warn("Problem encountered: ", e);
+                        }
+                        return item;
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
@@ -243,7 +252,8 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             }
             tClass = Class.forName(resourceType.getProperty("class"));
         } catch (ClassNotFoundException e) {
-            logger.error(e.getMessage(), e);
+            logger.warn(e.getMessage(), e);
+            tClass = Map.class;
         } catch (NullPointerException e) {
             logger.error("Class property is not defined", e);
             throw new ServiceException(String.format("ResourceType [%s] does not have properties field", resourceTypeName));
