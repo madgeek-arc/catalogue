@@ -231,7 +231,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             for (Map.Entry<String, List<Resource>> bucket : resources.entrySet()) {
                 List<T> bucketResults = new ArrayList<>();
                 for (Resource res : bucket.getValue()) {
-                    bucketResults.add((T) parserPool.deserialize(res, clazz));
+                    if (clazz != null) {
+                        bucketResults.add((T) parserPool.deserialize(res, clazz));
+                    } else {
+                        bucketResults.add((T) parserPool.deserialize(res, getClassFromResourceType(res.getResourceTypeName())));
+                    }
                 }
                 result.put(bucket.getKey(), bucketResults);
             }
