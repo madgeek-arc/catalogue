@@ -2,10 +2,7 @@ package gr.athenarc.catalogue.service;
 
 import eu.openminted.registry.core.domain.Resource;
 import eu.openminted.registry.core.domain.ResourceType;
-import eu.openminted.registry.core.service.ParserService;
-import eu.openminted.registry.core.service.ResourceService;
-import eu.openminted.registry.core.service.ResourceTypeService;
-import eu.openminted.registry.core.service.SearchService;
+import eu.openminted.registry.core.service.*;
 import gr.athenarc.catalogue.LoggingUtils;
 import gr.athenarc.catalogue.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
@@ -28,8 +25,9 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
     public CatalogueGenericItemService(SearchService searchService,
                                        ResourceService resourceService,
                                        ResourceTypeService resourceTypeService,
+                                       VersionService versionService,
                                        ParserService parserPool) {
-        super(searchService, resourceService, resourceTypeService, parserPool);
+        super(searchService, resourceService, resourceTypeService, versionService, parserPool);
     }
 
     @Override

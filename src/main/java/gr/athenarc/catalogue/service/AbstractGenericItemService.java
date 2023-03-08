@@ -26,6 +26,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     public final SearchService searchService;
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
+    public final VersionService versionService;
     public final ParserService parserPool;
     public final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -38,10 +39,12 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     protected AbstractGenericItemService(SearchService searchService,
                                          ResourceService resourceService,
                                          ResourceTypeService resourceTypeService,
+                                         VersionService versionService,
                                          ParserService parserPool) {
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
+        this.versionService = versionService;
         this.parserPool = parserPool;
     }
 
