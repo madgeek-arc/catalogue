@@ -2,15 +2,15 @@ package gr.athenarc.catalogue.controller;
 
 import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Paging;
+import gr.athenarc.catalogue.annotations.Browse;
 import gr.athenarc.catalogue.service.GenericItemService;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -52,16 +52,9 @@ public class GenericItemController {
         return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
 
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "query", value = "Keyword to refine the search", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "from", value = "Starting index in the result set", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "quantity", value = "Quantity to be fetched", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "resourceType", value = "Resource type name", dataTypeClass = String.class, paramType = "query", required = true),
-            @ApiImplicitParam(name = "order", value = "asc / desc", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "orderField", value = "Order field", dataTypeClass = String.class, paramType = "query")
-    })
+    @Browse
     @GetMapping()
-    public ResponseEntity<Paging<?>> browseByResourceType(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
+    public ResponseEntity<Paging<?>> browseByResourceType(@Parameter(hidden = true) @RequestParam Map<String, Object> allRequestParams) {
         FacetFilter ff = createFacetFilter(allRequestParams);
         return new ResponseEntity<>(genericResourceService.getResults(ff), HttpStatus.OK);
     }

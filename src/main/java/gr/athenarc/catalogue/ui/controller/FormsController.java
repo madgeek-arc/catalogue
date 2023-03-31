@@ -2,15 +2,14 @@ package gr.athenarc.catalogue.ui.controller;
 
 import eu.openminted.registry.core.domain.Browsing;
 import eu.openminted.registry.core.domain.FacetFilter;
+import gr.athenarc.catalogue.annotations.Browse;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.service.ModelService;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 import java.util.Map;
@@ -44,15 +43,9 @@ public class FormsController {
         return new ResponseEntity<>(modelService.get(id), HttpStatus.OK);
     }
 
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "query", value = "Keyword to refine the search", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "from", value = "Starting index in the result set", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "quantity", value = "Quantity to be fetched", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "order", value = "asc / desc", dataTypeClass = String.class, paramType = "query"),
-            @ApiImplicitParam(name = "orderField", value = "Order field", dataTypeClass = String.class, paramType = "query")
-    })
+    @Browse
     @GetMapping("models")
-    public ResponseEntity<Browsing<Model>> getModels(@ApiIgnore @RequestParam Map<String, Object> allRequestParams) {
+    public ResponseEntity<Browsing<Model>> getModels(@Parameter(hidden = true) @RequestParam Map<String, Object> allRequestParams) {
         String resourceType = (String) allRequestParams.get("resourceType");
         FacetFilter ff = createFacetFilter(allRequestParams);
         if (resourceType != null && !"".equals(resourceType)) {
