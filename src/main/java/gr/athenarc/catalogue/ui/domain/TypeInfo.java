@@ -8,6 +8,7 @@ public class TypeInfo {
     List<String> values;
     String vocabulary;
     boolean multiplicity = false;
+    DataRequest prefill;
 
     public TypeInfo() {}
 
@@ -53,5 +54,13 @@ public class TypeInfo {
 
     public void setMultiplicity(boolean multiplicity) {
         this.multiplicity = multiplicity;
+    }
+
+    public DataRequest getPrefill() {
+        return prefill;
+    }
+
+    public void setPrefill(DataRequest prefill) {
+        this.prefill = prefill;
     }
 }
