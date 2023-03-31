@@ -1,6 +1,6 @@
 package gr.athenarc.catalogue.exception;
 
-import gr.athenarc.catalogue.RequestUtils;
+import gr.athenarc.catalogue.utils.RequestUtils;
 import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
 import org.springframework.http.HttpStatus;
 

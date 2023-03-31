@@ -1,6 +1,6 @@
 package gr.athenarc.catalogue.config.logging;
 
-import gr.athenarc.catalogue.RequestUtils;
+import gr.athenarc.catalogue.utils.RequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

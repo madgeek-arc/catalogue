@@ -1,4 +1,4 @@
-package gr.athenarc.catalogue;
+package gr.athenarc.catalogue.utils;
 
 public class LoggingUtils {
 

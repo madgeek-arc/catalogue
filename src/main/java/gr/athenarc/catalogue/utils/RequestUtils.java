@@ -1,4 +1,4 @@
-package gr.athenarc.catalogue;
+package gr.athenarc.catalogue.utils;
 
 import javax.servlet.http.HttpServletRequest;
 

@@ -1,4 +1,4 @@
-package gr.athenarc.catalogue;
+package gr.athenarc.catalogue.utils;
 
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;

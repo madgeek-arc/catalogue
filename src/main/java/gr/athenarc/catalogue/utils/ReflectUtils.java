@@ -1,4 +1,4 @@
-package gr.athenarc.catalogue;
+package gr.athenarc.catalogue.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
