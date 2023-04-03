@@ -4,7 +4,6 @@ import eu.openminted.registry.core.domain.FacetFilter;
 import eu.openminted.registry.core.domain.Paging;
 import gr.athenarc.catalogue.annotations.Browse;
 import gr.athenarc.catalogue.service.GenericItemService;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,9 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+
+import static gr.athenarc.catalogue.utils.PagingUtils.createFacetFilter;
 
 @RestController
 @RequestMapping(path = "items")
@@ -69,31 +68,5 @@ public class GenericItemController {
     public ResponseEntity<?> getByField(@RequestParam("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
         Object ret = genericResourceService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
-    }
-
-    public static FacetFilter createFacetFilter(Map<String, Object> allRequestParams) {
-        FacetFilter ff = new FacetFilter();
-        ff.setKeyword(allRequestParams.get("query") != null ? (String) allRequestParams.remove("query") : "");
-        ff.setFrom(allRequestParams.get("from") != null ? Integer.parseInt((String) allRequestParams.remove("from")) : 0);
-        ff.setQuantity(allRequestParams.get("quantity") != null ? Integer.parseInt((String) allRequestParams.remove("quantity")) : 10);
-        ff.setResourceType((String) allRequestParams.remove("resourceType"));
-        ff.setFilter(allRequestParams);
-        Map<String, Object> sort = new HashMap<>();
-        Map<String, Object> order = new HashMap<>();
-        String orderDirection = allRequestParams.get("order") != null ? (String) allRequestParams.remove("order") : "asc";
-        String orderField = allRequestParams.get("orderField") != null ? (String) allRequestParams.remove("orderField") : null;
-        if (orderField != null) {
-            order.put("order", orderDirection);
-            sort.put(orderField, order);
-            ff.setOrderBy(sort);
-        }
-
-        if (!allRequestParams.isEmpty()) {
-            Set<Map.Entry<String, Object>> filterSet = allRequestParams.entrySet();
-            for (Map.Entry<String, Object> entry : filterSet) {
-                ff.addFilter(entry.getKey(), entry.getValue());
-            }
-        }
-        return ff;
     }
 }

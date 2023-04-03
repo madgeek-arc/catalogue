@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import static gr.athenarc.catalogue.controller.GenericItemController.createFacetFilter;
+import static gr.athenarc.catalogue.utils.PagingUtils.createFacetFilter;
 
 @RestController
 @RequestMapping("forms")
