@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
         @Parameter(in = ParameterIn.QUERY, name = "from", description = "Starting index in the result set", content = @Content(schema = @Schema(type = "string", defaultValue = "0"))),
         @Parameter(in = ParameterIn.QUERY, name = "quantity", description = "Quantity to be fetched", content = @Content(schema = @Schema(type = "string", defaultValue = "10"))),
         @Parameter(in = ParameterIn.QUERY, name = "order", description = "Order of results", content = @Content(schema = @Schema(type = "string", defaultValue = "asc", allowableValues = {"asc", "desc"}))),
-        @Parameter(in = ParameterIn.QUERY, name = "orderField", description = "Field to use for ordering", content = @Content(schema = @Schema(type = "string", defaultValue = "name"))),
+        @Parameter(in = ParameterIn.QUERY, name = "orderField", description = "Field to use for ordering", content = @Content(schema = @Schema(type = "string"))),
         @Parameter(in = ParameterIn.QUERY, name = "query", description = "Keyword to refine the search")
 })
 public @interface Browse {
