@@ -9,6 +9,7 @@ public class PagingUtils {
 
     public static FacetFilter createFacetFilter(Map<String, Object> params) {
         FacetFilter ff = new FacetFilter();
+        ff.setResourceType(params.get("resourceType") != null ? (String) params.remove("resourceType") : "");
         ff.setKeyword(params.get("query") != null ? (String) params.remove("query") : "");
         ff.setFrom(params.get("from") != null ? Integer.parseInt((String) params.remove("from")) : 0);
         ff.setQuantity(params.get("quantity") != null ? Integer.parseInt((String) params.remove("quantity")) : 10);
