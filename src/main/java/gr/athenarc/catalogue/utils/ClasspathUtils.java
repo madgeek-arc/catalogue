@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,16 @@ public class ClasspathUtils {
         return classes;
     }
 
+    public static Set<Class<?>> filterOutInterfaces(Set<Class<?>> classes) {
+        Set<Class<?>> nonInterfaces = new HashSet<>();
+        for (Class<?> c : classes) {
+            if (!c.isInterface()) {
+                nonInterfaces.add(c);
+            }
+        }
+        return nonInterfaces;
+    }
+
     public static Set<Class<?>> findAllEnums(String packageName) {
         return new HashSet<>(getSubclassesUsingReflections(packageName, Enum.class));
     }
@@ -49,15 +60,22 @@ public class ClasspathUtils {
     }
 
     public static Set<Class<?>> getClassesWithoutInterfaces(String packageName) {
-        Set<Class<?>> allClasses = ClasspathUtils.findAllClasses(packageName);
-        logger.info("Classes found in '{}': {}", packageName, allClasses.size());
-        Set<Class<?>> classes = new HashSet<>();
-        for (Class<?> c : allClasses) {
-            if (!c.isInterface()) {
-                classes.add(c);
+        return getClassesWithoutInterfaces(List.of(packageName));
+    }
+
+    public static Set<Class<?>> getClassesWithoutInterfaces(List<String> packageNames) {
+
+        Set<Class<?>> allClasses = new HashSet<>();
+        for (String packageName : packageNames) {
+            Set<Class<?>> classes = filterOutInterfaces(ClasspathUtils.findAllClasses(packageName));
+            logger.info("Classes found in '{}': {}", packageName, classes.size());
+            if (logger.isDebugEnabled()) {
+                classes.forEach(c -> logger.debug(" - {}", c.getCanonicalName()));
             }
+            allClasses.addAll(classes);
         }
-        return classes;
+
+        return allClasses;
     }
 
     public static Set<Class<?>> getAllClasses(String packageName) {

@@ -1,10 +1,9 @@
 package gr.athenarc.catalogue.ui.controller;
 
-import gr.athenarc.catalogue.utils.ClasspathUtils;
-import gr.athenarc.catalogue.config.CatalogueLibConfiguration;
+import gr.athenarc.catalogue.config.CatalogueLibProperties;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.service.ModelService;
-import org.springframework.beans.factory.annotation.Autowired;
+import gr.athenarc.catalogue.utils.ClasspathUtils;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,13 +16,13 @@ import java.util.stream.Collectors;
 public class UiController {
 
     private final ModelService modelService;
-    private final CatalogueLibConfiguration catalogueLibConfiguration;
+    private final CatalogueLibProperties properties;
 
-    @Autowired
+
     public UiController(ModelService modelService,
-                        CatalogueLibConfiguration catalogueLibConfiguration) {
+                        CatalogueLibProperties properties) {
         this.modelService = modelService;
-        this.catalogueLibConfiguration = catalogueLibConfiguration;
+        this.properties = properties;
     }
 
     @GetMapping(value = "ui/form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -35,15 +34,20 @@ public class UiController {
 
     @GetMapping(value = "ui/vocabularies/map", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, List<String>> getVocabularies() {
-        return getEnumsMap(catalogueLibConfiguration.generatedClassesPackageName());
+        return getEnumsMap(properties.getJaxb().getAllPackages());
     }
 
-    private Map<String, List<String>> getEnumsMap(String packageName) {
+    private Map<String, List<String>> getEnumsMap(List<String> packageNames) {
+        if (packageNames == null || packageNames.isEmpty()) {
+            return null;
+        }
         Map<String, List<String>> enumsMap = new HashMap<>();
-        Set<Class<?>> allClasses = ClasspathUtils.findAllEnums(packageName);
-        for (Class<?> c : allClasses) {
-            if (c.isEnum()) {
-                enumsMap.put(c.getSimpleName(), new ArrayList<>(Arrays.stream(c.getEnumConstants()).map(Object::toString).collect(Collectors.toList())));
+        for (String packageName : packageNames) {
+            Set<Class<?>> allClasses = ClasspathUtils.findAllEnums(packageName);
+            for (Class<?> c : allClasses) {
+                if (c.isEnum()) {
+                    enumsMap.put(c.getSimpleName(), new ArrayList<>(Arrays.stream(c.getEnumConstants()).map(Object::toString).collect(Collectors.toList())));
+                }
             }
         }
         return enumsMap;
