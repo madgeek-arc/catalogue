@@ -62,8 +62,11 @@ public class GenericResourceValidationAspect {
         FacetFilter ff = new FacetFilter();
         ff.addFilter("resourceType", resourceTypeName);
         List<Model> models = modelService.browse(ff).getResults();
-        if (models == null || models.size() != 1) {
-            throw new RuntimeException(String.format("Found more than one models for [resourceType=%s]", resourceTypeName));
+        if (models == null || models.isEmpty()) {
+            logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
+            return resource;
+        } else if (models.size() != 1) {
+            throw new RuntimeException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName));
         }
         Model model = models.get(0);
         return (T) validateSections(resource, model.getSections());
