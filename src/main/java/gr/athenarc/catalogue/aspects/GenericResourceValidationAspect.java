@@ -40,7 +40,7 @@ public class GenericResourceValidationAspect {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 logger.debug("Validating resource: {}", objectMapper.writeValueAsString(item));
-            } catch (JsonProcessingException e) {}
+            } catch (JsonProcessingException ignore) {}
             validate(item, resourceTypeName);
         }
     }
@@ -53,7 +53,7 @@ public class GenericResourceValidationAspect {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 logger.debug("Validating resource: {}", objectMapper.writeValueAsString(item));
-            } catch (JsonProcessingException e) {}
+            } catch (JsonProcessingException ignore) {}
             validate(item, resourceTypeName);
         }
     }
