@@ -50,14 +50,14 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @PostConstruct
     void initResourceTypesBrowseFields() { // TODO: move this to a bean to avoid running multiple times ??
-        browseByMap = new HashMap<>();
-        labelsMap = new HashMap<>();
-        Map<String, Set<String>> aliasGroupBrowse = new HashMap<>();
-        Map<String, Map<String, String>> aliasGroupLabels = new HashMap<>();
+        browseByMap = new TreeMap<>();
+        labelsMap = new TreeMap<>();
+        Map<String, Set<String>> aliasGroupBrowse = new TreeMap<>();
+        Map<String, Map<String, String>> aliasGroupLabels = new TreeMap<>();
         for (ResourceType rt : resourceTypeService.getAllResourceType()) {
-            Set<String> browseSet = new HashSet<>();
-            Map<String, Set<String>> sets = new HashMap<>();
-            Map<String, String> labels = new HashMap<>();
+            Set<String> browseSet = new TreeSet<>();
+            Map<String, Set<String>> sets = new TreeMap<>();
+            Map<String, String> labels = new TreeMap<>();
 
             labels.put("resourceType", "Resource Type");
             for (IndexField f : rt.getIndexFields()) {
@@ -67,7 +67,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
                     sets.get(f.getResourceType().getName()).add(f.getName());
                 }
             }
-            labelsMap.put(rt.getName(), labels);
+
             boolean flag = true;
             for (Map.Entry<String, Set<String>> entry : sets.entrySet()) {
                 if (flag) {
@@ -79,16 +79,27 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             }
             if (rt.getAliasGroup() != null) {
                 if (aliasGroupBrowse.get(rt.getAliasGroup()) == null) {
-                    aliasGroupBrowse.put(rt.getAliasGroup(), browseSet);
-                    aliasGroupLabels.put(rt.getAliasGroup(), labels);
+                    aliasGroupBrowse.put(rt.getAliasGroup(), new TreeSet<>(browseSet));
+                    aliasGroupLabels.put(rt.getAliasGroup(), new TreeMap<>(labels));
                 } else {
                     aliasGroupBrowse.get(rt.getAliasGroup()).retainAll(browseSet);
                     aliasGroupLabels.get(rt.getAliasGroup()).keySet().retainAll(labels.keySet());
                 }
             }
-            List<String> browseBy = new ArrayList<>(browseSet);
-            java.util.Collections.sort(browseBy);
-            browseByMap.put(rt.getName(), browseBy);
+            if (rt.getAliases() != null) {
+                for (String alias : rt.getAliases()) {
+                    if (aliasGroupBrowse.get(alias) == null) {
+                        aliasGroupBrowse.put(alias, new TreeSet<>(browseSet));
+                        aliasGroupLabels.put(alias, new TreeMap<>(labels));
+                    } else {
+                        aliasGroupBrowse.get(alias).retainAll(browseSet);
+                        aliasGroupLabels.get(alias).keySet().retainAll(labels.keySet());
+                    }
+                }
+            }
+
+            labelsMap.put(rt.getName(), labels);
+            browseByMap.put(rt.getName(), new ArrayList<>(browseSet));
             logger.debug("Generating browse fields for [{}]", rt.getName());
         }
         for (String alias : aliasGroupBrowse.keySet()) {

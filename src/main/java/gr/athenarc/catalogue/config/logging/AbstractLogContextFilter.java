@@ -27,12 +27,13 @@ public abstract class AbstractLogContextFilter implements Filter {
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
 
+        logger.trace("Editing MDC");
         editMDC(MDC.getMDCAdapter());
 
         try {
             chain.doFilter(request, response);
-        }
-        finally {
+        } finally {
+            logger.trace("Clearing MDC");
             MDC.clear();
         }
     }

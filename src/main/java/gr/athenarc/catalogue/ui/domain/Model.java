@@ -1,8 +1,11 @@
 package gr.athenarc.catalogue.ui.domain;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Date;
 import java.util.List;
 
+@Schema(implementation = Object.class)
 public class Model {
 
     private String id;

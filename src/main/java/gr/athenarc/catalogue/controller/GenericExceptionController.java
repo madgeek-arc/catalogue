@@ -18,7 +18,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
-public class GenericExceptionController extends GenericController {
+public class GenericExceptionController {
 
     private static final Logger logger = LoggerFactory.getLogger(GenericExceptionController.class);
 
