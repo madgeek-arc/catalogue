@@ -1,6 +1,5 @@
 package gr.athenarc.catalogue.controller;
 
-import eu.openminted.registry.core.controllers.GenericController;
 import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
@@ -13,18 +12,30 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * Advice handling all thrown Exceptions.
+ */
 @ControllerAdvice
 public class GenericExceptionController {
 
     private static final Logger logger = LoggerFactory.getLogger(GenericExceptionController.class);
 
+    /**
+     * Transforms every thrown exception to a {@link ServerError} response.
+     *
+     * @param req http servlet request
+     * @param ex  the thrown exception
+     * @return {@link ServerError}
+     */
     @ExceptionHandler(Exception.class)
     ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        HttpStatus status = getStatusFromException(ex);
+
         if (ex instanceof ResourceException) {
             logger.info(ex.getMessage(), ex);
             status = ((ResourceException) ex).getStatus();
@@ -53,5 +64,20 @@ public class GenericExceptionController {
         return ResponseEntity
                 .status(status)
                 .body(new ServerError(status, req, ex));
+    }
+
+    /**
+     * Get http status code from {@link ResponseStatus} annotation using reflection, if it exists, else return {@literal HttpStatus.INTERNAL_SERVER_ERROR}.
+     *
+     * @param exception thrown exception
+     * @return {@link HttpStatus}
+     */
+    private HttpStatus getStatusFromException(Exception exception) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        ResponseStatus annotation = exception.getClass().getAnnotation(ResponseStatus.class);
+        if (annotation != null) {
+            status = annotation.value();
+        }
+        return status;
     }
 }
