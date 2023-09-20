@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.*;
 import eu.openminted.registry.core.domain.index.IndexField;
 import eu.openminted.registry.core.service.*;
-import gr.athenarc.catalogue.utils.LoggingUtils;
-import gr.athenarc.catalogue.utils.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.athenarc.catalogue.utils.LoggingUtils;
+import gr.athenarc.catalogue.utils.ReflectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -191,20 +191,20 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> Browsing<T> cqlQuery(FacetFilter filter) {
-        filter.getBrowseBy().addAll(browseByMap.get(filter.getResourceType()));
+        filter.setBrowseBy(createBrowseBy(filter));
         return convertToBrowsing(searchService.cqlQuery(filter), filter.getResourceType());
     }
 
     @Override
     public <T> Browsing<T> getResults(FacetFilter filter) {
-        filter.getBrowseBy().addAll(browseByMap.get(filter.getResourceType()));
-        Browsing<T> browsing;
+        filter.setBrowseBy(createBrowseBy(filter));
         try {
+            Browsing<T> browsing;
             browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
+            return browsing;
         } catch (UnknownHostException e) {
             throw new ServiceException(e);
         }
-        return browsing;
     }
 
     @Override
@@ -311,5 +311,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     public void setBrowseByMap(Map<String, List<String>> browseByMap) {
         this.browseByMap = browseByMap;
+    }
+
+    private List<String> createBrowseBy(FacetFilter filter) {
+        Set<String> browseBy = new HashSet<>(filter.getBrowseBy());
+        browseBy.addAll(browseByMap.get(filter.getResourceType()));
+        return new ArrayList<>(browseBy);
     }
 }
