@@ -1,12 +1,15 @@
 package gr.athenarc.catalogue.exception;
 
-import gr.athenarc.catalogue.utils.RequestUtils;
 import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
+import gr.athenarc.catalogue.utils.RequestUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
+/**
+ * Error reporting class. It is returned every time an exception is thrown.
+ */
 public class ServerError {
 
     int status;

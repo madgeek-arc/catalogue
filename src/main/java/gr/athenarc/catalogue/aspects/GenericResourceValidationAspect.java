@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.openminted.registry.core.domain.FacetFilter;
 import gr.athenarc.catalogue.config.CatalogueLibProperties;
+import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ValidationException;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.domain.Section;
@@ -14,10 +15,14 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+/**
+ * Aspect validating the given resources before adding/updating them in the catalogue.
+ */
 @Aspect
 @Component
 public class GenericResourceValidationAspect {
@@ -60,6 +65,12 @@ public class GenericResourceValidationAspect {
         }
     }
 
+    /**
+     * Validates a {@link T resource} based on its {@link Model}.
+     * @param resource The resource to validate.
+     * @param resourceTypeName The resourceType name to search for the resource's {@link Model}.
+     * @return {@link T}
+     */
     private <T> T validate(T resource, String resourceTypeName) {
         FacetFilter ff = new FacetFilter();
         ff.addFilter("resourceType", resourceTypeName);
@@ -68,17 +79,32 @@ public class GenericResourceValidationAspect {
             logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
             return resource;
         } else if (models.size() != 1) {
-            throw new RuntimeException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName));
+            throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
         }
         Model model = models.get(0);
-        return (T) validateSections(resource, model.getSections());
+        return validateSections(resource, model.getSections());
     }
 
-    private Object validateSections(Object obj, List<Section> sections) {
+    /**
+     * Validates the {@link Object obj} against a list of sections.
+     * @param obj
+     * @param sections {@link List}<{@link Section}>
+     * @return {@link T}
+     * @param <T>
+     */
+    private <T> T validateSections(T obj, List<Section> sections) {
         return validateSections(obj, sections, null);
     }
 
-    private Object validateSections(Object obj, List<Section> sections, Deque<String> path) {
+    /**
+     * Validates the {@link Object obj} against a list of sections, keeping track of the current path followed.
+     * @param obj
+     * @param sections {@link List}<{@link Section}>
+     * @param path keeps track of the path followed in the {@link Object obj} (for displaying more detailed errors).
+     * @return {@link T}
+     * @param <T>
+     */
+    private <T> T validateSections(T obj, List<Section> sections, Deque<String> path) {
         if (path == null) {
             path = new ArrayDeque<>();
         }
@@ -95,30 +121,38 @@ public class GenericResourceValidationAspect {
         return obj;
     }
 
+    /**
+     * Validates that a list of fields is present in an object.
+     * @param object The {@link Object object} to validate
+     * @param fields {@link List}<{@link UiField}>
+     * @param mandatory Initial mandatory value.
+     * @param path keeps track of the path of every field for displaying errors.
+     * @return
+     */
     private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
         boolean empty = true;
-        for (UiField field : fields) {
-            path.push(field.getLabel().getText());
-            if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
-                if (object == null) {
-                    break;
-                } else if (object instanceof List) {
-                    for (Object ans : (List) object) {
-                        empty = validateFields(((LinkedHashMap) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-                        removeCompositeFieldIfEmpty(field, ans, empty);
+        if (object != null) {
+            for (UiField field : fields) {
+                path.push(field.getLabel().getText());
+                if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
+                    if (object instanceof List) {
+                        for (Object ans : (List<?>) object) {
+                            empty = validateFields(((LinkedHashMap<?, ?>) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                            removeCompositeFieldIfEmpty(field, ans, empty);
+                        }
+                    } else {
+                        empty = validateFields(((LinkedHashMap<?, ?>) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
                     }
-                } else {
-                    empty = validateFields(((LinkedHashMap) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                    removeCompositeFieldIfEmpty(field, object, empty);
                 }
-                removeCompositeFieldIfEmpty(field, object, empty);
+                if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
+                    checkMandatoryField(object, field, path);
+                }
+                if (containsValue(object)) {
+                    empty = false;
+                }
+                path.pop();
             }
-            if (mandatory && field.getForm().getMandatory()) {
-                checkMandatoryField(object, field, path);
-            }
-            if (containsValue(object)) {
-                empty = false;
-            }
-            path.pop();
         }
         return empty;
     }
@@ -153,7 +187,7 @@ public class GenericResourceValidationAspect {
         } else if (obj instanceof List) {
             if (((List) obj).isEmpty()) {
                 throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-            } else if (((List) obj).stream().allMatch(Objects::isNull)) {
+            } else if (((List) obj).stream().allMatch(item -> item == null || "".equals(item))) {
                 throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
             } else {
                 for (int i = 0; i < ((List<?>) obj).size(); i++) {
@@ -166,7 +200,7 @@ public class GenericResourceValidationAspect {
                     }
                 }
             }
-        } else if (((LinkedHashMap) obj).get(field.getName()) == null || "".equals(((LinkedHashMap) obj).get(field.getName()))) {
+        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap) obj).get(field.getName()) == null || "".equals(((LinkedHashMap) obj).get(field.getName())))) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         }
     }
