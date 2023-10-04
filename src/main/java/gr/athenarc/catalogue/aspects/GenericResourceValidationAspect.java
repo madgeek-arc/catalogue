@@ -127,7 +127,7 @@ public class GenericResourceValidationAspect {
      * @param fields {@link List}<{@link UiField}>
      * @param mandatory Initial mandatory value.
      * @param path keeps track of the path of every field for displaying errors.
-     * @return
+     * @return if a field is empty
      */
     private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
         boolean empty = true;
@@ -185,22 +185,22 @@ public class GenericResourceValidationAspect {
         if (obj == null) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         } else if (obj instanceof List) {
-            if (((List) obj).isEmpty()) {
+            if (((List<?>) obj).isEmpty()) {
                 throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-            } else if (((List) obj).stream().allMatch(item -> item == null || "".equals(item))) {
+            } else if (((List<?>) obj).stream().allMatch(item -> item == null || "".equals(item))) {
                 throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
             } else {
                 for (int i = 0; i < ((List<?>) obj).size(); i++) {
                     // check each list entry for the required field
-                    if (((List) obj).get(i) instanceof LinkedHashMap) {
-                        LinkedHashMap entry = (LinkedHashMap) ((List<?>) obj).get(i);
+                    if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
+                        LinkedHashMap<?,?> entry = (LinkedHashMap<?,?>) ((List<?>) obj).get(i);
                         if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
                             throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
                         }
                     }
                 }
             }
-        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap) obj).get(field.getName()) == null || "".equals(((LinkedHashMap) obj).get(field.getName())))) {
+        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?,?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?,?>) obj).get(field.getName())))) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         }
     }
@@ -233,16 +233,16 @@ public class GenericResourceValidationAspect {
     private boolean containsValue(Object obj) {
         boolean contains = false;
         if (obj instanceof LinkedHashMap) {
-            for (Object key : ((LinkedHashMap) obj).keySet()) {
-                if (((LinkedHashMap) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap) obj).get(key) instanceof List) {
-                    contains = contains || containsValue(((LinkedHashMap) obj).get(key));
-                } else if (((LinkedHashMap) obj).get(key) != null && !((LinkedHashMap) obj).get(key).equals("")) {
+            for (Object key : ((LinkedHashMap<?,?>) obj).keySet()) {
+                if (((LinkedHashMap<?,?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?,?>) obj).get(key) instanceof List) {
+                    contains = contains || containsValue(((LinkedHashMap<?,?>) obj).get(key));
+                } else if (((LinkedHashMap<?,?>) obj).get(key) != null && !((LinkedHashMap<?,?>) obj).get(key).equals("")) {
                     return true;
                 }
             }
         } else if (obj instanceof List) {
-            for (Object item : (List) obj) {
-                contains = contains || containsValue(item);
+            for (Object item : (List<?>) obj) {
+                contains = containsValue(item);
                 if (contains) {
                     break;
                 }
