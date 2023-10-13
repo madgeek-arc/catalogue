@@ -12,10 +12,25 @@ import java.util.Date;
  */
 public class ServerError {
 
+    /**
+     * The status code to return.
+     */
     int status;
+    /**
+     * The id of the erroneous transaction.
+     */
     String transactionId;
+    /**
+     * The timestamp the error occurred.
+     */
     Date timestamp;
+    /**
+     * The requested url that the error occurred.
+     */
     String url;
+    /**
+     * The error message to display.
+     */
     String message;
 
     public ServerError() {

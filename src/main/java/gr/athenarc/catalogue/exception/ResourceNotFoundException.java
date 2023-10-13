@@ -29,4 +29,11 @@ public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String id, String resourceType) {
         super(String.format("[resourceType=%s] with [id=%s] was not found", resourceType, id));
     }
+
+    /**
+     * Constructs a ResourceNotFoundException displaying a custom message.
+     */
+    public ResourceNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
