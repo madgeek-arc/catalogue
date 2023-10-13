@@ -67,7 +67,8 @@ public class GenericResourceValidationAspect {
 
     /**
      * Validates a {@link T resource} based on its {@link Model}.
-     * @param resource The resource to validate.
+     *
+     * @param resource         The {@link Object resource} to validate.
      * @param resourceTypeName The resourceType name to search for the resource's {@link Model}.
      * @return {@link T}
      */
@@ -87,10 +88,11 @@ public class GenericResourceValidationAspect {
 
     /**
      * Validates the {@link Object obj} against a list of sections.
-     * @param obj
+     *
+     * @param obj      The {@link Object object} to validate.
      * @param sections {@link List}<{@link Section}>
-     * @return {@link T}
      * @param <T>
+     * @return {@link T}
      */
     private <T> T validateSections(T obj, List<Section> sections) {
         return validateSections(obj, sections, null);
@@ -98,11 +100,12 @@ public class GenericResourceValidationAspect {
 
     /**
      * Validates the {@link Object obj} against a list of sections, keeping track of the current path followed.
-     * @param obj
+     *
+     * @param obj      The {@link Object object} to validate.
      * @param sections {@link List}<{@link Section}>
-     * @param path keeps track of the path followed in the {@link Object obj} (for displaying more detailed errors).
-     * @return {@link T}
+     * @param path     keeps track of the path followed in the {@link Object obj} (for displaying more detailed errors).
      * @param <T>
+     * @return {@link T}
      */
     private <T> T validateSections(T obj, List<Section> sections, Deque<String> path) {
         if (path == null) {
@@ -123,10 +126,11 @@ public class GenericResourceValidationAspect {
 
     /**
      * Validates that a list of fields is present in an object.
-     * @param object The {@link Object object} to validate
-     * @param fields {@link List}<{@link UiField}>
+     *
+     * @param object    The {@link Object object} to validate.
+     * @param fields    {@link List}<{@link UiField}>
      * @param mandatory Initial mandatory value.
-     * @param path keeps track of the path of every field for displaying errors.
+     * @param path      keeps track of the path of every field for displaying errors.
      * @return if a field is empty
      */
     private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
@@ -193,14 +197,14 @@ public class GenericResourceValidationAspect {
                 for (int i = 0; i < ((List<?>) obj).size(); i++) {
                     // check each list entry for the required field
                     if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
-                        LinkedHashMap<?,?> entry = (LinkedHashMap<?,?>) ((List<?>) obj).get(i);
+                        LinkedHashMap<?, ?> entry = (LinkedHashMap<?, ?>) ((List<?>) obj).get(i);
                         if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
                             throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
                         }
                     }
                 }
             }
-        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?,?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?,?>) obj).get(field.getName())))) {
+        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?, ?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?, ?>) obj).get(field.getName())))) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         }
     }
@@ -233,10 +237,10 @@ public class GenericResourceValidationAspect {
     private boolean containsValue(Object obj) {
         boolean contains = false;
         if (obj instanceof LinkedHashMap) {
-            for (Object key : ((LinkedHashMap<?,?>) obj).keySet()) {
-                if (((LinkedHashMap<?,?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?,?>) obj).get(key) instanceof List) {
-                    contains = contains || containsValue(((LinkedHashMap<?,?>) obj).get(key));
-                } else if (((LinkedHashMap<?,?>) obj).get(key) != null && !((LinkedHashMap<?,?>) obj).get(key).equals("")) {
+            for (Object key : ((LinkedHashMap<?, ?>) obj).keySet()) {
+                if (((LinkedHashMap<?, ?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?, ?>) obj).get(key) instanceof List) {
+                    contains = contains || containsValue(((LinkedHashMap<?, ?>) obj).get(key));
+                } else if (((LinkedHashMap<?, ?>) obj).get(key) != null && !((LinkedHashMap<?, ?>) obj).get(key).equals("")) {
                     return true;
                 }
             }
