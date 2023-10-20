@@ -314,8 +314,13 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     }
 
     private List<String> createBrowseBy(FacetFilter filter) {
-        Set<String> browseBy = new HashSet<>(filter.getBrowseBy());
-        browseBy.addAll(browseByMap.get(filter.getResourceType()));
+        Set<String> browseBy = new HashSet<>();
+        if (filter.getBrowseBy() != null) {
+            browseBy.addAll(filter.getBrowseBy());
+        }
+        if (filter.getResourceType() != null && browseByMap.containsKey(filter.getResourceType())) {
+            browseBy.addAll(browseByMap.get(filter.getResourceType()));
+        }
         return new ArrayList<>(browseBy);
     }
 }
