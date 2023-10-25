@@ -14,12 +14,14 @@ public class Model {
     private String notice;
     private String type;
     private String subType;
+    private Series series;
     private String resourceType;
     private Date creationDate;
     private String createdBy;
     private Date modificationDate;
     private String modifiedBy;
     private List<Section> sections;
+    private ModelConfiguration configuration;
     private boolean locked;
 
     public Model() {
@@ -74,6 +76,15 @@ public class Model {
         this.subType = subType;
     }
 
+    public Series getSeries() {
+        return series;
+    }
+
+    public Model setSeries(Series series) {
+        this.series = series;
+        return this;
+    }
+
     public String getResourceType() {
         return resourceType;
     }
@@ -120,6 +131,15 @@ public class Model {
 
     public void setSections(List<Section> sections) {
         this.sections = sections;
+    }
+
+    public ModelConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public Model setConfiguration(ModelConfiguration configuration) {
+        this.configuration = configuration;
+        return this;
     }
 
     public boolean isLocked() {
