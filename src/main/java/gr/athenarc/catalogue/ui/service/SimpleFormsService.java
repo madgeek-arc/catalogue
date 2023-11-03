@@ -55,13 +55,6 @@ public class SimpleFormsService implements ModelService {
         this.formDisplayService = formDisplayService;
     }
 
-    @Deprecated
-    private List<UiField> sortFieldsByParentId(List<UiField> fields) {
-        List<UiField> sorted = fields.stream().filter(f -> f.getParentId() != null).sorted(Comparator.comparing(UiField::getParentId)).collect(Collectors.toList());
-        sorted.addAll(fields.stream().filter(f -> f.getParentId() == null).collect(Collectors.toList()));
-        return sorted;
-    }
-
     public <T> T add(T obj, String resourceTypeName) {
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         String id = null;
@@ -147,8 +140,8 @@ public class SimpleFormsService implements ModelService {
     }
 
     @Override
-    public void delete(String surveyId) throws ResourceNotFoundException {
-        delete(surveyId, MODEL_RESOURCE_TYPE_NAME);
+    public void delete(String id) throws ResourceNotFoundException {
+        delete(id, MODEL_RESOURCE_TYPE_NAME);
     }
 
     @Override

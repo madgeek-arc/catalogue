@@ -9,7 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 @RestController
@@ -34,7 +37,7 @@ public class ResourcePayloadController {
 
     @PostMapping()
     public ResponseEntity<String> createResource(@RequestParam("resourceType") String resourceType,
-                                                 @RequestBody String resource) {
+                                                 @RequestBody String resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         return new ResponseEntity<>(resourcePayloadService.addRaw(resourceType, resource), createContentType(resourceType), HttpStatus.OK);
     }
 

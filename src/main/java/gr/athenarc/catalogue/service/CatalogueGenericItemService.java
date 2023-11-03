@@ -3,9 +3,9 @@ package gr.athenarc.catalogue.service;
 import eu.openminted.registry.core.domain.Resource;
 import eu.openminted.registry.core.domain.ResourceType;
 import eu.openminted.registry.core.service.*;
+import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.utils.LoggingUtils;
 import gr.athenarc.catalogue.utils.ReflectUtils;
-import gr.athenarc.catalogue.exception.ResourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
     }
 
     @Override
-    public String addRaw(String resourceTypeName, String payload) {
+    public String addRaw(String resourceTypeName, String payload) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         payload = payload.replaceAll("[\n\t]", "");
@@ -53,8 +53,11 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
 
         // create Java class and set ID using reflection
         Object item = parserPool.deserialize(res, clazz);
-        String id = UUID.randomUUID().toString();
-        ReflectUtils.setId(clazz, item, id);
+        String id = ReflectUtils.getId(clazz, item);
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+            ReflectUtils.setId(clazz, item, id);
+        }
 
         // return to Resource class and save
         payload = parserPool.serialize(item, ParserService.ParserServiceTypes.XML);

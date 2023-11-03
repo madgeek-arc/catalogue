@@ -1,7 +1,7 @@
 package gr.athenarc.catalogue.ui.controller;
 
 import gr.athenarc.catalogue.ui.domain.DataRequest;
-import gr.athenarc.catalogue.ui.service.RequestService;
+import gr.athenarc.catalogue.ui.service.DataRequestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,15 +13,15 @@ import reactor.core.publisher.Mono;
 @RequestMapping("request/default")
 public class DataRequestController {
 
-    private final RequestService requestService;
+    private final DataRequestService dataRequestService;
 
-    public DataRequestController(RequestService requestService) {
-        this.requestService = requestService;
+    public DataRequestController(DataRequestService dataRequestService) {
+        this.dataRequestService = dataRequestService;
     }
 
     @PostMapping
     Mono<? extends ResponseEntity<?>> performRequest(@RequestBody DataRequest request) {
-        Mono<?> response = requestService.perform(request);
+        Mono<?> response = dataRequestService.retrieve(request);
         return response
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.badRequest().build());

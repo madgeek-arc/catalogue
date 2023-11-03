@@ -16,5 +16,4 @@ public interface DataRequestService {
      */
     Mono<?> retrieve(DataRequest request);
 
-
 }

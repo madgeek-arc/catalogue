@@ -22,12 +22,12 @@ import java.net.URL;
 import java.util.Map;
 
 @Service
-public class DefaultDataRequestService implements RequestService {
+public class DefaultDataRequestService implements DataRequestService {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDataRequestService.class);
 
     @Override
-    public Mono<?> perform(DataRequest dataRequest) {
+    public Mono<?> retrieve(DataRequest dataRequest) {
         Request request = dataRequest.getRequest();
 
         Mono<String> response;
