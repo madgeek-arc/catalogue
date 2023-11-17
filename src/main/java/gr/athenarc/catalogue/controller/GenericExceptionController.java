@@ -33,7 +33,7 @@ public class GenericExceptionController {
      * @return {@link ServerError}
      */
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
+    protected ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
         HttpStatus status = getStatusFromException(ex);
 
         if (ex instanceof ResourceException) {
