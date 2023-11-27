@@ -21,14 +21,18 @@ public abstract class AbstractLogContextFilter implements Filter {
     }
 
     /**
-     * Uses MDCAdapter to edit MDC.
+     * Uses MDCAdapter to edit MDC. Passes down ServletRequest and ServletResponse for more customized functionality.
+     *
+     * @param mdc      {@link MDCAdapter}
+     * @param request  {@link ServletRequest}
+     * @param response {@link ServletResponse}
      */
-    public abstract void editMDC(MDCAdapter mdc);
+    public abstract void editMDC(MDCAdapter mdc, ServletRequest request, ServletResponse response);
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
 
         logger.trace("Editing MDC");
-        editMDC(MDC.getMDCAdapter());
+        editMDC(MDC.getMDCAdapter(), request, response);
 
         try {
             chain.doFilter(request, response);
