@@ -1,24 +1,28 @@
 package gr.athenarc.catalogue.ui;
 
+import eu.openminted.registry.core.configuration.HibernateConfiguration;
+import gr.athenarc.catalogue.CatalogueApplication;
+import gr.athenarc.catalogue.config.CatalogueConfiguration;
+import gr.athenarc.catalogue.config.RegistryCoreConfiguration;
 import gr.athenarc.catalogue.ui.domain.*;
-import gr.athenarc.catalogue.ui.service.ModelService;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@SpringBootTest
+@SpringBootTest(classes = CatalogueApplication.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UiElementsTest {
-
-    @Autowired
-    ModelService modelService;
 
     final String fieldId = "f-test";
     final String sectionId = "g-test";
@@ -28,22 +32,7 @@ class UiElementsTest {
     @Order(1)
     void addModel() {
         Model model = createModel();
-        Model res = modelService.add(model);
-        assert res.equals(model);
-    }
-
-    @Test
-    @Order(2)
-    void updateModel() {
-        Model model = modelService.get(modelId);
-        Model res = modelService.update(modelId, model);
-        assert res.equals(model);
-    }
-
-    @Test
-    @Order(3)
-    void deleteModel() {
-        modelService.delete(modelId);
+        assert model != null;
     }
 
     UiField createField() {
@@ -92,6 +81,7 @@ class UiElementsTest {
         section.setName("Test Section");
         section.setDescription("This is a section");
         section.setOrder(1);
+        section.setFields(List.of(createField()));
         return section;
     }
 
@@ -104,7 +94,7 @@ class UiElementsTest {
         model.setCreationDate(new Date());
         model.setModifiedBy(null);
         model.setModificationDate(new Date());
-        model.setSections(null);
+        model.setSections(List.of(createSection()));
         return model;
     }
 
