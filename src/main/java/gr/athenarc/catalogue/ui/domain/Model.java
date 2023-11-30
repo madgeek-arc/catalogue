@@ -23,6 +23,7 @@ public class Model {
     private List<Section> sections;
     private ModelConfiguration configuration;
     private boolean locked;
+    private boolean active;
 
     public Model() {
         // no arg constructor
@@ -148,5 +149,13 @@ public class Model {
 
     public void setLocked(boolean locked) {
         this.locked = locked;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
