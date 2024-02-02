@@ -1,26 +1,18 @@
 package gr.athenarc.catalogue.ui;
 
-import eu.openminted.registry.core.configuration.HibernateConfiguration;
-import gr.athenarc.catalogue.CatalogueApplication;
-import gr.athenarc.catalogue.config.CatalogueConfiguration;
-import gr.athenarc.catalogue.config.RegistryCoreConfiguration;
 import gr.athenarc.catalogue.ui.domain.*;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@SpringBootTest(classes = CatalogueApplication.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UiElementsTest {
 
@@ -32,7 +24,8 @@ class UiElementsTest {
     @Order(1)
     void addModel() {
         Model model = createModel();
-        assert model != null;
+        assertNotNull(model);
+//        assert model != null;
     }
 
     UiField createField() {
