@@ -16,8 +16,8 @@
 
 package gr.athenarc.catalogue.ui.controller;
 
-import eu.openminted.registry.core.domain.Browsing;
-import eu.openminted.registry.core.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.athenarc.catalogue.annotations.Browse;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.service.ModelService;

@@ -16,8 +16,8 @@
 
 package gr.athenarc.catalogue.ui.service;
 
-import eu.openminted.registry.core.domain.Browsing;
-import eu.openminted.registry.core.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.domain.Section;

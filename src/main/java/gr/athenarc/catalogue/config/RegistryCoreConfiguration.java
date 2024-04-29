@@ -20,6 +20,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(value = {"eu.openminted.registry.core"})
+@ComponentScan(value = {"gr.uoa.di.madgik.registry"})
 public class RegistryCoreConfiguration {
 }

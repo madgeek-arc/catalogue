@@ -17,9 +17,9 @@
 package gr.athenarc.catalogue.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.openminted.registry.core.domain.*;
-import eu.openminted.registry.core.domain.index.IndexField;
-import eu.openminted.registry.core.service.*;
+import gr.uoa.di.madgik.registry.domain.*;
+import gr.uoa.di.madgik.registry.domain.index.IndexField;
+import gr.uoa.di.madgik.registry.service.*;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.utils.LoggingUtils;
@@ -128,16 +128,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     public <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull) {
         Resource res;
         T ret;
-        try {
-            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue(field, value));
-            if (throwOnNull && res == null) {
-                throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
-            }
-            ret = (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
-        } catch (UnknownHostException e) {
-            logger.error(e.getMessage(), e);
-            throw new ServiceException(e);
+        res = searchService.searchFields(resourceTypeName, new SearchService.KeyValue(field, value));
+        if (throwOnNull && res == null) {
+            throw new ResourceException(String.format("%s '%s' does not exist!", resourceTypeName, value), HttpStatus.NOT_FOUND);
         }
+        ret = (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
         return ret;
     }
 
@@ -206,21 +201,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     }
 
     @Override
-    public <T> Browsing<T> cqlQuery(FacetFilter filter) {
-        filter.setBrowseBy(createBrowseBy(filter));
-        return convertToBrowsing(searchService.cqlQuery(filter), filter.getResourceType());
-    }
-
-    @Override
     public <T> Browsing<T> getResults(FacetFilter filter) {
         filter.setBrowseBy(createBrowseBy(filter));
-        try {
-            Browsing<T> browsing;
-            browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
-            return browsing;
-        } catch (UnknownHostException e) {
-            throw new ServiceException(e);
-        }
+        Browsing<T> browsing;
+        browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
+        return browsing;
     }
 
     @Override
@@ -298,11 +283,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     @Override
     public Resource searchResource(String resourceTypeName, String id, boolean throwOnNull) {
         Resource res = null;
-        try {
-            res = searchService.searchId(resourceTypeName, new SearchService.KeyValue("resource_internal_id", id));
-        } catch (UnknownHostException e) {
-            logger.error(e.getMessage(), e);
-        }
+        res = searchService.searchFields(resourceTypeName, new SearchService.KeyValue("resource_internal_id", id));
         if (throwOnNull) {
             return Optional.ofNullable(res)
                     .orElseThrow(() -> new ResourceNotFoundException(id, resourceTypeName));
@@ -313,11 +294,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     @Override
     public Resource searchResource(String resourceTypeName, SearchService.KeyValue... keyValues) {
         Resource res = null;
-        try {
-            res = searchService.searchId(resourceTypeName, keyValues);
-        } catch (UnknownHostException e) {
-            logger.error(e.getMessage(), e);
-        }
+        res = searchService.searchFields(resourceTypeName, keyValues);
         return res;
     }
 

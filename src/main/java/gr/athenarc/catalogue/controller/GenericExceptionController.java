@@ -70,7 +70,7 @@ public class GenericExceptionController {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.CONFLICT;
-        } else if (ex instanceof ResourceNotFoundException || ex instanceof eu.openminted.registry.core.exception.ResourceNotFoundException) {
+        } else if (ex instanceof ResourceNotFoundException || ex instanceof gr.uoa.di.madgik.registry.exception.ResourceNotFoundException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.NOT_FOUND;

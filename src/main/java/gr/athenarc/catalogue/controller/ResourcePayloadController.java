@@ -16,8 +16,8 @@
 
 package gr.athenarc.catalogue.controller;
 
-import eu.openminted.registry.core.dao.ResourceTypeDao;
-import eu.openminted.registry.core.domain.ResourceType;
+import gr.uoa.di.madgik.registry.dao.ResourceTypeDao;
+import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.athenarc.catalogue.service.ResourcePayloadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

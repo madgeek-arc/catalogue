@@ -16,10 +16,10 @@
 
 package gr.athenarc.catalogue.ui.config;
 
-import eu.openminted.registry.core.service.ParserService;
-import eu.openminted.registry.core.service.ResourceService;
-import eu.openminted.registry.core.service.ResourceTypeService;
-import eu.openminted.registry.core.service.SearchService;
+import gr.uoa.di.madgik.registry.service.ParserService;
+import gr.uoa.di.madgik.registry.service.ResourceService;
+import gr.uoa.di.madgik.registry.service.ResourceTypeService;
+import gr.uoa.di.madgik.registry.service.SearchService;
 import gr.athenarc.catalogue.service.GenericItemService;
 import gr.athenarc.catalogue.service.id.IdGenerator;
 import gr.athenarc.catalogue.ui.service.FormDisplayService;

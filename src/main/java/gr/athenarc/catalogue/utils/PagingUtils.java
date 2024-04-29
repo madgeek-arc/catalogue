@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.utils;
 
-import eu.openminted.registry.core.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
 
 import java.util.HashMap;
 import java.util.Map;

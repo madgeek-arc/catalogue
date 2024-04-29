@@ -16,11 +16,11 @@
 
 package gr.athenarc.catalogue.service;
 
-import eu.openminted.registry.core.domain.Browsing;
-import eu.openminted.registry.core.domain.FacetFilter;
-import eu.openminted.registry.core.domain.Paging;
-import eu.openminted.registry.core.domain.Resource;
-import eu.openminted.registry.core.service.SearchService;
+import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Paging;
+import gr.uoa.di.madgik.registry.domain.Resource;
+import gr.uoa.di.madgik.registry.service.SearchService;
 
 import javax.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
@@ -30,8 +30,6 @@ import java.util.Map;
 public interface GenericItemService {
 
     <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull);
-
-    <T> Browsing<T> cqlQuery(FacetFilter filter);
 
     <T> Browsing<T> getResults(FacetFilter filter);
 

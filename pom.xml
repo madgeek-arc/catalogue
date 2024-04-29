@@ -16,7 +16,7 @@
     <properties>
         <java.version>11</java.version>
         <springdoc.version>1.6.15</springdoc.version>
-        <registry-core.version>2.7.3</registry-core.version>
+        <registry-core.version>3.0.0-SNAPSHOT</registry-core.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
@@ -75,17 +75,27 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>eu.openminted</groupId>
+            <groupId>gr.uoa.di.madgik</groupId>
             <artifactId>registry-core-api</artifactId>
             <version>${registry-core.version}</version>
         </dependency>
         <dependency>
-            <groupId>eu.openminted</groupId>
+            <groupId>gr.uoa.di.madgik</groupId>
             <artifactId>registry-core-rest</artifactId>
             <version>${registry-core.version}</version>
         </dependency>
         <dependency>
-            <groupId>eu.openminted</groupId>
+            <groupId>gr.uoa.di.madgik</groupId>
+            <artifactId>registry-core-jms</artifactId>
+            <version>${registry-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>gr.uoa.di.madgik</groupId>
+            <artifactId>registry-core-elasticsearch</artifactId>
+            <version>${registry-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>gr.uoa.di.madgik</groupId>
             <artifactId>registry-core-helper</artifactId>
             <version>${registry-core.version}</version>
             <scope>compile</scope>

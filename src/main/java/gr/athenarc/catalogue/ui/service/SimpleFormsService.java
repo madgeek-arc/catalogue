@@ -16,14 +16,14 @@
 
 package gr.athenarc.catalogue.ui.service;
 
-import eu.openminted.registry.core.domain.Browsing;
-import eu.openminted.registry.core.domain.FacetFilter;
-import eu.openminted.registry.core.domain.Resource;
-import eu.openminted.registry.core.domain.ResourceType;
-import eu.openminted.registry.core.service.ParserService;
-import eu.openminted.registry.core.service.ResourceService;
-import eu.openminted.registry.core.service.ResourceTypeService;
-import eu.openminted.registry.core.service.SearchService;
+import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Resource;
+import gr.uoa.di.madgik.registry.domain.ResourceType;
+import gr.uoa.di.madgik.registry.service.ParserService;
+import gr.uoa.di.madgik.registry.service.ResourceService;
+import gr.uoa.di.madgik.registry.service.ResourceTypeService;
+import gr.uoa.di.madgik.registry.service.SearchService;
 import gr.athenarc.catalogue.utils.LoggingUtils;
 import gr.athenarc.catalogue.utils.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;

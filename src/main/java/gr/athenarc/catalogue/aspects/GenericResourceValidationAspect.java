@@ -18,7 +18,7 @@ package gr.athenarc.catalogue.aspects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.openminted.registry.core.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.athenarc.catalogue.config.CatalogueLibProperties;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ValidationException;
