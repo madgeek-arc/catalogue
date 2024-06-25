@@ -127,6 +127,17 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> T add(String resourceTypeName, T resource) {
+        String id = null;
+        try {
+            id = (String) ((LinkedHashMap) resource).get("id");
+        } catch (Exception e) {
+            logger.warn("Could not find field 'id'.", e);
+        }
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+            ((LinkedHashMap) resource).put("id", id);
+        }
+
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
         if (!clazz.isInstance(resource)) {
             resource = (T) objectMapper.convertValue(resource, clazz);
@@ -137,16 +148,6 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         res.setResourceTypeName(resourceTypeName);
         res.setResourceType(resourceType);
 
-        String id = null;
-        try {
-            id = ReflectUtils.getId(clazz, resource);
-        } catch (Exception e) {
-            logger.warn("Could not find field 'id'.", e);
-        }
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-            ReflectUtils.setId(clazz, resource, id);
-        }
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
         logger.info(LoggingUtils.addResource(resourceTypeName, id, resource));

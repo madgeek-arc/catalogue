@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>gr.athenarc</groupId>
 	<artifactId>catalogue</artifactId>
-	<version>5.0.1</version>
+	<version>5.0.2</version>
 	<packaging>jar</packaging>
 	<name>catalogue</name>
 	<description>Catalogue project</description>
@@ -220,11 +220,13 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
+				<includes>
+					<include>**/resourceTypes/</include>
+				</includes>
 				<excludes>
 					<exclude>**/registry.properties</exclude>
 				</excludes>
 			</resource>
 		</resources>
 	</build>
-
 </project>
