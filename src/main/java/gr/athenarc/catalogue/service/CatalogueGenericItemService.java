@@ -21,7 +21,6 @@ public class CatalogueGenericItemService extends AbstractGenericItemService impl
 
     private static final Logger logger = LoggerFactory.getLogger(CatalogueGenericItemService.class);
 
-    @Autowired
     public CatalogueGenericItemService(SearchService searchService,
                                        ResourceService resourceService,
                                        ResourceTypeService resourceTypeService,

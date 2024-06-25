@@ -158,13 +158,18 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        resource = (T) objectMapper.convertValue(resource, clazz);
-
-        String existingId = ReflectUtils.getId(clazz, resource);
+        String existingId = null;
+        try {
+            existingId = (String) ((LinkedHashMap) resource).get("id");
+        } catch (Exception e) {
+            logger.warn("Could not find field 'id'.", e);
+        }
         if (!id.equals(existingId)) {
             throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
         }
+
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
+        resource = (T) objectMapper.convertValue(resource, clazz);
 
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         Resource res = searchResource(resourceTypeName, id, true);
