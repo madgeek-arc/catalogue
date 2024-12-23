@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,13 +22,14 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.nio.file.Paths;
 
 /**
@@ -63,7 +64,7 @@ public class LogsController {
             return ResponseEntity.ok().body(FileUtils.getFolderContents(logsDir));
         } else {
             ByteArrayResource resource = FileUtils.readFile(filepath);
-            response.setHeader("Content-disposition", "attachment; filename=" + Paths.get(filepath).getFileName().toString());
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + Paths.get(filepath).getFileName().toString());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
         }
     }

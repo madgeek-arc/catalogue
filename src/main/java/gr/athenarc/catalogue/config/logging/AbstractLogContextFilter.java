@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import org.slf4j.MDC;
 import org.slf4j.spi.MDCAdapter;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.*;
+import jakarta.servlet.*;
 import java.io.IOException;
 
 @Component

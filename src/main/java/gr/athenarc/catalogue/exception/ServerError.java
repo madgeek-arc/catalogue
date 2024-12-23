@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,10 @@ package gr.athenarc.catalogue.exception;
 
 import gr.athenarc.catalogue.config.logging.LogTransactionsFilter;
 import gr.athenarc.catalogue.utils.RequestUtils;
-import org.springframework.http.HttpStatus;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatusCode;
+
 import java.util.Date;
 
 /**
@@ -60,7 +61,7 @@ public class ServerError {
         this.message = message;
     }
 
-    public ServerError(HttpStatus status, String transactionId, String url, String message) {
+    public ServerError(HttpStatusCode status, String transactionId, String url, String message) {
         timestamp = new Date();
         this.status = status.value();
         this.transactionId = transactionId;
@@ -76,7 +77,7 @@ public class ServerError {
         this.message = message;
     }
 
-    public ServerError(HttpStatus status, HttpServletRequest req, Exception exception) {
+    public ServerError(HttpStatusCode status, HttpServletRequest req, Exception exception) {
         timestamp = new Date();
         this.status = status.value();
         this.transactionId = LogTransactionsFilter.getTransactionId();
@@ -84,7 +85,7 @@ public class ServerError {
         this.message = exception.getMessage();
     }
 
-    public ServerError(HttpStatus status, String transactionId, HttpServletRequest req, Exception exception) {
+    public ServerError(HttpStatusCode status, String transactionId, HttpServletRequest req, Exception exception) {
         timestamp = new Date();
         this.status = status.value();
         this.transactionId = transactionId;

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.utils;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class RequestUtils {
 

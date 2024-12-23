@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,16 @@
 
 package gr.athenarc.catalogue.controller;
 
-import gr.uoa.di.madgik.registry.dao.ResourceTypeDao;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.athenarc.catalogue.service.ResourcePayloadService;
+import gr.uoa.di.madgik.registry.service.ResourceTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 @RestController
@@ -36,13 +33,13 @@ import java.lang.reflect.InvocationTargetException;
 public class ResourcePayloadController {
 
     private final ResourcePayloadService resourcePayloadService;
-    private final ResourceTypeDao resourceTypeDao;
+    private final ResourceTypeService resourceTypeService;
 
     @Autowired
     public ResourcePayloadController(ResourcePayloadService resourcePayloadService,
-                                     ResourceTypeDao resourceTypeDao) {
+                                     ResourceTypeService resourceTypeService) {
         this.resourcePayloadService = resourcePayloadService;
-        this.resourceTypeDao = resourceTypeDao;
+        this.resourceTypeService = resourceTypeService;
     }
 
     @GetMapping("{id}")
@@ -65,7 +62,7 @@ public class ResourcePayloadController {
     }
 
     private HttpHeaders createContentType(String resourceTypeName) {
-        ResourceType resourceType = resourceTypeDao.getResourceType(resourceTypeName);
+        ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         HttpHeaders headers = new HttpHeaders();
         if (resourceType.getPayloadType().equals("xml")) {
             headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML_VALUE);

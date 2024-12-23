@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.ui.domain;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 
 public class FieldIdNameValue {
 

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021-2024 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import gr.athenarc.catalogue.exception.ServerError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -31,7 +32,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Advice handling all thrown Exceptions.
@@ -50,7 +51,7 @@ public class GenericExceptionController {
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
-        HttpStatus status = getStatusFromException(ex);
+        HttpStatusCode status = getStatusFromException(ex);
 
         if (ex instanceof ResourceException) {
             logger.info(ex.getMessage(), ex);
