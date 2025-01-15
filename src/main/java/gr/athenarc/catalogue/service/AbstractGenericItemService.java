@@ -216,7 +216,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             results = (List<T>) paging.getResults()
                     .parallelStream()
                     .map(res -> (T) parserPool.deserialize(res, clazz))
-                    .collect(Collectors.toList());
+                    .toList();
         } else { // mixed resources
             results = (List<T>) paging.getResults()
                     .stream()
@@ -230,7 +230,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
                         return item;
                     })
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }

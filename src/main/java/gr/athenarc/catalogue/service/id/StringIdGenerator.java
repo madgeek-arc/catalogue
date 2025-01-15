@@ -39,6 +39,6 @@ public class StringIdGenerator implements IdGenerator<String> {
         if (prefix == null) {
             prefix = "";
         }
-        return prefix + RandomStringUtils.randomAlphabetic(length);
+        return prefix + RandomStringUtils.secure().nextAlphabetic(length);
     }
 }

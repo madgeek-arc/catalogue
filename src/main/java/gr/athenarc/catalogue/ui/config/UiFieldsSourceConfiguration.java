@@ -31,11 +31,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UiFieldsSourceConfiguration {
 
     @Bean
-    @Autowired
     ModelService simpleUiFieldService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService,
                                       SearchService searchService, ResourceService resourceService,
                                       ResourceTypeService resourceTypeService, ParserService parserService,
@@ -44,7 +43,6 @@ public class UiFieldsSourceConfiguration {
     }
 
     @Bean
-    @Autowired
     FormDisplayService registryFormDisplayService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService) {
         return new RegistryFormDisplayService(genericItemService);
     }
