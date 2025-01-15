@@ -16,21 +16,20 @@
 
 package gr.athenarc.catalogue.ui.controller;
 
-import gr.uoa.di.madgik.registry.domain.Browsing;
-import gr.uoa.di.madgik.registry.domain.FacetFilter;
-import gr.athenarc.catalogue.annotations.Browse;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.service.ModelService;
+import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
+import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-
-import static gr.athenarc.catalogue.utils.PagingUtils.createFacetFilter;
 
 @RestController
 @RequestMapping("forms")
@@ -59,12 +58,12 @@ public class FormsController {
         return new ResponseEntity<>(modelService.get(id), HttpStatus.OK);
     }
 
-    @Browse
+    @BrowseParameters
     @GetMapping("models")
-    public ResponseEntity<Browsing<Model>> getModels(@Parameter(hidden = true) @RequestParam Map<String, Object> allRequestParams) {
-        String resourceType = (String) allRequestParams.get("resourceType");
-        FacetFilter ff = createFacetFilter(allRequestParams);
-        if (resourceType != null && !"".equals(resourceType)) {
+    public ResponseEntity<Browsing<Model>> getModels(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
+        String resourceType = allRequestParams.get("resourceType") != null ? (String) allRequestParams.remove("resourceType").get(0) : null;
+        FacetFilter ff = FacetFilter.from(allRequestParams);
+        if (StringUtils.hasText(resourceType)) {
             ff.addFilter("resourceType", resourceType);
         }
         return new ResponseEntity<>(modelService.browse(ff), HttpStatus.OK);

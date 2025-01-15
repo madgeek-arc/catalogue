@@ -16,10 +16,10 @@
 
 package gr.athenarc.catalogue.controller;
 
+import gr.athenarc.catalogue.service.GenericItemService;
+import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.Paging;
-import gr.athenarc.catalogue.annotations.Browse;
-import gr.athenarc.catalogue.service.GenericItemService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,12 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-
-import static gr.athenarc.catalogue.utils.PagingUtils.createFacetFilter;
 
 @RestController
 @RequestMapping(path = "items")
@@ -70,12 +68,12 @@ public class GenericItemController {
         return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
 
-    @Browse
+    @BrowseParameters
     @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
-                content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
+            content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
     @GetMapping()
-    public ResponseEntity<Paging<?>> browseByResourceType(@Parameter(hidden = true) @RequestParam Map<String, Object> allRequestParams) {
-        FacetFilter ff = createFacetFilter(allRequestParams);
+    public ResponseEntity<Paging<?>> browseByResourceType(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
+        FacetFilter ff = FacetFilter.from(allRequestParams);
         return new ResponseEntity<>(genericResourceService.getResults(ff), HttpStatus.OK);
     }
 
