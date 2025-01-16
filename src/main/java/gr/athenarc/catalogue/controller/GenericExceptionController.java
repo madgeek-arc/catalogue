@@ -77,6 +77,7 @@ public class GenericExceptionController {
             status = HttpStatus.NOT_FOUND;
         } else {
             logger.error(ex.getMessage(), ex);
+            ex = new RuntimeException("Internal Server Error", ex); // wrap exception to hide unknown error message.
         }
         return ResponseEntity
                 .status(status)
