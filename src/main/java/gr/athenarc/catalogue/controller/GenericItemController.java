@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2024 OpenAIRE AMKE
+ * Copyright 2021-2025 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,15 @@ import java.lang.reflect.InvocationTargetException;
 @RequestMapping(path = "items")
 public class GenericItemController {
 
-    private final GenericItemService genericResourceService;
+    private final GenericResourceService genericResourceService;
 
     @Autowired
-    GenericItemController(@Qualifier("catalogueGenericItemService") GenericItemService genericResourceService) {
+    GenericItemController(@Qualifier("catalogueGenericResourceService") GenericResourceService genericResourceService) {
         this.genericResourceService = genericResourceService;
     }
 
     @PostMapping()
-    public <T> ResponseEntity<?> create(@RequestParam("resourceType") String resourceType,
+    public <T> ResponseEntity<T> create(@RequestParam("resourceType") String resourceType,
                                         @RequestBody T resource) {
         T createdResource;
         createdResource = genericResourceService.add(resourceType, resource);
@@ -53,7 +53,7 @@ public class GenericItemController {
     }
 
     @PutMapping("{id}")
-    public <T> ResponseEntity<?> update(@PathVariable("id") String id,
+    public <T> ResponseEntity<T> update(@PathVariable("id") String id,
                                         @RequestParam("resourceType") String resourceType,
                                         @RequestParam(value = "raw", defaultValue = "false") boolean raw,
                                         @RequestBody T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
@@ -63,7 +63,7 @@ public class GenericItemController {
     }
 
     @DeleteMapping("{id}")
-    public <T> ResponseEntity<?> delete(@PathVariable("id") String id, @RequestParam("resourceType") String resourceType) {
+    public <T> ResponseEntity<T> delete(@PathVariable("id") String id, @RequestParam("resourceType") String resourceType) {
         T deleted = genericResourceService.delete(resourceType, id);
         return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
@@ -72,7 +72,7 @@ public class GenericItemController {
     @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
             content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
     @GetMapping()
-    public ResponseEntity<Paging<?>> browseByResourceType(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
+    public <T> ResponseEntity<Paging<T>> browseByResourceType(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
         FacetFilter ff = FacetFilter.from(allRequestParams);
         return new ResponseEntity<>(genericResourceService.getResults(ff), HttpStatus.OK);
     }
@@ -84,8 +84,8 @@ public class GenericItemController {
     }
 
     @GetMapping("search")
-    public ResponseEntity<?> getByField(@RequestParam("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
-        Object ret = genericResourceService.get(resourceType, field, value, true);
+    public <T> ResponseEntity<T> getByField(@RequestParam("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
+        T ret = genericResourceService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 }

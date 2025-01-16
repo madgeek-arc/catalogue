@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2024 OpenAIRE AMKE
+ * Copyright 2021-2025 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class GenericResourceValidationAspect {
         this.properties = properties;
     }
 
-    @Before("execution(* gr.athenarc.catalogue.service.AbstractGenericItemService.add(..))")
+    @Before("execution(* gr.athenarc.catalogue.service.GenericResourceManager.add(..))")
     public void validateBeforeAdd(JoinPoint joinPoint) {
         if (properties.getValidation().isEnabled()) {
             String resourceTypeName = (String) joinPoint.getArgs()[0];
@@ -67,7 +67,7 @@ public class GenericResourceValidationAspect {
         }
     }
 
-    @Before("execution(* gr.athenarc.catalogue.service.AbstractGenericItemService.update(..))")
+    @Before("execution(* gr.athenarc.catalogue.service.GenericResourceManager.update(..))")
     public void validateBeforeUpdate(JoinPoint joinPoint) {
         if (properties.getValidation().isEnabled()) {
             String resourceTypeName = (String) joinPoint.getArgs()[0];

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2024 OpenAIRE AMKE
+ * Copyright 2021-2025 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import gr.athenarc.catalogue.utils.ReflectUtils;
 import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
 import gr.athenarc.catalogue.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ResourceNotFoundException;
-import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.GenericResourceService;
 import gr.athenarc.catalogue.service.id.IdGenerator;
 import gr.athenarc.catalogue.ui.domain.*;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class SimpleFormsService implements ModelService {
 
     private static final Logger logger = LoggerFactory.getLogger(SimpleFormsService.class);
 
-    private final GenericItemService genericItemService;
+    private final GenericResourceService genericResourceService;
     private final IdGenerator<String> idGenerator;
     public final SearchService searchService;
     public final ResourceService resourceService;
@@ -55,14 +55,14 @@ public class SimpleFormsService implements ModelService {
     private Map<String, Form> formMap;
     private Map<String, Display> displayMap;
 
-    public SimpleFormsService(GenericItemService genericItemService,
+    public SimpleFormsService(GenericResourceService genericResourceService,
                               IdGenerator<String> idGenerator,
                               SearchService searchService,
                               ResourceService resourceService,
                               ResourceTypeService resourceTypeService,
                               ParserService parserPool,
                               FormDisplayService formDisplayService) {
-        this.genericItemService = genericItemService;
+        this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
         this.resourceService = resourceService;
@@ -81,7 +81,7 @@ public class SimpleFormsService implements ModelService {
                 id = idGenerator.createId(resourceTypeName.charAt(0) + "-");
                 ReflectUtils.setId(obj.getClass(), obj, id);
             }
-            existing = genericItemService.get(resourceTypeName, id);
+            existing = genericResourceService.get(resourceTypeName, id);
         } catch (NoSuchFieldException e) {
             logger.error(e.getMessage(), e);
         } catch (ResourceNotFoundException e) {
@@ -108,7 +108,7 @@ public class SimpleFormsService implements ModelService {
             if (!id.equals(ReflectUtils.getId(obj.getClass(), obj))) {
                 throw new ResourceException("You are not allowed to modify the id of a resource.", HttpStatus.CONFLICT);
             }
-            existing = genericItemService.searchResource(resourceTypeName, id, true);
+            existing = genericResourceService.searchResource(resourceTypeName, id, true);
             existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
         } catch (NoSuchFieldException e) {
             logger.error(e.getMessage(), e);
@@ -123,8 +123,8 @@ public class SimpleFormsService implements ModelService {
 
     public <T> void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
         Resource resource = null;
-        Class<?> clazz = genericItemService.getClassFromResourceType(resourceTypeName);
-        resource = genericItemService.searchResource(resourceTypeName, id, true);
+        Class<?> clazz = genericResourceService.getClassFromResourceType(resourceTypeName);
+        resource = genericResourceService.searchResource(resourceTypeName, id, true);
         T obj = (T) parserPool.deserialize(resource, clazz);
         logger.trace(LoggingUtils.deleteResource(resourceTypeName, id, obj));
         resourceService.deleteResource(resource.getId());
@@ -162,7 +162,7 @@ public class SimpleFormsService implements ModelService {
 
     @Override
     public Model get(String id) {
-        Model model = genericItemService.get(MODEL_RESOURCE_TYPE_NAME, id);
+        Model model = genericResourceService.get(MODEL_RESOURCE_TYPE_NAME, id);
         enrichModel(model);
         return model;
     }
@@ -170,7 +170,7 @@ public class SimpleFormsService implements ModelService {
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        Browsing<Model> models = genericItemService.getResults(filter);
+        Browsing<Model> models = genericResourceService.getResults(filter);
         models.getResults().forEach(this::enrichModel);
         return models;
     }
