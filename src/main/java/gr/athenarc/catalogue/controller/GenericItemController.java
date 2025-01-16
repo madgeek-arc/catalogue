@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.controller;
 
-import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.GenericResourceService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.Paging;

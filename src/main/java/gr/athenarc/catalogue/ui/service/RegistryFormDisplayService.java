@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.ui.service;
 
-import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.GenericResourceService;
 import gr.athenarc.catalogue.ui.domain.Display;
 import gr.athenarc.catalogue.ui.domain.Form;
 import gr.athenarc.catalogue.ui.domain.UiFieldDisplay;
@@ -31,15 +31,15 @@ public class RegistryFormDisplayService implements FormDisplayService {
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryFormDisplayService.class);
 
-    private final GenericItemService genericItemService;
+    private final GenericResourceService genericResourceService;
 
-    public RegistryFormDisplayService(GenericItemService genericItemService) {
-        this.genericItemService = genericItemService;
+    public RegistryFormDisplayService(GenericResourceService genericResourceService) {
+        this.genericResourceService = genericResourceService;
     }
 
     @Override
     public Form getForm(String fieldId, String modelId) {
-        return genericItemService.get(camelCaseToSnakeCase(Form.class.getName()), fieldId);
+        return genericResourceService.get(camelCaseToSnakeCase(Form.class.getName()), fieldId);
     }
 
     @Override

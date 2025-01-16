@@ -32,12 +32,11 @@ import org.springframework.http.HttpStatus;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
-import java.net.UnknownHostException;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.UnaryOperator;
 
-public abstract class AbstractGenericItemService implements GenericItemService {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractGenericItemService.class);
+public class GenericResourceManager implements GenericResourceService {
+    private static final Logger logger = LoggerFactory.getLogger(GenericResourceManager.class);
 
     public final SearchService searchService;
     public final ResourceService resourceService;
@@ -52,11 +51,11 @@ public abstract class AbstractGenericItemService implements GenericItemService {
     private Map<String, List<String>> browseByMap;
     private Map<String, Map<String, String>> labelsMap;
 
-    protected AbstractGenericItemService(SearchService searchService,
-                                         ResourceService resourceService,
-                                         ResourceTypeService resourceTypeService,
-                                         VersionService versionService,
-                                         ParserService parserPool) {
+    protected GenericResourceManager(SearchService searchService,
+                                     ResourceService resourceService,
+                                     ResourceTypeService resourceTypeService,
+                                     VersionService versionService,
+                                     ParserService parserPool) {
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
@@ -110,7 +109,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
             logger.debug("Generating browse fields for [{}]", rt.getName());
         }
         for (String alias : aliasGroupBrowse.keySet()) {
-            browseByMap.put(alias, aliasGroupBrowse.get(alias).stream().sorted().collect(Collectors.toList()));
+            browseByMap.put(alias, aliasGroupBrowse.get(alias).stream().sorted().toList());
             labelsMap.put(alias, aliasGroupLabels.get(alias));
         }
     }
@@ -191,11 +190,15 @@ public abstract class AbstractGenericItemService implements GenericItemService {
         return (T) parserPool.deserialize(res, getClassFromResourceType(res.getResourceTypeName()));
     }
 
-    @Override
     public <T> Browsing<T> getResults(FacetFilter filter) {
         filter.setBrowseBy(createBrowseBy(filter));
-        Browsing<T> browsing;
-        browsing = convertToBrowsing(searchService.search(filter), filter.getResourceType());
+        return convertToBrowsing(searchService.search(filter), filter.getResourceType());
+    }
+
+    @Override
+    public <T> Browsing<T> getResults(FacetFilter filter, UnaryOperator<List<Facet>> transformer) {
+        Browsing<T> browsing = getResults(filter);
+        browsing.setFacets(transformer.apply(browsing.getFacets()));
         return browsing;
     }
 
@@ -273,8 +276,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public Resource searchResource(String resourceTypeName, String id, boolean throwOnNull) {
-        Resource res = null;
-        res = searchService.searchFields(resourceTypeName, new SearchService.KeyValue("resource_internal_id", id));
+        Resource res = searchService.searchFields(resourceTypeName, new SearchService.KeyValue("resource_internal_id", id));
         if (throwOnNull) {
             return Optional.ofNullable(res)
                     .orElseThrow(() -> new ResourceNotFoundException(id, resourceTypeName));
@@ -284,9 +286,7 @@ public abstract class AbstractGenericItemService implements GenericItemService {
 
     @Override
     public Resource searchResource(String resourceTypeName, SearchService.KeyValue... keyValues) {
-        Resource res = null;
-        res = searchService.searchFields(resourceTypeName, keyValues);
-        return res;
+        return searchService.searchFields(resourceTypeName, keyValues);
     }
 
     public Map<String, List<String>> getBrowseByMap() {

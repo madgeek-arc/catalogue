@@ -24,7 +24,6 @@ import gr.athenarc.catalogue.utils.LoggingUtils;
 import gr.athenarc.catalogue.utils.ReflectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +31,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.UUID;
 
-@Service("catalogueGenericItemService")
-public class CatalogueGenericItemService extends AbstractGenericItemService implements GenericItemService, ResourcePayloadService {
+@Service("catalogueGenericResourceService")
+public class CatalogueGenericResourceService extends GenericResourceManager implements GenericResourceService, ResourcePayloadService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CatalogueGenericItemService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CatalogueGenericResourceService.class);
 
-    public CatalogueGenericItemService(SearchService searchService,
-                                       ResourceService resourceService,
-                                       ResourceTypeService resourceTypeService,
-                                       VersionService versionService,
-                                       ParserService parserPool) {
+    public CatalogueGenericResourceService(SearchService searchService,
+                                           ResourceService resourceService,
+                                           ResourceTypeService resourceTypeService,
+                                           VersionService versionService,
+                                           ParserService parserPool) {
         super(searchService, resourceService, resourceTypeService, versionService, parserPool);
     }
 

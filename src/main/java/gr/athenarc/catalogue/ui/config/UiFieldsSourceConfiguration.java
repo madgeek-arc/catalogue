@@ -20,13 +20,12 @@ import gr.uoa.di.madgik.registry.service.ParserService;
 import gr.uoa.di.madgik.registry.service.ResourceService;
 import gr.uoa.di.madgik.registry.service.ResourceTypeService;
 import gr.uoa.di.madgik.registry.service.SearchService;
-import gr.athenarc.catalogue.service.GenericItemService;
+import gr.athenarc.catalogue.service.GenericResourceService;
 import gr.athenarc.catalogue.service.id.IdGenerator;
 import gr.athenarc.catalogue.ui.service.FormDisplayService;
 import gr.athenarc.catalogue.ui.service.ModelService;
 import gr.athenarc.catalogue.ui.service.RegistryFormDisplayService;
 import gr.athenarc.catalogue.ui.service.SimpleFormsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,15 +34,15 @@ import org.springframework.context.annotation.Configuration;
 public class UiFieldsSourceConfiguration {
 
     @Bean
-    ModelService simpleUiFieldService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService,
+    ModelService simpleUiFieldService(@Qualifier("catalogueGenericResourceService") GenericResourceService genericResourceService,
                                       SearchService searchService, ResourceService resourceService,
                                       ResourceTypeService resourceTypeService, ParserService parserService,
                                       IdGenerator<String> idGenerator, FormDisplayService formDisplayService) {
-        return new SimpleFormsService(genericItemService, idGenerator, searchService, resourceService, resourceTypeService, parserService, formDisplayService);
+        return new SimpleFormsService(genericResourceService, idGenerator, searchService, resourceService, resourceTypeService, parserService, formDisplayService);
     }
 
     @Bean
-    FormDisplayService registryFormDisplayService(@Qualifier("catalogueGenericItemService") GenericItemService genericItemService) {
-        return new RegistryFormDisplayService(genericItemService);
+    FormDisplayService registryFormDisplayService(@Qualifier("catalogueGenericResourceService") GenericResourceService genericResourceService) {
+        return new RegistryFormDisplayService(genericResourceService);
     }
 }
