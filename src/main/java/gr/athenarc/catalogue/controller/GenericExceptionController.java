@@ -22,6 +22,7 @@ import gr.athenarc.catalogue.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.exception.ServerError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.sql.SQLException;
 
 /**
  * Advice handling all thrown Exceptions.
@@ -75,7 +78,11 @@ public class GenericExceptionController {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.NOT_FOUND;
-        } else {
+        } else if (ex instanceof SQLException || ex instanceof DataAccessException) {
+            logger.error(ex.getMessage(), ex);
+            status = HttpStatus.UNPROCESSABLE_ENTITY;
+            return ResponseEntity.status(status).body(new ServerError(status, req, "Could not process request"));
+        }else {
             logger.error(ex.getMessage(), ex);
             ex = new RuntimeException("Internal Server Error", ex); // wrap exception to hide unknown error message.
         }
