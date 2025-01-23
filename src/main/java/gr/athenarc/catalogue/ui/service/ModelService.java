@@ -18,12 +18,11 @@ package gr.athenarc.catalogue.ui.service;
 
 import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
-import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.domain.Section;
 import gr.athenarc.catalogue.ui.domain.UiField;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ModelService {

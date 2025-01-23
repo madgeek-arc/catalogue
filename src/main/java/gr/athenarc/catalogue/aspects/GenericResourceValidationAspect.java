@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.athenarc.catalogue.config.CatalogueLibProperties;
-import gr.athenarc.catalogue.exception.ResourceException;
+import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.athenarc.catalogue.exception.ValidationException;
 import gr.athenarc.catalogue.ui.domain.Model;
 import gr.athenarc.catalogue.ui.domain.Section;

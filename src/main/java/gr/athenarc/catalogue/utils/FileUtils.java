@@ -16,7 +16,7 @@
 
 package gr.athenarc.catalogue.utils;
 
-import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;

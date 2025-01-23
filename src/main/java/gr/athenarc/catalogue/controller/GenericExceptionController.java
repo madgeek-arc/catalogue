@@ -16,9 +16,9 @@
 
 package gr.athenarc.catalogue.controller;
 
-import gr.athenarc.catalogue.exception.ResourceAlreadyExistsException;
-import gr.athenarc.catalogue.exception.ResourceException;
-import gr.athenarc.catalogue.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
+import gr.uoa.di.madgik.registry.exception.ResourceException;
+import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.athenarc.catalogue.exception.ServerError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

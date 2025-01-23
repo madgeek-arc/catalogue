@@ -19,7 +19,7 @@ package gr.athenarc.catalogue.service;
 import gr.uoa.di.madgik.registry.domain.Resource;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.service.*;
-import gr.athenarc.catalogue.exception.ResourceException;
+import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.athenarc.catalogue.utils.LoggingUtils;
 import gr.athenarc.catalogue.utils.ReflectUtils;
 import org.slf4j.Logger;
