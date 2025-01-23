@@ -23,7 +23,9 @@
   ],
   "indexMapperClass": "gr.uoa.di.madgik.registry.index.DefaultIndexMapper",
   "name": "ui_field_display",
-  "aliasGroup": "resourceTypes",
+  "aliases": [
+    "resourceTypes"
+  ],
   "payloadType": "json",
   "properties": {
     "class": "gr.athenarc.catalogue.ui.domain.UiFieldDisplay"

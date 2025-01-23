@@ -107,7 +107,9 @@
   ],
   "indexMapperClass": "gr.uoa.di.madgik.registry.index.DefaultIndexMapper",
   "name": "model",
-  "aliasGroup": "resourceTypes",
+  "aliases": [
+    "resourceTypes"
+  ],
   "payloadType": "json",
   "properties": {
     "class": "gr.athenarc.catalogue.ui.domain.Model"
