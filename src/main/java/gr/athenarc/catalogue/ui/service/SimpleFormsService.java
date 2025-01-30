@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package gr.athenarc.catalogue.ui.service;
 
 import gr.uoa.di.madgik.registry.domain.Browsing;
@@ -38,6 +37,7 @@ import org.springframework.http.HttpStatus;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SimpleFormsService implements ModelService {
@@ -139,7 +139,7 @@ public class SimpleFormsService implements ModelService {
         model.setCreationDate(date);
         model.setModificationDate(date);
 
-        validateIds(model);
+        validateModel(model);
         createParents(model);
         model = add(model, MODEL_RESOURCE_TYPE_NAME);
         return model;
@@ -149,7 +149,7 @@ public class SimpleFormsService implements ModelService {
     public Model update(String id, Model model) {
         createSectionIds(model);
         model.setModificationDate(new Date());
-        validateIds(model);
+        validateModel(model);
         createParents(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
         return model;
@@ -243,17 +243,33 @@ public class SimpleFormsService implements ModelService {
         return displayMap != null ? displayMap.get(fieldId) : null;
     }
 
-    private void validateIds(Model model) {
+    private void validateModel(Model model) {
         List<UiField> allFields = getAllFields(model);
-        Set<String> ids = new HashSet<>();
-        Set<String> uniqueIds = allFields
-                .stream()
-                .map(UiField::getId)
-                .filter(f -> !ids.add(f))
-                .collect(Collectors.toSet());
-        if (!uniqueIds.isEmpty()) {
-            throw new RuntimeException(String.format("Duplicate IDs found: [%s]", String.join(", ", uniqueIds)));
+
+        Set<String> duplicateIds = findDuplicateFields(allFields, UiField::getId);
+        if (!duplicateIds.isEmpty()) {
+            throw new ResourceException(
+                    String.format("Duplicate IDs found: [%s]", String.join(", ", duplicateIds)),
+                    HttpStatus.CONFLICT
+            );
         }
+        Set<String> duplicateNames = findDuplicateFields(allFields, UiField::getName);
+        if (!duplicateNames.isEmpty()) {
+            throw new ResourceException(
+                    String.format("Duplicate Names found: [%s]", String.join(", ", duplicateNames)),
+                    HttpStatus.CONFLICT
+            );
+        }
+    }
+
+    private Set<String> findDuplicateFields(List<UiField> list, Function<UiField, Object> predicate) {
+        Set<String> unique = new HashSet<>();
+        return list
+                .stream()
+                .map(predicate)
+                .map(Object::toString)
+                .filter(item -> !unique.add(item))
+                .collect(Collectors.toSet());
     }
 
     private void createSectionIds(Model model) {
