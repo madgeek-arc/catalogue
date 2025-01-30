@@ -28,7 +28,7 @@
   ],
   "payloadType": "json",
   "properties": {
-    "class": "gr.athenarc.catalogue.ui.domain.UiFieldForm"
+    "class": "gr.uoa.di.madgik.catalogue.ui.domain.UiFieldForm"
   },
   "schema": "{\n\t\"$schema\": \"https://json-schema.org/draft/2019-09/schema\"\n}"
 }
