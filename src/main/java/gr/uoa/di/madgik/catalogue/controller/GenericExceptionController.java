@@ -1,12 +1,12 @@
 /**
  * Copyright 2021-2025 OpenAIRE AMKE
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package gr.uoa.di.madgik.catalogue.controller;
 
+import gr.uoa.di.madgik.catalogue.exception.ServerError;
+import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
-import gr.uoa.di.madgik.catalogue.exception.ServerError;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -31,8 +33,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.SQLException;
 
@@ -73,15 +73,19 @@ public class GenericExceptionController {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.CONFLICT;
-        } else if (ex instanceof ResourceNotFoundException || ex instanceof gr.uoa.di.madgik.registry.exception.ResourceNotFoundException) {
+        } else if (ex instanceof ResourceNotFoundException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof ValidationException) {
+            logger.info(ex.getMessage());
+            logger.debug(ex.getMessage(), ex);
+            status = HttpStatus.BAD_REQUEST;
         } else if (ex instanceof SQLException || ex instanceof DataAccessException) {
             logger.error(ex.getMessage(), ex);
             status = HttpStatus.UNPROCESSABLE_ENTITY;
             return ResponseEntity.status(status).body(new ServerError(status, req, "Could not process request"));
-        }else {
+        } else {
             logger.error(ex.getMessage(), ex);
             ex = new RuntimeException("Internal Server Error", ex); // wrap exception to hide unknown error message.
         }
