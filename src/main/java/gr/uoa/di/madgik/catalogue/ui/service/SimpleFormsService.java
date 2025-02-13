@@ -256,13 +256,6 @@ public class SimpleFormsService implements ModelService {
                     HttpStatus.CONFLICT
             );
         }
-        Set<String> duplicateNames = findDuplicateFields(allFields, UiField::getName);
-        if (!duplicateNames.isEmpty()) {
-            throw new ResourceException(
-                    String.format("Duplicate Names found: [%s]", String.join(", ", duplicateNames)),
-                    HttpStatus.CONFLICT
-            );
-        }
     }
 
     private Set<String> findDuplicateFields(List<UiField> list, Function<UiField, Object> predicate) {
