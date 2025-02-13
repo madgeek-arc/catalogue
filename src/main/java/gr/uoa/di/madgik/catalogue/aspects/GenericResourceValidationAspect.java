@@ -71,12 +71,21 @@ public class GenericResourceValidationAspect {
         if (properties.getValidation().isEnabled()) {
             String resourceTypeName = (String) joinPoint.getArgs()[0];
             Object item = joinPoint.getArgs()[2];
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                logger.debug("Validating resource: {}", objectMapper.writeValueAsString(item));
-            } catch (JsonProcessingException ignore) {
-            }
-            validate(item, resourceTypeName);
+            validateAndRemoveEmptyFields(item, resourceTypeName);
+        }
+    }
+
+    public <T> T validateAndRemoveEmptyFields(T item, String resourceTypeName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String json = objectMapper.writeValueAsString(item);
+            logger.debug("Validating resource: {}", json);
+            Class<?> clazz = item.getClass();
+            Object transformed = validate(objectMapper.readValue(json, LinkedHashMap.class), resourceTypeName);
+            item = (T) objectMapper.readValue(objectMapper.writeValueAsString(transformed), clazz);
+            return item;
+        } catch (JsonProcessingException ignore) {
+            throw new ValidationException();
         }
     }
 
