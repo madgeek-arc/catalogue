@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,47 +42,51 @@ public class GenericItemController {
     }
 
     @PostMapping()
-    public <T> ResponseEntity<T> create(@RequestParam("resourceType") String resourceType,
-                                        @RequestBody T resource) {
-        T createdResource;
+    public ResponseEntity<Object> create(@RequestParam("resourceType") String resourceType,
+                                        @RequestBody Object resource) {
+        Object createdResource;
         createdResource = genericResourceService.add(resourceType, resource);
-        return new ResponseEntity<>(createdResource, HttpStatus.OK);
+        return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
     }
 
     @PutMapping("{id}")
-    public <T> ResponseEntity<T> update(@PathVariable("id") String id,
+    public ResponseEntity<Object> update(@PathVariable("id") String id,
                                         @RequestParam("resourceType") String resourceType,
-                                        @RequestParam(value = "raw", defaultValue = "false") boolean raw,
-                                        @RequestBody T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
-        T createdResource;
+                                        @RequestBody Object resource)
+            throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+        Object createdResource;
         createdResource = genericResourceService.update(resourceType, id, resource);
         return new ResponseEntity<>(createdResource, HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")
-    public <T> ResponseEntity<T> delete(@PathVariable("id") String id, @RequestParam("resourceType") String resourceType) {
-        T deleted = genericResourceService.delete(resourceType, id);
+    public ResponseEntity<Object> delete(@PathVariable("id") String id,
+                                        @RequestParam("resourceType") String resourceType) {
+        Object deleted = genericResourceService.delete(resourceType, id);
         return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
 
+    @GetMapping()
     @BrowseParameters
     @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
             content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
-    @GetMapping()
-    public <T> ResponseEntity<Paging<T>> browseByResourceType(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
-        FacetFilter ff = FacetFilter.from(allRequestParams);
+    public ResponseEntity<Paging<Object>> browseByResourceType(@Parameter(hidden = true)
+                                                              @RequestParam MultiValueMap<String, Object> params) {
+        FacetFilter ff = FacetFilter.from(params);
         return new ResponseEntity<>(genericResourceService.getResults(ff), HttpStatus.OK);
     }
 
     @GetMapping("{id}")
-    public <T> ResponseEntity<T> get(@RequestParam("resourceType") String resourceType, @PathVariable("id") String id) {
-        T ret = genericResourceService.get(resourceType, id);
+    public ResponseEntity<Object> get(@RequestParam("resourceType") String resourceType, @PathVariable("id") String id) {
+        Object ret = genericResourceService.get(resourceType, id);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
     @GetMapping("search")
-    public <T> ResponseEntity<T> getByField(@RequestParam("resourceType") String resourceType, @RequestParam(value = "field") String field, @RequestParam(value = "value") String value) {
-        T ret = genericResourceService.get(resourceType, field, value, true);
+    public ResponseEntity<Object> getByField(@RequestParam("resourceType") String resourceType,
+                                            @RequestParam(value = "field") String field,
+                                            @RequestParam(value = "value") String value) {
+        Object ret = genericResourceService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 }
