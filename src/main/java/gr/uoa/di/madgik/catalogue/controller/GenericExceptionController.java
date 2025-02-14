@@ -55,12 +55,12 @@ public class GenericExceptionController {
     protected ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
         HttpStatusCode status = getStatusFromException(ex);
 
-        if (ex instanceof ResourceException) {
+        if (ex instanceof ResourceException re) {
             logger.info(ex.getMessage(), ex);
-            status = ((ResourceException) ex).getStatus();
-        } else if (ex instanceof HttpClientErrorException) {
+            status = re.getStatus();
+        } else if (ex instanceof HttpClientErrorException hcee) {
             logger.info(ex.getMessage(), ex);
-            status = ((HttpClientErrorException) ex).getStatusCode();
+            status = hcee.getStatusCode();
         } else if (ex instanceof AccessDeniedException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
