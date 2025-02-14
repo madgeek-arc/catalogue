@@ -15,8 +15,8 @@
     <description>Catalogue project</description>
     <properties>
         <java.version>21</java.version>
-        <springdoc.version>2.7.0</springdoc.version>
-        <registry-core.version>4.0.0-SNAPSHOT</registry-core.version>
+        <springdoc.version>2.8.4</springdoc.version>
+        <registry-core.version>4.0.0</registry-core.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
