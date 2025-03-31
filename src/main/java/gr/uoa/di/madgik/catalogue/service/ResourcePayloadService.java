@@ -17,6 +17,10 @@ package gr.uoa.di.madgik.catalogue.service;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * @deprecated
+ */
+@Deprecated
 public interface ResourcePayloadService {
 
     String getRaw(String resourceTypeName, String id);

@@ -37,7 +37,7 @@ public class GenericItemController {
 
     private final GenericResourceService genericResourceService;
 
-    GenericItemController(@Qualifier("catalogueGenericResourceService") GenericResourceService genericResourceService) {
+    GenericItemController(GenericResourceService genericResourceService) {
         this.genericResourceService = genericResourceService;
     }
 

@@ -30,10 +30,13 @@ import org.springframework.http.HttpStatus;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.stereotype.Service;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
+@Service
 public class GenericResourceManager implements GenericResourceService {
     private static final Logger logger = LoggerFactory.getLogger(GenericResourceManager.class);
 

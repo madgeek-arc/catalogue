@@ -24,7 +24,7 @@ import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
-import gr.uoa.di.madgik.catalogue.ui.service.ModelService;
+import gr.uoa.di.madgik.catalogue.service.ModelService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;

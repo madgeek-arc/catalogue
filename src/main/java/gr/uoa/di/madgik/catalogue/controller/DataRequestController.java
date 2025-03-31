@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gr.uoa.di.madgik.catalogue.ui.controller;
+package gr.uoa.di.madgik.catalogue.controller;
 
 import gr.uoa.di.madgik.catalogue.ui.domain.DataRequest;
-import gr.uoa.di.madgik.catalogue.ui.service.DataRequestService;
+import gr.uoa.di.madgik.catalogue.service.DataRequestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
