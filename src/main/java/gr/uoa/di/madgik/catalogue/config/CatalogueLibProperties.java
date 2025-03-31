@@ -15,7 +15,7 @@
  */
 package gr.uoa.di.madgik.catalogue.config;
 
-import gr.uoa.di.madgik.catalogue.ui.controller.UiController;
+import gr.uoa.di.madgik.catalogue.controller.UiController;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

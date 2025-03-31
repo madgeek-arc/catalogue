@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gr.uoa.di.madgik.catalogue.ui.controller;
+package gr.uoa.di.madgik.catalogue.controller;
 
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.service.ModelService;
+import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
 import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
@@ -36,7 +36,6 @@ public class FormsController {
 
     private final ModelService modelService;
 
-    @Autowired
     public FormsController(ModelService modelService) {
         this.modelService = modelService;
     }

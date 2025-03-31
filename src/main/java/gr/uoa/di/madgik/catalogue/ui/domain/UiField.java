@@ -35,7 +35,6 @@ public class UiField {
 
     public UiField() {
         this.form = new Form();
-        this.display = new Display();
     }
 
     public UiField(UiField field) {

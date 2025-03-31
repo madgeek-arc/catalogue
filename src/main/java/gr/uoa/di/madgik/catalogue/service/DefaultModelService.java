@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gr.uoa.di.madgik.catalogue.ui.service;
+package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.catalogue.service.GenericResourceService;
+import gr.uoa.di.madgik.catalogue.ui.domain.Model;
+import gr.uoa.di.madgik.catalogue.ui.domain.Section;
+import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
-import gr.uoa.di.madgik.catalogue.ui.domain.*;
 import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
 import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
 import gr.uoa.di.madgik.registry.domain.Browsing;
@@ -40,9 +41,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SimpleFormsService implements ModelService {
+public class DefaultModelService implements ModelService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SimpleFormsService.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultModelService.class);
 
     private final GenericResourceService genericResourceService;
     private final IdGenerator<String> idGenerator;
@@ -50,25 +51,19 @@ public class SimpleFormsService implements ModelService {
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
-    public final FormDisplayService formDisplayService;
 
-    private Map<String, Form> formMap;
-    private Map<String, Display> displayMap;
-
-    public SimpleFormsService(GenericResourceService genericResourceService,
-                              IdGenerator<String> idGenerator,
-                              SearchService searchService,
-                              ResourceService resourceService,
-                              ResourceTypeService resourceTypeService,
-                              ParserService parserPool,
-                              FormDisplayService formDisplayService) {
+    public DefaultModelService(GenericResourceService genericResourceService,
+                               IdGenerator<String> idGenerator,
+                               SearchService searchService,
+                               ResourceService resourceService,
+                               ResourceTypeService resourceTypeService,
+                               ParserService parserPool) {
         this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
-        this.formDisplayService = formDisplayService;
     }
 
     public <T> T add(T obj, String resourceTypeName) {
@@ -165,17 +160,13 @@ public class SimpleFormsService implements ModelService {
 
     @Override
     public Model get(String id) {
-        Model model = genericResourceService.get(MODEL_RESOURCE_TYPE_NAME, id);
-        enrichModel(model);
-        return model;
+        return genericResourceService.get(MODEL_RESOURCE_TYPE_NAME, id);
     }
 
     @Override
     public Browsing<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
-        Browsing<Model> models = genericResourceService.getResults(filter);
-        models.getResults().forEach(this::enrichModel);
-        return models;
+        return genericResourceService.getResults(filter);
     }
 
     @Override
@@ -209,41 +200,6 @@ public class SimpleFormsService implements ModelService {
             }
         }
         return allFields;
-    }
-
-
-    void enrichModel(Model model) { // TODO: refactor
-        this.formMap = formDisplayService.getUiFieldIdFormMap(model.getId());
-        this.displayMap = formDisplayService.getUiFieldIdDisplayMap(model.getId());
-        if (model != null && model.getSections() != null) {
-            for (Section section : model.getSections()) {
-                enrichFields(section.getFields());
-            }
-        }
-    }
-
-    private void enrichFields(List<UiField> fields) {
-        if (fields != null) {
-            for (UiField field : fields) {
-                Form form = getFieldForm(field.getId());
-                if (form != null) {
-                    field.setForm(form);
-                }
-                Display display = getFieldDisplay(field.getId());
-                if (display != null) {
-                    field.setDisplay(getFieldDisplay(field.getId()));
-                }
-                enrichFields(field.getSubFields());
-            }
-        }
-    }
-
-    private Form getFieldForm(String fieldId) {
-        return formMap != null ? formMap.get(fieldId) : null;
-    }
-
-    private Display getFieldDisplay(String fieldId) {
-        return displayMap != null ? displayMap.get(fieldId) : null;
     }
 
     private void validateModel(Model model) {

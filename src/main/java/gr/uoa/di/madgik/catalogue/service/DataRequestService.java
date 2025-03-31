@@ -13,39 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.service;
 
-public class UiFieldForm {
+import gr.uoa.di.madgik.catalogue.ui.domain.DataRequest;
+import reactor.core.publisher.Mono;
 
-    String id;
-    String modelId;
-    Form form;
+/**
+ * Can be used to obtain values from an external API.
+ */
+public interface DataRequestService {
 
-    public UiFieldForm() {
-        // no arg constructor
-    }
+    /**
+     * Performs an API call, based on the {@link DataRequest} given, to retrieve a value.
+     *
+     * @param request The request object
+     * @return The value matching the {@link DataRequest#expression}
+     */
+    Mono<?> retrieve(DataRequest request);
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getModelId() {
-        return modelId;
-    }
-
-    public void setModelId(String modelId) {
-        this.modelId = modelId;
-    }
-
-    public Form getForm() {
-        return form;
-    }
-
-    public void setForm(Form form) {
-        this.form = form;
-    }
 }

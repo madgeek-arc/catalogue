@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gr.uoa.di.madgik.catalogue.ui.controller;
+package gr.uoa.di.madgik.catalogue.controller;
 
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.service.ModelService;
+import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.catalogue.utils.ClasspathUtils;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,20 +30,11 @@ import java.util.stream.Collectors;
 @RestController
 public class UiController {
 
-    private final ModelService modelService;
     private final CatalogueLibProperties properties;
 
 
-    public UiController(ModelService modelService,
-                        CatalogueLibProperties properties) {
-        this.modelService = modelService;
+    public UiController(CatalogueLibProperties properties) {
         this.properties = properties;
-    }
-
-    @GetMapping(value = "ui/form/model/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Model getFormModel(@PathVariable("id") String id) {
-        return modelService.get(id);
-//        return formsService.getSurveyModel(surveyId);
     }
 
 
