@@ -26,6 +26,7 @@ import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 
 import jakarta.annotation.PostConstruct;
@@ -37,6 +38,7 @@ import java.util.*;
 import java.util.function.UnaryOperator;
 
 @Service
+@Primary
 public class GenericResourceManager implements GenericResourceService {
     private static final Logger logger = LoggerFactory.getLogger(GenericResourceManager.class);
 
