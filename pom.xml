@@ -9,7 +9,7 @@
     </parent>
     <groupId>gr.uoa.di.madgik</groupId>
     <artifactId>catalogue</artifactId>
-    <version>8.0.2</version>
+    <version>8.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>catalogue</name>
     <description>Catalogue project</description>
@@ -135,7 +135,7 @@
         <connection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/madgeek-arc/catalogue.git</developerConnection>
         <url>https://github.com/madgeek-arc/catalogue.git</url>
-        <tag>v8.0.2</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
