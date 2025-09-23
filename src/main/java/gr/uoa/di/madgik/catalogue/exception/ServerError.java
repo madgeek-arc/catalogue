@@ -15,10 +15,10 @@
  */
 package gr.uoa.di.madgik.catalogue.exception;
 
-import gr.uoa.di.madgik.catalogue.config.logging.LogTransactionsFilter;
 import gr.uoa.di.madgik.catalogue.utils.RequestUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatusCode;
 
 import java.util.Date;
@@ -79,7 +79,7 @@ public class ServerError {
     public ServerError(HttpStatusCode status, HttpServletRequest req, String message) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = LogTransactionsFilter.getTransactionId();
+        this.transactionId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
         this.message = message;
     }
@@ -87,7 +87,7 @@ public class ServerError {
     public ServerError(HttpStatusCode status, HttpServletRequest req, Exception exception) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = LogTransactionsFilter.getTransactionId();
+        this.transactionId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
         this.message = exception.getMessage();
     }
