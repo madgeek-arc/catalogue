@@ -35,7 +35,7 @@ public class ServerError {
     /**
      * The id of the erroneous transaction.
      */
-    String transactionId;
+    String traceId;
     /**
      * The timestamp the error occurred.
      */
@@ -53,25 +53,25 @@ public class ServerError {
         timestamp = new Date();
     }
 
-    public ServerError(String transactionId, String url, String message) {
+    public ServerError(String traceId, String url, String message) {
         timestamp = new Date();
-        this.transactionId = transactionId;
+        this.traceId = traceId;
         this.url = url;
         this.message = message;
     }
 
-    public ServerError(HttpStatusCode status, String transactionId, String url, String message) {
+    public ServerError(HttpStatusCode status, String traceId, String url, String message) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = transactionId;
+        this.traceId = traceId;
         this.url = url;
         this.message = message;
     }
 
-    public ServerError(int status, String transactionId, String url, String message) {
+    public ServerError(int status, String traceId, String url, String message) {
         timestamp = new Date();
         this.status = status;
-        this.transactionId = transactionId;
+        this.traceId = traceId;
         this.url = url;
         this.message = message;
     }
@@ -79,7 +79,7 @@ public class ServerError {
     public ServerError(HttpStatusCode status, HttpServletRequest req, String message) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = MDC.get("traceId");
+        this.traceId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
         this.message = message;
     }
@@ -87,15 +87,15 @@ public class ServerError {
     public ServerError(HttpStatusCode status, HttpServletRequest req, Exception exception) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = MDC.get("traceId");
+        this.traceId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
         this.message = exception.getMessage();
     }
 
-    public ServerError(HttpStatusCode status, String transactionId, HttpServletRequest req, Exception exception) {
+    public ServerError(HttpStatusCode status, String traceId, HttpServletRequest req, Exception exception) {
         timestamp = new Date();
         this.status = status.value();
-        this.transactionId = transactionId;
+        this.traceId = traceId;
         this.url = RequestUtils.getUrlWithParams(req);
         this.message = exception.getMessage();
     }
@@ -108,12 +108,12 @@ public class ServerError {
         this.status = status;
     }
 
-    public String getTransactionId() {
-        return transactionId;
+    public String getTraceId() {
+        return traceId;
     }
 
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
     }
 
     public Date getTimestamp() {
