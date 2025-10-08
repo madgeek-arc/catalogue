@@ -81,6 +81,10 @@ public class GenericExceptionController {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.BAD_REQUEST;
+        } else if (ex instanceof UnsupportedOperationException) {
+            logger.info(ex.getMessage());
+            logger.debug(ex.getMessage(), ex);
+            status = HttpStatus.NOT_IMPLEMENTED;
         } else if (ex instanceof SQLException || ex instanceof DataAccessException) {
             logger.error(ex.getMessage(), ex);
             status = HttpStatus.UNPROCESSABLE_ENTITY;
