@@ -199,6 +199,11 @@ public class GenericResourceManager implements GenericResourceService {
         return convertToBrowsing(searchService.search(filter), filter.getResourceType());
     }
 
+    public <T> Browsing<HighlightedResult<T>> getHighlightedResults(FacetFilter filter) {
+        filter.setBrowseBy(createBrowseBy(filter));
+        return convertToBrowsingWithHighlights(searchService.searchWithHighlights(filter), filter.getResourceType());
+    }
+
     @Override
     public <T> Browsing<T> getResults(FacetFilter filter, UnaryOperator<List<Facet>> transformer) {
         Browsing<T> browsing = getResults(filter);
@@ -206,29 +211,34 @@ public class GenericResourceManager implements GenericResourceService {
         return browsing;
     }
 
-    @Override
     public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
         Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        List<T> results;
-        if (clazz != null) { // all resources are from the same resourceType
-            results = (List<T>) paging.getResults()
-                    .parallelStream()
-                    .map(res -> (T) parserPool.deserialize(res, clazz))
-                    .toList();
-        } else { // mixed resources
-            results = (List<T>) paging.getResults()
-                    .stream()
-                    .map(resource -> {
-                        T item = null;
-                        try {
-                            item = (T) parserPool.deserialize(resource, getClassFromResourceType(resource.getResourceTypeName()));
-                        } catch (Exception e) {
-                            logger.warn("Problem encountered: ", e);
-                        }
-                        return item;
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
+        List<T> results = new ArrayList<>();
+        for (Resource resource : paging.getResults()) {
+            if (resource == null) {
+                continue;
+            }
+            if (clazz == null) {
+                clazz = getClassFromResourceType(resource.getResourceTypeName());
+            }
+            T r = (T) parserPool.deserialize(resource, clazz);
+            results.add(r);
+        }
+        return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
+    }
+
+    public <T> Browsing<HighlightedResult<T>> convertToBrowsingWithHighlights(@NotNull Paging<HighlightedResult<Resource>> paging, String resourceTypeName) {
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
+        List<HighlightedResult<T>> results = new ArrayList<>();
+        for (HighlightedResult<Resource> resource : paging.getResults()) {
+            if (resource == null) {
+                continue;
+            }
+            if (clazz == null) {
+                clazz = getClassFromResourceType(resource.getResult().getResourceTypeName());
+            }
+            HighlightedResult<T> r = HighlightedResult.of((T) parserPool.deserialize(resource.getResult(), clazz), resource.getHighlights());
+            results.add(r);
         }
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
     }

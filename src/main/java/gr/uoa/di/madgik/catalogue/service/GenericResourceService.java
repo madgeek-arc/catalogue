@@ -47,15 +47,14 @@ public interface GenericResourceService {
      * @param <T>
      * @return
      */
-    <T> Browsing<T> getResults(FacetFilter filter, UnaryOperator<List<Facet>> transformer);
+    <T> Browsing<HighlightedResult<T>> getHighlightedResults(FacetFilter filter);
 
     /**
-     * @param paging
-     * @param resourceTypeName
+     * @param filter
      * @param <T>
      * @return
      */
-    <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName);
+    <T> Browsing<T> getResults(FacetFilter filter, UnaryOperator<List<Facet>> transformer);
 
     /**
      * @param filter
