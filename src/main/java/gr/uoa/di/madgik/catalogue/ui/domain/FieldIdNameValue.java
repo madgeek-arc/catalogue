@@ -23,12 +23,12 @@ public class FieldIdNameValue {
     String id;
     @Transient
     String name = null;
-    String value;
+    Object value;
 
     public FieldIdNameValue() {
     }
 
-    public FieldIdNameValue(String id, String name, String value) {
+    public FieldIdNameValue(String id, String name, Object value) {
         this.id = id;
         this.name = name;
         this.value = value;
@@ -50,11 +50,11 @@ public class FieldIdNameValue {
         this.name = name;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 }
