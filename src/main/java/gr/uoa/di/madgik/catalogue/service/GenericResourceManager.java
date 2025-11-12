@@ -237,7 +237,8 @@ public class GenericResourceManager implements GenericResourceService {
             if (clazz == null) {
                 clazz = getClassFromResourceType(resource.getResult().getResourceTypeName());
             }
-            HighlightedResult<T> r = HighlightedResult.of((T) parserPool.deserialize(resource.getResult(), clazz), resource.getHighlights());
+            final Class<?> finalClass = clazz;
+            HighlightedResult<T> r = resource.map(v -> (T) parserPool.deserialize(v, finalClass));
             results.add(r);
         }
         return new Browsing<>(paging, results, labelsMap.get(resourceTypeName));
