@@ -36,6 +36,15 @@ public interface GenericResourceService {
     <T> T get(String resourceTypeName, String field, String value, boolean throwOnNull);
 
     /**
+     * @param resourceTypeName
+     * @param fields
+     * @param throwOnNull
+     * @param <T>
+     * @return
+     */
+    <T> T get(String resourceTypeName, Map<String, String> fields, boolean throwOnNull);
+
+    /**
      * @param filter
      * @param <T>
      * @return

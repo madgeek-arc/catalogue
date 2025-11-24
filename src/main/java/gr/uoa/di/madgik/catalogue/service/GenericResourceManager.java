@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 @Service
 @Primary
@@ -128,6 +129,24 @@ public class GenericResourceManager implements GenericResourceService {
         }
         ret = (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
         return ret;
+    }
+
+    @Override
+    public <T> T get(String resourceTypeName, Map<String, String> fields, boolean throwOnNull) {
+        SearchService.KeyValue[] keyValues = fields.entrySet()
+                .stream()
+                .map(entry -> new SearchService.KeyValue(entry.getKey(), entry.getValue()))
+                .toArray(SearchService.KeyValue[]::new);
+
+        Resource res = searchService.searchFields(resourceTypeName, keyValues);
+
+        if (throwOnNull && res == null) {
+            throw new ResourceException(
+                    String.format("%s with values %s does not exist!", resourceTypeName, fields),
+                    HttpStatus.NOT_FOUND
+            );
+        }
+        return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
     }
 
     @Override
