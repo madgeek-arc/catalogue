@@ -27,7 +27,9 @@ public enum FieldType {
     METADATA                ("Metadata"),
     VOCABULARY              ("vocabulary"),
     COMPOSITE               ("composite"),
-    XMLGREGORIANCALENDAR    ("date");
+    XMLGREGORIANCALENDAR    ("date"),
+    EMAIL                   ("email"),
+    PHONENUMBER             ("phonenumber");
 
     private final String typeValue;
 

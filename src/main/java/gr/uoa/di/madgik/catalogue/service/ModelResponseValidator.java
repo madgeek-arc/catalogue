@@ -15,7 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Pattern;
+
+import static gr.uoa.di.madgik.catalogue.ui.domain.FieldType.EMAIL;
+import static gr.uoa.di.madgik.catalogue.ui.domain.FieldType.PHONENUMBER;
 
 @Service
 public class ModelResponseValidator {
@@ -32,7 +37,7 @@ public class ModelResponseValidator {
         this.modelService = modelService;
         this.properties = properties;
         this.objectMapper = objectMapper;
-    }
+        }
 
 
     /**
@@ -48,7 +53,7 @@ public class ModelResponseValidator {
             if (logger.isDebugEnabled()) {
                 try {
                     logger.debug("Validating resource: {}", objectMapper.writeValueAsString(resource));
-                } catch(JsonProcessingException ignore){
+                } catch (JsonProcessingException ignore) {
                 }
             }
 
@@ -76,7 +81,8 @@ public class ModelResponseValidator {
      * @return {@link T}
      */
     private <T> T validateSections(T obj, List<Section> sections) {
-        return objectMapper.convertValue(validateSections(objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {});
+        return objectMapper.convertValue(validateSections(objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {
+        });
     }
 
     /**
@@ -96,7 +102,7 @@ public class ModelResponseValidator {
             path.push(section.getName());
             if (section.getSubSections() != null) {
                 // if section is contained as a field in the data object
-                if (obj instanceof LinkedHashMap<?,?> data && data.get(section.getName()) != null) {
+                if (obj instanceof LinkedHashMap<?, ?> data && data.get(section.getName()) != null) {
                     validateSections(data.get(section.getName()), section.getSubSections(), path);
                 } else {
                     validateSections(obj, section.getSubSections(), path);
@@ -138,6 +144,9 @@ public class ModelResponseValidator {
                 if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
                     checkMandatoryField(object, field, path);
                 }
+
+                checkFieldType(object, field, path);
+
                 if (containsValue(object)) {
                     empty = false;
                 }
@@ -145,6 +154,64 @@ public class ModelResponseValidator {
             }
         }
         return empty;
+    }
+
+    // Email regex pattern (RFC 5322 simplified)
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
+    );
+
+    // Phone number pattern (supports various formats)
+    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^[+]?[(]?[0-9]{1,4}[)]?[-\\s\\.]?[(]?[0-9]{1,4}[)]?[-\\s\\.]?[0-9]{1,4}[-\\s\\.]?[0-9]{1,9}$"
+    );
+
+    void checkFieldType(Object object, UiField field, Deque<String> path) throws ValidationException {
+        if (object == null || field == null) {
+            throw new IllegalArgumentException("Object and field cannot be null");
+        }
+
+        try {
+            // Get the field value from the object using reflection
+            Field declaredField = object.getClass().getDeclaredField(field.getName());
+            declaredField.setAccessible(true);
+            Object value = declaredField.get(object);
+
+            if (value == null) {
+                throw new ValidationException("Field '" + field.getName() + "' cannot be null");
+            }
+
+            String stringValue = value.toString().trim();
+
+            if (stringValue.isEmpty()) {
+                throw new ValidationException("Field '" + field.getName() + "' cannot be empty");
+            }
+
+
+            // Validate based on field type
+            switch (field.getTypeInfo().getType()) {
+                case "email":
+                    if (!EMAIL_PATTERN.matcher(stringValue).matches()) {
+                        throw new ValidationException("Invalid email format for field '" + field.getName() + "'");
+                    }
+                    break;
+
+                case "phonenumber":
+                    if (!PHONE_PATTERN.matcher(stringValue).matches()) {
+                        throw new ValidationException("Invalid phone number format for field '" + field.getName() + "'");
+                    }
+                    break;
+
+                default:
+                    throw new ValidationException("Unsupported field type: " + field.getTypeInfo().getType());
+            }
+
+        } catch (NoSuchFieldException e) {
+            throw new ValidationException(String.format("Field '" + field.getName() + "' not found in object", e, prettyPrintPath(path)));
+        } catch (IllegalAccessException e) {
+            throw new ValidationException(String.format("Cannot access field '" + field.getName() + "'", e, prettyPrintPath(path)));
+        }
     }
 
     /**
