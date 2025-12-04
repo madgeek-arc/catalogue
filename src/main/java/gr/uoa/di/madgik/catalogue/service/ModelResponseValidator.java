@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -94,7 +93,8 @@ public class ModelResponseValidator {
      */
     private <T> void validateResourceAgainstModel(T obj, List<Section> sections) {
         objectMapper.convertValue(resourceToModelValidation(
-                objectMapper.convertValue(obj, LinkedHashMap.class), sections), new TypeReference<T>() {});
+                objectMapper.convertValue(obj, LinkedHashMap.class), sections), new TypeReference<T>() {
+        });
     }
 
     /**
@@ -107,7 +107,8 @@ public class ModelResponseValidator {
      */
     private <T> T validateSections(T obj, List<Section> sections) {
         return objectMapper.convertValue(validateSections(
-                objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {});
+                objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {
+        });
     }
 
     /**
@@ -172,7 +173,7 @@ public class ModelResponseValidator {
 
                 checkFieldType(object, field, path);
 
-                if (containsValue(object)) {
+                if (containsValue(object, field)) {
                     empty = false;
                 }
                 path.pop();
@@ -199,9 +200,9 @@ public class ModelResponseValidator {
 
         try {
             // Get the field value from the object using reflection
-            Field declaredField = object.getClass().getDeclaredField(field.getName());
-            declaredField.setAccessible(true);
-            Object value = declaredField.get(object);
+            // Field declaredField = object.getClass().getDeclaredField(field.getName());
+
+            Object value = getFieldValue(object, field);
 
             if (value == null) {
                 throw new ValidationException("Field '" + field.getName() + "' cannot be null");
@@ -222,14 +223,14 @@ public class ModelResponseValidator {
                     }
                     break;
 
-                case "phonenumber":
+                case "phone":
                     if (!PHONE_PATTERN.matcher(stringValue).matches()) {
                         throw new ValidationException("Invalid phone number format for field '" + field.getName() + "'");
                     }
                     break;
 
                 default:
-                    throw new ValidationException("Unsupported field type: " + field.getTypeInfo().getType());
+//                    throw new ValidationException("Unsupported field type: " + field.getTypeInfo().getType());
             }
 
         } catch (NoSuchFieldException e) {
@@ -237,6 +238,26 @@ public class ModelResponseValidator {
         } catch (IllegalAccessException e) {
             throw new ValidationException(String.format("Cannot access field '" + field.getName() + "'", e, prettyPrintPath(path)));
         }
+    }
+
+    private Object getFieldValue(Object object, UiField field) throws NoSuchFieldException, IllegalAccessException {
+        // Check if object is a LinkedHashMap
+        if (object instanceof LinkedHashMap) {
+            @SuppressWarnings("unchecked")
+            LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) object;
+
+            // Check if key exists in map
+            if (!data.containsKey(field.getName())) {
+                throw new NoSuchFieldException("Field '" + field.getName() + "' not found in map");
+            }
+
+            return data.get(field.getName());
+        } else if (object instanceof List) {
+            for (Object item : (List<?>) object) {
+                return getFieldValue(item, field);
+            }
+        }
+        return object;
     }
 
     /**
@@ -312,24 +333,31 @@ public class ModelResponseValidator {
      * @param obj the object to validate
      * @return {@link Boolean}
      */
-    private boolean containsValue(Object obj) {
+    private boolean containsValue(Object obj, UiField field) {
         boolean contains = false;
-        if (obj instanceof LinkedHashMap) {
-            for (Object key : ((LinkedHashMap<?, ?>) obj).keySet()) {
-                if (((LinkedHashMap<?, ?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?, ?>) obj).get(key) instanceof List) {
-                    contains = contains || containsValue(((LinkedHashMap<?, ?>) obj).get(key));
-                } else if (((LinkedHashMap<?, ?>) obj).get(key) != null && !((LinkedHashMap<?, ?>) obj).get(key).equals("")) {
-                    return true;
+        // TODO: create a switch(type) with default fallbacks the below (possible switch inside switch with string for email etc
+//        switch (field.getTypeInfo().getType()) {
+//            case "email" -> doSth();
+//            case "phone" -> doSth();
+//            default -> {
+                if (obj instanceof LinkedHashMap) {
+                    for (Object key : ((LinkedHashMap<?, ?>) obj).keySet()) {
+                        if (((LinkedHashMap<?, ?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?, ?>) obj).get(key) instanceof List) {
+                            contains = contains || containsValue(((LinkedHashMap<?, ?>) obj).get(key), field);
+                        } else if (((LinkedHashMap<?, ?>) obj).get(key) != null && !((LinkedHashMap<?, ?>) obj).get(key).equals("")) {
+                            return true;
+                        }
+                    }
+                } else if (obj instanceof List) {
+                    for (Object item : (List<?>) obj) {
+                        contains = containsValue(item, field);
+                        if (contains) {
+                            break;
+                        }
+                    }
                 }
-            }
-        } else if (obj instanceof List) {
-            for (Object item : (List<?>) obj) {
-                contains = containsValue(item);
-                if (contains) {
-                    break;
-                }
-            }
-        }
+//            }
+//        }
         return contains;
     }
 
@@ -405,6 +433,8 @@ public class ModelResponseValidator {
                     result.put(key, buildResourceFieldTree(value));
                 } else if (value instanceof List<?> list) {
                     result.put(key, extractListTree(list));
+                } else if (value == null) {
+                    continue;
                 } else {
                     result.put(key, null);
                 }
@@ -438,9 +468,9 @@ public class ModelResponseValidator {
      * Throws a {@link ValidationException} if any extra fields are found
      * in the resource that are not defined in the model.
      *
-     * @param model the model tree defining allowed fields
+     * @param model    the model tree defining allowed fields
      * @param resource the resource tree to validate
-     * @param path the path prefix used for building error messages for nested fields
+     * @param path     the path prefix used for building error messages for nested fields
      * @throws ValidationException if an extra field is detected
      */
     private void validateTrees(Map<String, Object> model, Map<String, Object> resource, String path) {
