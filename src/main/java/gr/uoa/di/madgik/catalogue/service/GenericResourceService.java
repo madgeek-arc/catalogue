@@ -37,12 +37,11 @@ public interface GenericResourceService {
 
     /**
      * @param resourceTypeName
-     * @param fields
-     * @param throwOnNull
+     * @param keyValues
      * @param <T>
      * @return
      */
-    <T> T get(String resourceTypeName, Map<String, String> fields, boolean throwOnNull);
+    <T> T get(String resourceTypeName, SearchService.KeyValue... keyValues);
 
     /**
      * @param filter

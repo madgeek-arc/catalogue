@@ -132,17 +132,12 @@ public class GenericResourceManager implements GenericResourceService {
     }
 
     @Override
-    public <T> T get(String resourceTypeName, Map<String, String> fields, boolean throwOnNull) {
-        SearchService.KeyValue[] keyValues = fields.entrySet()
-                .stream()
-                .map(entry -> new SearchService.KeyValue(entry.getKey(), entry.getValue()))
-                .toArray(SearchService.KeyValue[]::new);
-
+    public <T> T get(String resourceTypeName, SearchService.KeyValue... keyValues) {
         Resource res = searchService.searchFields(resourceTypeName, keyValues);
 
-        if (throwOnNull && res == null) {
+        if (res == null) {
             throw new ResourceException(
-                    String.format("%s with values %s does not exist!", resourceTypeName, fields),
+                    String.format("%s does not exist!", resourceTypeName),
                     HttpStatus.NOT_FOUND
             );
         }
