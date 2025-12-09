@@ -146,29 +146,14 @@ public class GenericResourceManager implements GenericResourceService {
 
     @Override
     public <T> T add(String resourceTypeName, T resource) {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        if (!clazz.isInstance(resource)) {
-            resource = (T) objectMapper.convertValue(resource, clazz);
-        }
-
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
         Resource res = new Resource();
         res.setResourceTypeName(resourceTypeName);
         res.setResourceType(resourceType);
 
-        String id = null;
-        try {
-            id = ReflectUtils.getId(clazz, resource);
-        } catch (Exception e) {
-            logger.warn("Could not find field 'id'.", e);
-        }
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-            ReflectUtils.setId(clazz, resource, id);
-        }
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
-        logger.info(LoggingUtils.addResource(resourceTypeName, id, resource));
+        logger.info("adding : [resourceType={}] : [body={}]", resourceTypeName, resource);
         resourceService.addResource(res);
 
         return resource;
@@ -176,9 +161,7 @@ public class GenericResourceManager implements GenericResourceService {
 
     @Override
     public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        resource = (T) objectMapper.convertValue(resource, clazz);
-
+        Class<?> clazz = resource.getClass();
         String existingId = ReflectUtils.getId(clazz, resource);
         if (!id.equals(existingId)) {
             throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
@@ -336,4 +319,10 @@ public class GenericResourceManager implements GenericResourceService {
         }
         return new ArrayList<>(browseBy);
     }
+
+    public <T> T validate(LinkedHashMap<String, Object> resource) {
+        //todo: what to do?
+        return null;
+    }
+
 }

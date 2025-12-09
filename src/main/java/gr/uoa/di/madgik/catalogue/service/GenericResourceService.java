@@ -20,6 +20,7 @@ import gr.uoa.di.madgik.registry.service.SearchService;
 
 import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
@@ -128,5 +129,13 @@ public interface GenericResourceService {
      * @return
      */
     Resource searchResource(String resourceTypeName, SearchService.KeyValue... keyValues);
+
+    /**
+     *
+     * @param resource
+     * @return
+     * @param <T>
+     */
+    <T> T validate(LinkedHashMap<String, Object> resource);
 
 }
