@@ -171,73 +171,13 @@ public class ModelResponseValidator {
                     checkMandatoryField(object, field, path);
                 }
 
-                checkFieldType(object, field, path);
-
-                if (containsValue(object, field)) {
+                if (containsValue(object, field, path)) {
                     empty = false;
                 }
                 path.pop();
             }
         }
         return empty;
-    }
-
-    // Email regex pattern (RFC 5322 simplified)
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
-    );
-
-    // Phone number pattern (supports various formats)
-    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
-    private static final Pattern PHONE_PATTERN = Pattern.compile(
-            "^[+]?[(]?[0-9]{1,4}[)]?[-\\s\\.]?[(]?[0-9]{1,4}[)]?[-\\s\\.]?[0-9]{1,4}[-\\s\\.]?[0-9]{1,9}$"
-    );
-
-    void checkFieldType(Object object, UiField field, Deque<String> path) throws ValidationException {
-        if (object == null || field == null) {
-            throw new IllegalArgumentException("Object and field cannot be null");
-        }
-
-        try {
-            // Get the field value from the object using reflection
-            // Field declaredField = object.getClass().getDeclaredField(field.getName());
-
-            Object value = getFieldValue(object, field);
-
-            if (value == null) {
-                throw new ValidationException("Field '" + field.getName() + "' cannot be null");
-            }
-
-            String stringValue = value.toString().trim();
-
-            if (stringValue.isEmpty()) {
-                throw new ValidationException("Field '" + field.getName() + "' cannot be empty");
-            }
-
-
-            // Validate based on field type
-            switch (field.getTypeInfo().getType()) {
-                case "email":
-                    if (!EMAIL_PATTERN.matcher(stringValue).matches()) {
-                        throw new ValidationException("Invalid email format for field '" + field.getName() + "'");
-                    }
-                    break;
-
-                case "phone":
-                    if (!PHONE_PATTERN.matcher(stringValue).matches()) {
-                        throw new ValidationException("Invalid phone number format for field '" + field.getName() + "'");
-                    }
-                    break;
-
-                default:
-//                    throw new ValidationException("Unsupported field type: " + field.getTypeInfo().getType());
-            }
-
-        } catch (NoSuchFieldException e) {
-            throw new ValidationException(String.format("Field '" + field.getName() + "' not found in object", e, prettyPrintPath(path)));
-        } catch (IllegalAccessException e) {
-            throw new ValidationException(String.format("Cannot access field '" + field.getName() + "'", e, prettyPrintPath(path)));
-        }
     }
 
     private Object getFieldValue(Object object, UiField field) throws NoSuchFieldException, IllegalAccessException {
@@ -327,38 +267,78 @@ public class ModelResponseValidator {
         return pathBuilder.toString();
     }
 
+    // Email regex pattern (RFC 5322 simplified)
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
+    );
+
+    // Phone number pattern (supports various formats)
+    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^(((\\+)|(00))[1-9]\\d{0,2}( )?)?((\\(\\d{2,4}\\))|\\d{2,4})[- .]?\\d{2,4}[- .]?\\d{3,5}$"
+    );
+
+
     /**
      * Checks whether an {@link Object obj} contains anything other than null value/values.
      *
      * @param obj the object to validate
      * @return {@link Boolean}
      */
-    private boolean containsValue(Object obj, UiField field) {
+    private boolean containsValue(Object obj, UiField field, Deque<String> path) {
         boolean contains = false;
-        // TODO: create a switch(type) with default fallbacks the below (possible switch inside switch with string for email etc
-//        switch (field.getTypeInfo().getType()) {
-//            case "email" -> doSth();
-//            case "phone" -> doSth();
-//            default -> {
-                if (obj instanceof LinkedHashMap) {
-                    for (Object key : ((LinkedHashMap<?, ?>) obj).keySet()) {
-                        if (((LinkedHashMap<?, ?>) obj).get(key) instanceof LinkedHashMap || ((LinkedHashMap<?, ?>) obj).get(key) instanceof List) {
-                            contains = contains || containsValue(((LinkedHashMap<?, ?>) obj).get(key), field);
-                        } else if (((LinkedHashMap<?, ?>) obj).get(key) != null && !((LinkedHashMap<?, ?>) obj).get(key).equals("")) {
-                            return true;
-                        }
-                    }
-                } else if (obj instanceof List) {
-                    for (Object item : (List<?>) obj) {
-                        contains = containsValue(item, field);
-                        if (contains) {
-                            break;
-                        }
-                    }
-                }
-//            }
-//        }
+        // TODO: create a switch(type) with default fallbacks the below (possible switch inside switch with string for email etc)
+
+        switch (field.getTypeInfo().getType()) {
+            case "email" -> {
+                validatePattern(obj, "email", EMAIL_PATTERN, path);
+            }
+            case "phone" -> {
+                validatePattern(obj, "phone", PHONE_PATTERN, path);
+            }
+
+            default -> {
+                contains = checkForAnyValue(obj, field, path);
+            }
+        }
         return contains;
+    }
+
+
+    private void validatePattern(Object obj, String fieldKey, Pattern pattern, Deque<String> path) {
+        if (obj instanceof LinkedHashMap<?, ?> map) {
+            Object value = map.get(fieldKey);
+            if (value != null) {
+                String stringValue = value.toString().trim();
+                if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                    );
+                }
+            }
+        }
+    }
+
+    private boolean checkForAnyValue(Object obj, UiField field, Deque<String> path) {
+        if (obj instanceof LinkedHashMap<?, ?> map) {
+            for (Object key : map.keySet()) {
+                Object value = map.get(key);
+                if (value instanceof LinkedHashMap || value instanceof List) {
+                    if (containsValue(value, field, path)) {
+                        return true;
+                    }
+                } else if (value != null && !value.equals("")) {
+                    return true;
+                }
+            }
+        } else if (obj instanceof List<?> list) {
+            for (Object item : list) {
+                if (containsValue(item, field, path)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
