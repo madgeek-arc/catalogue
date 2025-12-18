@@ -171,7 +171,7 @@ public class ModelResponseValidator {
                     checkMandatoryField(object, field, path);
                 }
 
-                if (containsValue(object, field, path)) {
+                if (containsAndValidatesValue(object, field, path)) {
                     empty = false;
                 }
                 path.pop();
@@ -285,61 +285,92 @@ public class ModelResponseValidator {
      * @param obj the object to validate
      * @return {@link Boolean}
      */
-    private boolean containsValue(Object obj, UiField field, Deque<String> path) {
-        boolean contains = false;
-        // TODO: create a switch(type) with default fallbacks the below (possible switch inside switch with string for email etc)
-
-        switch (field.getTypeInfo().getType()) {
-            case "email" -> {
-                validatePattern(obj, "email", EMAIL_PATTERN, path);
-            }
-            case "phone" -> {
-                validatePattern(obj, "phone", PHONE_PATTERN, path);
-            }
-
-            default -> {
-                contains = checkForAnyValue(obj, field, path);
-            }
-        }
-        return contains;
-    }
-
-
-    private void validatePattern(Object obj, String fieldKey, Pattern pattern, Deque<String> path) {
-        if (obj instanceof LinkedHashMap<?, ?> map) {
-            Object value = map.get(fieldKey);
-            if (value != null) {
-                String stringValue = value.toString().trim();
-                if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
-                    throw new ValidationException(
-                            String.format("Field '%s' is invalid.", prettyPrintPath(path))
-                    );
-                }
-            }
-        }
-    }
-
-    private boolean checkForAnyValue(Object obj, UiField field, Deque<String> path) {
+    private boolean containsAndValidatesValue(Object obj, UiField field, Deque<String> path) {
         if (obj instanceof LinkedHashMap<?, ?> map) {
             for (Object key : map.keySet()) {
-                Object value = map.get(key);
-                if (value instanceof LinkedHashMap || value instanceof List) {
-                    if (containsValue(value, field, path)) {
+                if (key.equals(field.getName())) {
+                    Object value = map.get(key);
+                    if (value instanceof LinkedHashMap || value instanceof List) {
+                        if (containsAndValidatesValue(value, field, path)) {
+                            return true;
+                        }
+                    } else if (value != null && !value.equals("")) {
+                        checkValidation(value, field, path);
                         return true;
                     }
-                } else if (value != null && !value.equals("")) {
-                    return true;
+                    break;
                 }
             }
-        } else if (obj instanceof List<?> list) {
+        } else if (obj instanceof
+                List<?> list) {
             for (Object item : list) {
-                if (containsValue(item, field, path)) {
+                if (containsAndValidatesValue(item, field, path)) {
                     return true;
                 }
             }
         }
         return false;
     }
+
+    private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
+        switch (field.getTypeInfo().getType()) {
+            case "email" -> validatePattern(value, EMAIL_PATTERN, path);
+            case "phone" -> validatePattern(value, PHONE_PATTERN, path);
+            case "vocabulary" -> validateVocabulary(value, field, path);
+        }
+    }
+
+    private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
+        if (value != null) {
+            String stringValue = value.toString().trim();
+            if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                );
+            }
+        }
+    }
+
+    private void validateVocabulary(Object value, UiField field, Deque<String> path) {
+        if (value != null) {
+            String stringValue = value.toString().trim();
+            List<String> allowedValues = field.getTypeInfo().getValues();
+
+            if (allowedValues == null || allowedValues.isEmpty()) {
+                logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
+                return;
+            }
+
+            if (!stringValue.isEmpty() && !allowedValues.contains(stringValue)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                );
+            }
+        }
+    }
+
+//    private boolean checkForAnyValue(Object obj, UiField field, Deque<String> path) {
+//        if (obj instanceof LinkedHashMap<?, ?> map) {
+//            for (Object key : map.keySet()) {
+//                Object value = map.get(key);
+//                if (value instanceof LinkedHashMap || value instanceof List) {
+//                    if (containsValue(value, field, path)) {
+//                        // TODO add function for switch and validation
+//                        return true;
+//                    }
+//                } else if (value != null && !value.equals("")) {
+//                    return true;
+//                }
+//            }
+//        } else if (obj instanceof List<?> list) {
+//            for (Object item : list) {
+//                if (containsValue(item, field, path)) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     /**
      * Converts the given resource object into a structure suitable for validation
