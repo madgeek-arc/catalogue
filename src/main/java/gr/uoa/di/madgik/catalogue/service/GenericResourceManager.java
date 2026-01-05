@@ -1,12 +1,12 @@
 /**
  * Copyright 2021-2025 OpenAIRE AMKE
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +15,26 @@
  */
 package gr.uoa.di.madgik.catalogue.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import gr.uoa.di.madgik.registry.domain.*;
-import gr.uoa.di.madgik.registry.domain.index.IndexField;
-import gr.uoa.di.madgik.registry.service.*;
-import gr.uoa.di.madgik.registry.exception.ResourceException;
-import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
 import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
+import gr.uoa.di.madgik.registry.domain.*;
+import gr.uoa.di.madgik.registry.domain.index.IndexField;
+import gr.uoa.di.madgik.registry.exception.ResourceException;
+import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.service.*;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 @Service
 @Primary
@@ -48,7 +46,7 @@ public class GenericResourceManager implements GenericResourceService {
     public final ResourceTypeService resourceTypeService;
     public final VersionService versionService;
     public final ParserService parserPool;
-    public final ObjectMapper objectMapper = new ObjectMapper();
+    private final ModelResponseValidator validator;
 
     @Value("${elastic.index.max_result_window:10000}")
     protected int maxQuantity;
@@ -60,12 +58,14 @@ public class GenericResourceManager implements GenericResourceService {
                                      ResourceService resourceService,
                                      ResourceTypeService resourceTypeService,
                                      VersionService versionService,
-                                     ParserService parserPool) {
+                                     ParserService parserPool,
+                                     @Lazy ModelResponseValidator validator) { //FIXME: circular dependency
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
         this.versionService = versionService;
         this.parserPool = parserPool;
+        this.validator = validator;
     }
 
     @PostConstruct
@@ -146,7 +146,15 @@ public class GenericResourceManager implements GenericResourceService {
 
     @Override
     public <T> T add(String resourceTypeName, T resource) {
+        return add(resourceTypeName, resource, true);
+    }
+
+    @Override
+    public <T> T add(String resourceTypeName, T resource, boolean validate) {
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        if (validate) {
+            validator.validate(resource, resourceTypeName);
+        }
         Resource res = new Resource();
         res.setResourceTypeName(resourceTypeName);
         res.setResourceType(resourceType);
@@ -160,7 +168,14 @@ public class GenericResourceManager implements GenericResourceService {
     }
 
     @Override
-    public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+    public <T> T update(String resourceTypeName, String id, T resource)
+            throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+        return update(resourceTypeName, id, resource, true);
+    }
+
+    @Override
+    public <T> T update(String resourceTypeName, String id, T resource, boolean validate)
+            throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Class<?> clazz = resource.getClass();
         String existingId = ReflectUtils.getId(clazz, resource);
         if (!id.equals(existingId)) {
@@ -168,6 +183,9 @@ public class GenericResourceManager implements GenericResourceService {
         }
 
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        if (validate) {
+            validator.validate(resource, resourceTypeName);
+        }
         Resource res = searchResource(resourceTypeName, id, true);
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
@@ -320,9 +338,8 @@ public class GenericResourceManager implements GenericResourceService {
         return new ArrayList<>(browseBy);
     }
 
-    public <T> T validate(LinkedHashMap<String, Object> resource) {
-        //todo: what to do?
-        return null;
+    public <T> T validate(String resourceTypeName, T resource) {
+        return validator.validate(resource, resourceTypeName);
     }
 
 }

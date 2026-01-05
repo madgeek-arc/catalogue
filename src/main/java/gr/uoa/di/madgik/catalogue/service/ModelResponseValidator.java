@@ -25,11 +25,25 @@ import gr.uoa.di.madgik.catalogue.ui.domain.Section;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
+import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -49,6 +63,21 @@ public class ModelResponseValidator {
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
+
+    // Email regex pattern (RFC 5322 simplified)
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
+    );
+
+    // Phone number pattern (supports various formats)
+    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^(((\\+)|(00))[1-9]\\d{0,2}( )?)?((\\(\\d{2,4}\\))|\\d{2,4})[- .]?\\d{2,4}[- .]?\\d{3,5}$"
+    );
+
+    private static final Pattern URL_PATTERN = Pattern.compile(
+            "^https?://[^\\s/$.?#][^\\s]*$"
+    );
 
     /**
      * Validates a {@link T resource} based on its {@link Model}.
@@ -267,18 +296,6 @@ public class ModelResponseValidator {
         return pathBuilder.toString();
     }
 
-    // Email regex pattern (RFC 5322 simplified)
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
-    );
-
-    // Phone number pattern (supports various formats)
-    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
-    private static final Pattern PHONE_PATTERN = Pattern.compile(
-            "^(((\\+)|(00))[1-9]\\d{0,2}( )?)?((\\(\\d{2,4}\\))|\\d{2,4})[- .]?\\d{2,4}[- .]?\\d{3,5}$"
-    );
-
-
     /**
      * Checks whether an {@link Object obj} contains anything other than null value/values.
      *
@@ -316,6 +333,8 @@ public class ModelResponseValidator {
         switch (field.getTypeInfo().getType()) {
             case "email" -> validatePattern(value, EMAIL_PATTERN, path);
             case "phone" -> validatePattern(value, PHONE_PATTERN, path);
+            case "url" -> validatePattern(value, URL_PATTERN, path);
+            case "url_strict" -> validateUrl(field, (URL)value); //TODO: add on catalogue-ui
             case "vocabulary" -> validateVocabulary(value, field, path);
         }
     }
@@ -328,6 +347,40 @@ public class ModelResponseValidator {
                         String.format("Field '%s' is invalid.", prettyPrintPath(path))
                 );
             }
+        }
+    }
+
+    public void validateUrl(UiField field, URL urlForValidation) {
+        try {
+            String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
+            URI uri = new URL(cleanedUrlString).toURI(); // validate and clean
+
+            // add timeout
+            ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+                    HttpClient.create()
+                            .followRedirect(true)
+                            .responseTimeout(Duration.ofSeconds(5))
+                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+            );
+            WebClient webClient = WebClient.builder()
+                    .clientConnector(connector)
+                    .build();
+
+            ClientResponse response = webClient.get()
+                    .uri(uri)
+                    .exchangeToMono(Mono::just)
+                    .block();
+
+            HttpStatusCode statusCode = response.statusCode();
+            if (!statusCode.is2xxSuccessful()) {
+                String fieldName = (field != null) ? field.getName() : "unknown";
+                throw new ValidationException(
+                        String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
+                                fieldName, urlForValidation, statusCode.value()));
+            }
+        } catch (URISyntaxException | MalformedURLException | WebClientResponseException |
+                 WebClientRequestException e) {
+            throw new ValidationException("Failed to validate URL: " + urlForValidation);
         }
     }
 
