@@ -337,6 +337,8 @@ public class ModelResponseValidator {
             List<String> allowedValues = field.getTypeInfo().getValues();
 
             if (allowedValues == null || allowedValues.isEmpty()) {
+                // TODO: break it down to two cases predetermined values from model and getting them from elsewhere
+                // This is where the "elsewhere" is for NOT predetermined values
                 logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
                 return;
             }
@@ -348,29 +350,6 @@ public class ModelResponseValidator {
             }
         }
     }
-
-//    private boolean checkForAnyValue(Object obj, UiField field, Deque<String> path) {
-//        if (obj instanceof LinkedHashMap<?, ?> map) {
-//            for (Object key : map.keySet()) {
-//                Object value = map.get(key);
-//                if (value instanceof LinkedHashMap || value instanceof List) {
-//                    if (containsValue(value, field, path)) {
-//                        // TODO add function for switch and validation
-//                        return true;
-//                    }
-//                } else if (value != null && !value.equals("")) {
-//                    return true;
-//                }
-//            }
-//        } else if (obj instanceof List<?> list) {
-//            for (Object item : list) {
-//                if (containsValue(item, field, path)) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 
     /**
      * Converts the given resource object into a structure suitable for validation
