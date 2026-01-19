@@ -20,10 +20,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
+import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
+import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
+import gr.uoa.di.madgik.catalogue.ui.domain.types.UrlProperties;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;
@@ -331,12 +334,17 @@ public class ModelResponseValidator {
     }
 
     private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
-        switch (field.getTypeInfo().getType()) {
-            case "email" -> validatePattern(value, EMAIL_PATTERN, path);
-            case "phone" -> validatePattern(value, PHONE_PATTERN, path);
-            case "url" -> validatePattern(value, URL_PATTERN, path);
-            case "url_strict" -> validateUrl(field, (URL)value); //TODO: add on catalogue-ui
-            case "vocabulary" -> validateVocabulary(value, field, path);
+        TypeInfo typeInfo = field.getTypeInfo();
+        switch (typeInfo.getType()) {
+            case email -> validatePattern(value, EMAIL_PATTERN, path); // TODO: use custom pattern (if provided)
+            case phone -> validatePattern(value, PHONE_PATTERN, path); // TODO: use custom pattern (if provided)
+            case url -> {
+                validatePattern(value, URL_PATTERN, path);
+                if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
+                    validateUrl(field, (URL)value);
+                }
+            }
+            case vocabulary -> validateVocabulary(value, field, path);
         }
     }
 
@@ -389,7 +397,7 @@ public class ModelResponseValidator {
     private void validateVocabulary(Object value, UiField field, Deque<String> path) {
         if (value != null) {
             String stringValue = value.toString().trim();
-            List<String> allowedValues = field.getTypeInfo().getValues();
+            List<IdLabel> allowedValues = field.getTypeInfo().getValues();
 
             if (allowedValues == null || allowedValues.isEmpty()) {
                 // TODO: break it down to two cases predetermined values from model and getting them from elsewhere
