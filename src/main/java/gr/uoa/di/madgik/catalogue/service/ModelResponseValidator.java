@@ -385,6 +385,7 @@ public class ModelResponseValidator {
         }
     }
 
+    //TODO: also validate parent-child relationship (eg. Category-Subcategory) -> VocabularyValidationUtils()
     private void validateVocabulary(Object value, UiField field, Deque<String> path) {
         if (value != null) {
             String stringValue = value.toString().trim();
