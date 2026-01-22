@@ -2,25 +2,25 @@ package gr.uoa.di.madgik.catalogue.ui.domain.types;
 
 public final class TextProperties implements TypeProperties {
 
-    int minLength;
-    int maxLength;
+    Integer minLength;
+    Integer maxLength;
 
     public TextProperties() {
     }
 
-    public int getMinLength() {
+    public Integer getMinLength() {
         return minLength;
     }
 
-    public void setMinLength(int minLength) {
+    public void setMinLength(Integer minLength) {
         this.minLength = minLength;
     }
 
-    public int getMaxLength() {
+    public Integer getMaxLength() {
         return maxLength;
     }
 
-    public void setMaxLength(int maxLength) {
+    public void setMaxLength(Integer maxLength) {
         this.maxLength = maxLength;
     }
 }
