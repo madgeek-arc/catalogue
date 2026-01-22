@@ -258,7 +258,7 @@
                 <configuration>
                     <jsonLibrary>jackson2</jsonLibrary>
                     <classPatterns>
-                        <pattern>gr.uoa.di.madgik.catalogue.ui.domain.types</pattern>
+                        <pattern>gr.uoa.di.madgik.catalogue.ui.domain.types.*</pattern>
                         <pattern>gr.uoa.di.madgik.catalogue.ui.domain.*</pattern>
                         <pattern>gr.uoa.di.madgik.catalogue.dto.**</pattern>
                     </classPatterns>
