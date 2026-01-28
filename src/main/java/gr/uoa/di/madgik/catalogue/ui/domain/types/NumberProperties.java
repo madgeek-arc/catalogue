@@ -4,7 +4,7 @@ public final class NumberProperties implements TypeProperties {
 
     Number min;
     Number max;
-    int decimals;
+    Integer decimals;
     String pattern;
 
     public NumberProperties() {
@@ -26,11 +26,11 @@ public final class NumberProperties implements TypeProperties {
         this.max = max;
     }
 
-    public int getDecimals() {
+    public Integer getDecimals() {
         return decimals;
     }
 
-    public void setDecimals(int decimals) {
+    public void setDecimals(Integer decimals) {
         this.decimals = decimals;
     }
 
