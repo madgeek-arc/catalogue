@@ -26,6 +26,7 @@ import java.util.List;
 @JsonDeserialize(using = TypeInfoDeserializer.class)
 public class TypeInfo {
 
+    @Deprecated
     String vocabulary;
     FieldType type;
     String defaultValue;
@@ -47,10 +48,12 @@ public class TypeInfo {
         this.prefill = prefill;
     }
 
+    @Deprecated
     public String getVocabulary() {
         return vocabulary;
     }
 
+    @Deprecated
     public void setVocabulary(String vocabulary) {
         this.vocabulary = vocabulary;
     }
