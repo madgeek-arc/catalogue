@@ -13,6 +13,7 @@ import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
 import gr.uoa.di.madgik.catalogue.ui.domain.types.*;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 public class TypeInfoDeserializer extends StdDeserializer<TypeInfo> {
@@ -44,11 +45,31 @@ public class TypeInfoDeserializer extends StdDeserializer<TypeInfo> {
 
         if (propsNode == null || propsNode.isNull()) { // Backward compatibility: old models don't have "properties"
             properties = switch (type) { // create properties fields with null values for each type
-                case number             -> new NumberProperties();
+                case number             -> {
+                    NumberProperties numberProperties = new NumberProperties();
+                    if (values != null && !values.isEmpty()) {
+                        IdLabel value = values.getFirst();
+                        String decimals = value.id().split("\\.")[1];
+                        numberProperties.setDecimals(decimals.length());
+                        values = null;
+
+                    }
+                    yield numberProperties;
+                }
                 case string, largeText  -> new TextProperties();
                 case date               -> new DateProperties();
                 case url                -> new UrlProperties();
-                case vocabulary         -> new VocabularyProperties();
+                case vocabulary         -> {
+                    VocabularyProperties vocabularyProperties = new VocabularyProperties();
+                    if (vocabulary != null) {
+                        vocabularyProperties.setUrl(URI.create("/api/vocabularies-endpoint/" + vocabulary));
+                        vocabularyProperties.setLabelField("name");
+                        yield vocabularyProperties;
+                    } else {
+                        type = FieldType.select;
+                        yield null;
+                    }
+                }
                 case email, phone       -> new PatternProperties();
                 default                 -> new CustomProperties();
             };
