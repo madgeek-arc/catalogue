@@ -16,52 +16,78 @@
 
 package gr.uoa.di.madgik.catalogue.ui.domain;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import gr.uoa.di.madgik.catalogue.dto.IdLabel;
+import gr.uoa.di.madgik.catalogue.ui.domain.jackson.TypeInfoDeserializer;
+import gr.uoa.di.madgik.catalogue.ui.domain.types.TypeProperties;
+
 import java.util.List;
 
+@JsonDeserialize(using = TypeInfoDeserializer.class)
 public class TypeInfo {
 
-    String type;
-    List<String> values;
+    @Deprecated
     String vocabulary;
+    FieldType type;
+    String defaultValue;
+    List<IdLabel> values;
+    TypeProperties properties;
     boolean multiplicity = false;
     DataRequest prefill;
 
-    public TypeInfo() {}
-
-    public String getType() {
-        return type;
+    public TypeInfo() {
     }
 
-    public void setType(FieldType type) {
-        this.type = type.getKey();
-    }
-
-    public void setType(String type) {
-        try {
-            if (FieldType.exists(type)) {
-                this.type = FieldType.fromString(type).getKey();
-            } else {
-                this.type = type;
-            }
-        } catch (IllegalArgumentException e) {
-            this.type = FieldType.COMPOSITE.getKey();
-        }
-    }
-
-    public List<String> getValues() {
-        return values;
-    }
-
-    public void setValues(List<String> values) {
+    public TypeInfo(String vocabulary, FieldType type, String defaultValue, List<IdLabel> values, TypeProperties properties, boolean multiplicity, DataRequest prefill) {
+        this.vocabulary = vocabulary;
+        this.type = type;
+        this.defaultValue = defaultValue;
         this.values = values;
+        this.properties = properties;
+        this.multiplicity = multiplicity;
+        this.prefill = prefill;
     }
 
+    @Deprecated
     public String getVocabulary() {
         return vocabulary;
     }
 
+    @Deprecated
     public void setVocabulary(String vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    public FieldType getType() {
+        return type;
+    }
+
+    public void setType(FieldType type) {
+        this.type = type;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    public List<IdLabel> getValues() {
+        return values;
+    }
+
+    public void setValues(List<IdLabel> values) {
+        this.values = values;
+    }
+
+    public TypeProperties getProperties() {
+        return properties;
+    }
+
+    public void setProperties(TypeProperties properties) {
+        this.properties = properties;
     }
 
     public boolean isMultiplicity() {

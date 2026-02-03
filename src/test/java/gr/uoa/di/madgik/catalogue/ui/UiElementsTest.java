@@ -38,7 +38,7 @@ class UiElementsTest {
         field.setLabel(StyledString.of("Test Label"));
 
         TypeInfo typeInfo = new TypeInfo();
-        typeInfo.setType("composite");
+        typeInfo.setType(FieldType.composite);
         typeInfo.setMultiplicity(true);
         typeInfo.setVocabulary(null);
         List<String> values = new ArrayList<>();

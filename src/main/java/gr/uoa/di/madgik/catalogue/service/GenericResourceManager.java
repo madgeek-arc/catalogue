@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,22 +16,21 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import gr.uoa.di.madgik.registry.domain.*;
-import gr.uoa.di.madgik.registry.domain.index.IndexField;
-import gr.uoa.di.madgik.registry.service.*;
-import gr.uoa.di.madgik.registry.exception.ResourceException;
-import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
 import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
+import gr.uoa.di.madgik.registry.domain.*;
+import gr.uoa.di.madgik.registry.domain.index.IndexField;
+import gr.uoa.di.madgik.registry.exception.ResourceException;
+import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.service.*;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
@@ -48,7 +47,7 @@ public class GenericResourceManager implements GenericResourceService {
     public final ResourceTypeService resourceTypeService;
     public final VersionService versionService;
     public final ParserService parserPool;
-    public final ObjectMapper objectMapper = new ObjectMapper();
+    private final ModelResponseValidator validator;
 
     @Value("${elastic.index.max_result_window:10000}")
     protected int maxQuantity;
@@ -60,12 +59,14 @@ public class GenericResourceManager implements GenericResourceService {
                                      ResourceService resourceService,
                                      ResourceTypeService resourceTypeService,
                                      VersionService versionService,
-                                     ParserService parserPool) {
+                                     ParserService parserPool,
+                                     @Lazy ModelResponseValidator validator) { //FIXME: circular dependency
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
         this.versionService = versionService;
         this.parserPool = parserPool;
+        this.validator = validator;
     }
 
     @PostConstruct
@@ -132,46 +133,60 @@ public class GenericResourceManager implements GenericResourceService {
     }
 
     @Override
-    public <T> T add(String resourceTypeName, T resource) {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        if (!clazz.isInstance(resource)) {
-            resource = (T) objectMapper.convertValue(resource, clazz);
-        }
+    public <T> T get(String resourceTypeName, SearchService.KeyValue... keyValues) {
+        Resource res = searchService.searchFields(resourceTypeName, keyValues);
 
+        if (res == null) {
+            throw new ResourceException(
+                    String.format("%s does not exist!", resourceTypeName),
+                    HttpStatus.NOT_FOUND
+            );
+        }
+        return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
+    }
+
+    @Override
+    public <T> T add(String resourceTypeName, T resource) {
+        return add(resourceTypeName, resource, true);
+    }
+
+    @Override
+    public <T> T add(String resourceTypeName, T resource, boolean validate) {
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        if (validate) {
+            validator.validate(resource, resourceTypeName);
+        }
         Resource res = new Resource();
         res.setResourceTypeName(resourceTypeName);
         res.setResourceType(resourceType);
 
-        String id = null;
-        try {
-            id = ReflectUtils.getId(clazz, resource);
-        } catch (Exception e) {
-            logger.warn("Could not find field 'id'.", e);
-        }
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-            ReflectUtils.setId(clazz, resource, id);
-        }
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
-        logger.info(LoggingUtils.addResource(resourceTypeName, id, resource));
+        logger.info("adding : [resourceType={}] : [body={}]", resourceTypeName, resource);
         resourceService.addResource(res);
 
         return resource;
     }
 
     @Override
-    public <T> T update(String resourceTypeName, String id, T resource) throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
-        Class<?> clazz = getClassFromResourceType(resourceTypeName);
-        resource = (T) objectMapper.convertValue(resource, clazz);
+    public <T> T update(String resourceTypeName, String id, T resource)
+            throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+        return update(resourceTypeName, id, resource, true);
+    }
 
+    @Override
+    public <T> T update(String resourceTypeName, String id, T resource, boolean validate)
+            throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+        Class<?> clazz = resource.getClass();
         String existingId = ReflectUtils.getId(clazz, resource);
         if (!id.equals(existingId)) {
             throw new ResourceException("Resource body id different than path id", HttpStatus.CONFLICT);
         }
 
         ResourceType resourceType = resourceTypeService.getResourceType(resourceTypeName);
+        if (validate) {
+            validator.validate(resource, resourceTypeName);
+        }
         Resource res = searchResource(resourceTypeName, id, true);
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
@@ -323,4 +338,9 @@ public class GenericResourceManager implements GenericResourceService {
         }
         return new ArrayList<>(browseBy);
     }
+
+    public <T> T validate(String resourceTypeName, T resource) {
+        return validator.validate(resource, resourceTypeName);
+    }
+
 }
