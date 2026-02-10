@@ -37,7 +37,7 @@ import java.nio.file.Paths;
  * It supports changes only in log4j logging configuration.
  */
 @RestController
-@RequestMapping("logs")
+@RequestMapping(path = "logs", produces = MediaType.APPLICATION_JSON_VALUE)
 public class LogsController {
 
     private static final Logger logger = LoggerFactory.getLogger(LogsController.class);
