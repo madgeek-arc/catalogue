@@ -26,6 +26,7 @@ import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
 import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
+import gr.uoa.di.madgik.catalogue.ui.domain.types.PatternProperties;
 import gr.uoa.di.madgik.catalogue.ui.domain.types.UrlProperties;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
@@ -50,6 +51,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @Service
 public class ModelResponseValidator {
@@ -336,17 +338,30 @@ public class ModelResponseValidator {
     private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
         TypeInfo typeInfo = field.getTypeInfo();
         switch (typeInfo.getType()) {
-            case email -> validatePattern(value, EMAIL_PATTERN, path); // TODO: use custom pattern (if provided)
-            case phone -> validatePattern(value, PHONE_PATTERN, path); // TODO: use custom pattern (if provided)
+            case email -> validatePattern(value, getPatternOrDefault(typeInfo, EMAIL_PATTERN), path);
+            case phone -> validatePattern(value, getPatternOrDefault(typeInfo, PHONE_PATTERN), path);
             case url -> {
                 validatePattern(value, URL_PATTERN, path);
                 if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-                    validateUrl(field, (URL)value);
+                    validateUrl(field, (URL) value);
                 }
             }
             case vocabulary -> validateVocabulary(value, field, path);
         }
     }
+
+    private Pattern getPatternOrDefault(TypeInfo typeInfo, Pattern defaultPattern) {
+        if (typeInfo.getProperties() instanceof PatternProperties patternProps && patternProps.getPattern() != null) {
+            try {
+                return Pattern.compile(patternProps.getPattern());
+            } catch (PatternSyntaxException e) {
+                logger.warn("Invalid expression: \"{}\", default value was used", patternProps.getPattern());
+                return defaultPattern;
+            }
+        }
+        return defaultPattern;
+    }
+
 
     private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
         if (value != null) {
