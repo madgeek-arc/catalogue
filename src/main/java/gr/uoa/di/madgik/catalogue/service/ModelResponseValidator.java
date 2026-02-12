@@ -56,674 +56,674 @@ import java.util.regex.PatternSyntaxException;
 @Service
 public class ModelResponseValidator {
 
-	private static final Logger logger = LoggerFactory.getLogger(ModelResponseValidator.class);
+    private static final Logger logger = LoggerFactory.getLogger(ModelResponseValidator.class);
 
-	private final ModelService modelService;
-	private final CatalogueLibProperties properties;
-	private final ObjectMapper objectMapper;
+    private final ModelService modelService;
+    private final CatalogueLibProperties properties;
+    private final ObjectMapper objectMapper;
 
-	public ModelResponseValidator(ModelService modelService,
-								  CatalogueLibProperties properties,
-								  ObjectMapper objectMapper) {
-		this.modelService = modelService;
-		this.properties = properties;
-		this.objectMapper = objectMapper;
-	}
+    public ModelResponseValidator(ModelService modelService,
+                                  CatalogueLibProperties properties,
+                                  ObjectMapper objectMapper) {
+        this.modelService = modelService;
+        this.properties = properties;
+        this.objectMapper = objectMapper;
+    }
 
-	// Email regex pattern (RFC 5322 simplified)
-	private static final Pattern EMAIL_PATTERN = Pattern.compile(
-			"^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
-	);
+    // Email regex pattern (RFC 5322 simplified)
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
+    );
 
-	// Phone number pattern (supports various formats)
-	// Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
-	private static final Pattern PHONE_PATTERN = Pattern.compile(
-			"^(((\\+)|(00))[1-9]\\d{0,2}( )?)?((\\(\\d{2,4}\\))|\\d{2,4})[- .]?\\d{2,4}[- .]?\\d{3,5}$"
-	);
+    // Phone number pattern (supports various formats)
+    // Matches: +30 123 456 7890, (123) 456-7890, 123-456-7890, 1234567890, etc.
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^(((\\+)|(00))[1-9]\\d{0,2}( )?)?((\\(\\d{2,4}\\))|\\d{2,4})[- .]?\\d{2,4}[- .]?\\d{3,5}$"
+    );
 
-	private static final Pattern URL_PATTERN = Pattern.compile(
-			"^https?://[^\\s/$.?#][^\\s]*$"
-	);
+    private static final Pattern URL_PATTERN = Pattern.compile(
+            "^https?://[^\\s/$.?#][^\\s]*$"
+    );
 
-	/**
-	 * Validates a {@link T resource} based on its {@link Model}.
-	 *
-	 * @param resource         The {@link Object resource} to validate.
-	 * @param resourceTypeName The resourceType name to search for the resource's {@link Model}.
-	 * @return {@link T}
-	 */
-	public <T> T validate(T resource, String resourceTypeName) {
-		if (properties.getValidation().isEnabled()) {
+    /**
+     * Validates a {@link T resource} based on its {@link Model}.
+     *
+     * @param resource         The {@link Object resource} to validate.
+     * @param resourceTypeName The resourceType name to search for the resource's {@link Model}.
+     * @return {@link T}
+     */
+    public <T> T validate(T resource, String resourceTypeName) {
+        if (properties.getValidation().isEnabled()) {
 
-			if (logger.isDebugEnabled()) {
-				try {
-					logger.debug("Validating resource: {}", objectMapper.writeValueAsString(resource));
-				} catch (JsonProcessingException ignore) {
-				}
-			}
+            if (logger.isDebugEnabled()) {
+                try {
+                    logger.debug("Validating resource: {}", objectMapper.writeValueAsString(resource));
+                } catch (JsonProcessingException ignore) {
+                }
+            }
 
-			FacetFilter ff = new FacetFilter();
-			ff.addFilter("resourceType", resourceTypeName);
-			List<Model> models = modelService.browse(ff).getResults();
-			if (models == null || models.isEmpty()) {
-				logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
-				return resource;
-			} else if (models.size() != 1) {
-				throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
-			}
-			Model model = models.getFirst();
-			validateResourceAgainstModel(resource, model.getSections());
-			return validateSections(resource, model.getSections());
-		}
-		return resource;
-	}
+            FacetFilter ff = new FacetFilter();
+            ff.addFilter("resourceType", resourceTypeName);
+            List<Model> models = modelService.browse(ff).getResults();
+            if (models == null || models.isEmpty()) {
+                logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
+                return resource;
+            } else if (models.size() != 1) {
+                throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
+            }
+            Model model = models.getFirst();
+            validateResourceAgainstModel(resource, model.getSections());
+            return validateSections(resource, model.getSections());
+        }
+        return resource;
+    }
 
-	/**
-	 * Validates the given {@link Object obj} against the model defined by the provided sections,
-	 * ensuring that no extra or unexpected fields are present.
-	 *
-	 * @param obj      The {@link Object object} to validate.
-	 * @param sections the {@link List}<{@link Section}> defining the allowed fields in the model
-	 * @param <T>      the type of the object being validated
-	 */
-	private <T> void validateResourceAgainstModel(T obj, List<Section> sections) {
-		objectMapper.convertValue(resourceToModelValidation(
-				objectMapper.convertValue(obj, LinkedHashMap.class), sections), new TypeReference<T>() {
-		});
-	}
+    /**
+     * Validates the given {@link Object obj} against the model defined by the provided sections,
+     * ensuring that no extra or unexpected fields are present.
+     *
+     * @param obj      The {@link Object object} to validate.
+     * @param sections the {@link List}<{@link Section}> defining the allowed fields in the model
+     * @param <T>      the type of the object being validated
+     */
+    private <T> void validateResourceAgainstModel(T obj, List<Section> sections) {
+        objectMapper.convertValue(resourceToModelValidation(
+                objectMapper.convertValue(obj, LinkedHashMap.class), sections), new TypeReference<T>() {
+        });
+    }
 
-	/**
-	 * Validates the {@link Object obj} against a list of sections.
-	 *
-	 * @param obj      The {@link Object object} to validate.
-	 * @param sections {@link List}<{@link Section}>
-	 * @param <T>
-	 * @return {@link T}
-	 */
-	private <T> T validateSections(T obj, List<Section> sections) {
-		return objectMapper.convertValue(validateSections(
-				objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {
-		});
-	}
+    /**
+     * Validates the {@link Object obj} against a list of sections.
+     *
+     * @param obj      The {@link Object object} to validate.
+     * @param sections {@link List}<{@link Section}>
+     * @param <T>
+     * @return {@link T}
+     */
+    private <T> T validateSections(T obj, List<Section> sections) {
+        return objectMapper.convertValue(validateSections(
+                objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {
+        });
+    }
 
-	/**
-	 * Validates the {@link Object obj} against a list of sections, keeping track of the current path followed.
-	 *
-	 * @param obj      The {@link Object object} to validate.
-	 * @param sections {@link List}<{@link Section}>
-	 * @param path     keeps track of the path followed in the {@link Object obj} (for displaying more detailed errors).
-	 * @param <T>
-	 * @return {@link T}
-	 */
-	private <T> T validateSections(T obj, List<Section> sections, Deque<String> path) {
-		if (path == null) {
-			path = new ArrayDeque<>();
-		}
-		for (Section section : sections) {
-			path.push(section.getName());
-			if (section.getSubSections() != null) {
-				// if section is contained as a field in the data object
-				if (obj instanceof LinkedHashMap<?, ?> data && data.get(section.getName()) != null) {
-					validateSections(data.get(section.getName()), section.getSubSections(), path);
-				} else {
-					validateSections(obj, section.getSubSections(), path);
-				}
-			}
-			if (section.getFields() != null) {
-				validateFields(obj, section.getFields(), true, path);
-			}
-			path.pop();
-		}
-		return obj;
-	}
+    /**
+     * Validates the {@link Object obj} against a list of sections, keeping track of the current path followed.
+     *
+     * @param obj      The {@link Object object} to validate.
+     * @param sections {@link List}<{@link Section}>
+     * @param path     keeps track of the path followed in the {@link Object obj} (for displaying more detailed errors).
+     * @param <T>
+     * @return {@link T}
+     */
+    private <T> T validateSections(T obj, List<Section> sections, Deque<String> path) {
+        if (path == null) {
+            path = new ArrayDeque<>();
+        }
+        for (Section section : sections) {
+            path.push(section.getName());
+            if (section.getSubSections() != null) {
+                // if section is contained as a field in the data object
+                if (obj instanceof LinkedHashMap<?, ?> data && data.get(section.getName()) != null) {
+                    validateSections(data.get(section.getName()), section.getSubSections(), path);
+                } else {
+                    validateSections(obj, section.getSubSections(), path);
+                }
+            }
+            if (section.getFields() != null) {
+                validateFields(obj, section.getFields(), true, path);
+            }
+            path.pop();
+        }
+        return obj;
+    }
 
-	/**
-	 * Validates that a list of fields is present in an object.
-	 *
-	 * @param object    The {@link Object object} to validate.
-	 * @param fields    {@link List}<{@link UiField}>
-	 * @param mandatory Initial mandatory value.
-	 * @param path      keeps track of the path of every field for displaying errors.
-	 * @return if a field is empty
-	 */
-	private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
-		boolean empty = true;
-		if (object != null) {
-			for (UiField field : fields) {
-				path.push(field.getLabel().getText());
-				if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
-					if (object instanceof List) {
-						for (Object ans : (List<?>) object) {
-							empty = validateFields(((LinkedHashMap<?, ?>) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-							removeCompositeFieldIfEmpty(field, ans, empty);
-						}
-					} else {
-						empty = validateFields(((LinkedHashMap<?, ?>) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-					}
-					removeCompositeFieldIfEmpty(field, object, empty);
-				}
-				if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
-					checkMandatoryField(object, field, path);
-				}
+    /**
+     * Validates that a list of fields is present in an object.
+     *
+     * @param object    The {@link Object object} to validate.
+     * @param fields    {@link List}<{@link UiField}>
+     * @param mandatory Initial mandatory value.
+     * @param path      keeps track of the path of every field for displaying errors.
+     * @return if a field is empty
+     */
+    private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
+        boolean empty = true;
+        if (object != null) {
+            for (UiField field : fields) {
+                path.push(field.getLabel().getText());
+                if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
+                    if (object instanceof List) {
+                        for (Object ans : (List<?>) object) {
+                            empty = validateFields(((LinkedHashMap<?, ?>) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                            removeCompositeFieldIfEmpty(field, ans, empty);
+                        }
+                    } else {
+                        empty = validateFields(((LinkedHashMap<?, ?>) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                    }
+                    removeCompositeFieldIfEmpty(field, object, empty);
+                }
+                if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
+                    checkMandatoryField(object, field, path);
+                }
 
-				if (containsAndValidatesValue(object, field, path)) {
-					empty = false;
-				}
-				path.pop();
-			}
-		}
-		return empty;
-	}
+                if (containsAndValidatesValue(object, field, path)) {
+                    empty = false;
+                }
+                path.pop();
+            }
+        }
+        return empty;
+    }
 
-	private Object getFieldValue(Object object, UiField field) throws NoSuchFieldException, IllegalAccessException {
-		// Check if object is a LinkedHashMap
-		if (object instanceof LinkedHashMap) {
-			@SuppressWarnings("unchecked")
-			LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) object;
+    private Object getFieldValue(Object object, UiField field) throws NoSuchFieldException, IllegalAccessException {
+        // Check if object is a LinkedHashMap
+        if (object instanceof LinkedHashMap) {
+            @SuppressWarnings("unchecked")
+            LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) object;
 
-			// Check if key exists in map
-			if (!data.containsKey(field.getName())) {
-				throw new NoSuchFieldException("Field '" + field.getName() + "' not found in map");
-			}
+            // Check if key exists in map
+            if (!data.containsKey(field.getName())) {
+                throw new NoSuchFieldException("Field '" + field.getName() + "' not found in map");
+            }
 
-			return data.get(field.getName());
-		} else if (object instanceof List) {
-			for (Object item : (List<?>) object) {
-				return getFieldValue(item, field);
-			}
-		}
-		return object;
-	}
+            return data.get(field.getName());
+        } else if (object instanceof List) {
+            for (Object item : (List<?>) object) {
+                return getFieldValue(item, field);
+            }
+        }
+        return object;
+    }
 
-	/**
-	 * Replaces the value found in {@link Object object}[{@link UiField field}.getName()] with null.
-	 *
-	 * @param field  the field information
-	 * @param object the object to modify
-	 * @param empty  condition to remove field
-	 */
-	void removeCompositeFieldIfEmpty(UiField field, Object object, boolean empty) {
-		if ("composite".equals(field.getTypeInfo().getType()) && empty) {
-			if (object instanceof LinkedHashMap) {
-				((LinkedHashMap) object).put(field.getName(), null);
-			}
-		}
-	}
+    /**
+     * Replaces the value found in {@link Object object}[{@link UiField field}.getName()] with null.
+     *
+     * @param field  the field information
+     * @param object the object to modify
+     * @param empty  condition to remove field
+     */
+    void removeCompositeFieldIfEmpty(UiField field, Object object, boolean empty) {
+        if ("composite".equals(field.getTypeInfo().getType()) && empty) {
+            if (object instanceof LinkedHashMap) {
+                ((LinkedHashMap) object).put(field.getName(), null);
+            }
+        }
+    }
 
-	/**
-	 * Checks if a specific field exists in {@link Object obj}.
-	 * In case {@link Object obj} is a {@link List}, the method checks if every list entry contains a value for this field.
-	 *
-	 * @param obj   the object to check
-	 * @param field information about the field
-	 * @param path  the complete access path to find the field, saved as a {@link Deque}
-	 * @throws ValidationException containing a detailed message for the missing field
-	 */
-	private void checkMandatoryField(Object obj, UiField field, Deque<String> path) throws ValidationException {
-		if (obj == null) {
-			throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-		} else if (obj instanceof List) {
-			if (((List<?>) obj).isEmpty()) {
-				throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-			} else if (((List<?>) obj).stream().allMatch(item -> item == null || "".equals(item))) {
-				throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
-			} else {
-				for (int i = 0; i < ((List<?>) obj).size(); i++) {
-					// check each list entry for the required field
-					if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
-						LinkedHashMap<?, ?> entry = (LinkedHashMap<?, ?>) ((List<?>) obj).get(i);
-						if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
-							throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
-						}
-					}
-				}
-			}
-		} else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?, ?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?, ?>) obj).get(field.getName())))) {
-			throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-		}
-	}
+    /**
+     * Checks if a specific field exists in {@link Object obj}.
+     * In case {@link Object obj} is a {@link List}, the method checks if every list entry contains a value for this field.
+     *
+     * @param obj   the object to check
+     * @param field information about the field
+     * @param path  the complete access path to find the field, saved as a {@link Deque}
+     * @throws ValidationException containing a detailed message for the missing field
+     */
+    private void checkMandatoryField(Object obj, UiField field, Deque<String> path) throws ValidationException {
+        if (obj == null) {
+            throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
+        } else if (obj instanceof List) {
+            if (((List<?>) obj).isEmpty()) {
+                throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
+            } else if (((List<?>) obj).stream().allMatch(item -> item == null || "".equals(item))) {
+                throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
+            } else {
+                for (int i = 0; i < ((List<?>) obj).size(); i++) {
+                    // check each list entry for the required field
+                    if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
+                        LinkedHashMap<?, ?> entry = (LinkedHashMap<?, ?>) ((List<?>) obj).get(i);
+                        if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
+                            throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
+                        }
+                    }
+                }
+            }
+        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?, ?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?, ?>) obj).get(field.getName())))) {
+            throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
+        }
+    }
 
-	/**
-	 * Creates a prettified representation of an object's access path.
-	 * Transforms a {@link Deque} of entries to a path. (e.g. Deque [object, to, path] becomes 'path -> to -> object')
-	 *
-	 * @param path a {@link Deque} containing entries of each relative location (in reverse order)
-	 * @return {@link String}
-	 */
-	private String prettyPrintPath(Deque<String> path) {
-		StringBuilder pathBuilder = new StringBuilder();
-		// iterate using descending iterator because elements in the deck are added using the push() method.
-		for (Iterator<String> iter = path.descendingIterator(); iter.hasNext(); ) {
-			pathBuilder.append(iter.next());
-			if (iter.hasNext()) {
-				pathBuilder.append(" -> ");
-			}
-		}
-		return pathBuilder.toString();
-	}
+    /**
+     * Creates a prettified representation of an object's access path.
+     * Transforms a {@link Deque} of entries to a path. (e.g. Deque [object, to, path] becomes 'path -> to -> object')
+     *
+     * @param path a {@link Deque} containing entries of each relative location (in reverse order)
+     * @return {@link String}
+     */
+    private String prettyPrintPath(Deque<String> path) {
+        StringBuilder pathBuilder = new StringBuilder();
+        // iterate using descending iterator because elements in the deck are added using the push() method.
+        for (Iterator<String> iter = path.descendingIterator(); iter.hasNext(); ) {
+            pathBuilder.append(iter.next());
+            if (iter.hasNext()) {
+                pathBuilder.append(" -> ");
+            }
+        }
+        return pathBuilder.toString();
+    }
 
-	/**
-	 * Checks whether an {@link Object obj} contains anything other than null value/values.
-	 *
-	 * @param obj the object to validate
-	 * @return {@link Boolean}
-	 */
-	private boolean containsAndValidatesValue(Object obj, UiField field, Deque<String> path) {
-		if (obj instanceof LinkedHashMap<?, ?> map) {
-			for (Object key : map.keySet()) {
-				if (key.equals(field.getName())) {
-					Object value = map.get(key);
-					if (value instanceof LinkedHashMap || value instanceof List) {
-						if (containsAndValidatesValue(value, field, path)) {
-							return true;
-						}
-					} else if (value != null && !value.equals("")) {
-						checkValidation(value, field, path);
-						return true;
-					}
-					break;
-				}
-			}
-		} else if (obj instanceof
-				List<?> list) {
-			for (Object item : list) {
-				if (containsAndValidatesValue(item, field, path)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    /**
+     * Checks whether an {@link Object obj} contains anything other than null value/values.
+     *
+     * @param obj the object to validate
+     * @return {@link Boolean}
+     */
+    private boolean containsAndValidatesValue(Object obj, UiField field, Deque<String> path) {
+        if (obj instanceof LinkedHashMap<?, ?> map) {
+            for (Object key : map.keySet()) {
+                if (key.equals(field.getName())) {
+                    Object value = map.get(key);
+                    if (value instanceof LinkedHashMap || value instanceof List) {
+                        if (containsAndValidatesValue(value, field, path)) {
+                            return true;
+                        }
+                    } else if (value != null && !value.equals("")) {
+                        checkValidation(value, field, path);
+                        return true;
+                    }
+                    break;
+                }
+            }
+        } else if (obj instanceof
+                List<?> list) {
+            for (Object item : list) {
+                if (containsAndValidatesValue(item, field, path)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
-		TypeInfo typeInfo = field.getTypeInfo();
-		switch (typeInfo.getType()) {
-			case email -> validatePattern(value, getPatternOrDefault(typeInfo, EMAIL_PATTERN), path);
-			case phone -> validatePattern(value, getPatternOrDefault(typeInfo, PHONE_PATTERN), path);
-			case url -> {
-				validatePattern(value, URL_PATTERN, path);
-				if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-					validateUrl(field, (URL) value);
-				}
-			}
-			// TODO: Vocabulary is scheduled to change
-			case vocabulary -> validateVocabulary(value, field, path);
-			case string, largeText -> validateText(value, typeInfo, path);
-			case number -> validateNumber(value, typeInfo, path);
-			case date -> validateDate(value, typeInfo, path);
-			// Comment: When the field is not mandatory, it'll never reach here and the possible null default value will be sent normally, which is wrong
-			case bool, checkbox -> validateBoolean(value, path);
-			case radio, select, scale -> validateSelection(value, typeInfo, path);
-		}
-	}
+    private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
+        TypeInfo typeInfo = field.getTypeInfo();
+        switch (typeInfo.getType()) {
+            case email -> validatePattern(value, getPatternOrDefault(typeInfo, EMAIL_PATTERN), path);
+            case phone -> validatePattern(value, getPatternOrDefault(typeInfo, PHONE_PATTERN), path);
+            case url -> {
+                validatePattern(value, URL_PATTERN, path);
+                if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
+                    validateUrl(field, (URL) value);
+                }
+            }
+            // TODO: Vocabulary is scheduled to change
+            case vocabulary -> validateVocabulary(value, field, path);
+            case string, largeText -> validateText(value, typeInfo, path);
+            case number -> validateNumber(value, typeInfo, path);
+            case date -> validateDate(value, typeInfo, path);
+            // Comment: When the field is not mandatory, it'll never reach here and the possible null default value will be sent normally, which is wrong
+            case bool, checkbox -> validateBoolean(value, path);
+            case radio, select, scale -> validateSelection(value, typeInfo, path);
+        }
+    }
 
-	private Pattern getPatternOrDefault(TypeInfo typeInfo, Pattern defaultPattern) {
-		if (typeInfo.getProperties() instanceof PatternProperties patternProps && patternProps.getPattern() != null) {
-			try {
-				return Pattern.compile(patternProps.getPattern());
-			} catch (PatternSyntaxException e) {
-				logger.warn("Invalid expression: \"{}\", default value was used", patternProps.getPattern());
-				return defaultPattern;
-			}
-		}
-		return defaultPattern;
-	}
+    private Pattern getPatternOrDefault(TypeInfo typeInfo, Pattern defaultPattern) {
+        if (typeInfo.getProperties() instanceof PatternProperties patternProps && patternProps.getPattern() != null) {
+            try {
+                return Pattern.compile(patternProps.getPattern());
+            } catch (PatternSyntaxException e) {
+                logger.warn("Invalid expression: \"{}\", default value was used", patternProps.getPattern());
+                return defaultPattern;
+            }
+        }
+        return defaultPattern;
+    }
 
-	private void validateText(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
-		if (typeInfo.getProperties() instanceof TextProperties textProps && value instanceof String str) {
-			Integer minLength = textProps.getMinLength();
-			Integer maxLength = textProps.getMaxLength();
+    private void validateText(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        if (typeInfo.getProperties() instanceof TextProperties textProps && value instanceof String str) {
+            Integer minLength = textProps.getMinLength();
+            Integer maxLength = textProps.getMaxLength();
 
-			if (minLength == null && maxLength == null) {
-				return;
-			}
+            if (minLength == null && maxLength == null) {
+                return;
+            }
 
-			int length = str.length();
+            int length = str.length();
 
-			if (minLength != null && maxLength != null) {
-				if (length < minLength || length > maxLength) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Text length %d is outside valid range [%d, %d]", prettyPrintPath(path), length, minLength, maxLength)
-					);
-				}
-			} else {
-				if (minLength != null && length < minLength) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Text length %d is less than minimum %d", prettyPrintPath(path), length, minLength)
-					);
-				}
-				if (maxLength != null && length > maxLength) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Text length %d exceeds maximum %d", prettyPrintPath(path), length, maxLength)
-					);
-				}
-			}
-		}
-	}
+            if (minLength != null && maxLength != null) {
+                if (length < minLength || length > maxLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d is outside valid range [%d, %d]", prettyPrintPath(path), length, minLength, maxLength)
+                    );
+                }
+            } else {
+                if (minLength != null && length < minLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d is less than minimum %d", prettyPrintPath(path), length, minLength)
+                    );
+                }
+                if (maxLength != null && length > maxLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d exceeds maximum %d", prettyPrintPath(path), length, maxLength)
+                    );
+                }
+            }
+        }
+    }
 
-	private void validateNumber(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
-		if (typeInfo.getProperties() instanceof NumberProperties numProps) {
-			Number num = null;
+    private void validateNumber(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        if (typeInfo.getProperties() instanceof NumberProperties numProps) {
+            Number num = null;
 
-			if (value instanceof Number) {
-				num = (Number) value;
-			} else if (value instanceof String str) {
-				try {
-					num = Double.parseDouble(str);
-				} catch (NumberFormatException e) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Value '%s' is not a valid number", prettyPrintPath(path), str)
-					);
-				}
-			} else {
-				return;
-			}
+            if (value instanceof Number) {
+                num = (Number) value;
+            } else if (value instanceof String str) {
+                try {
+                    num = Double.parseDouble(str);
+                } catch (NumberFormatException e) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Value '%s' is not a valid number", prettyPrintPath(path), str)
+                    );
+                }
+            } else {
+                return;
+            }
 
-			Number min = numProps.getMin();
-			Number max = numProps.getMax();
-			Integer decimals = numProps.getDecimals();
-			String pattern = numProps.getPattern();
+            Number min = numProps.getMin();
+            Number max = numProps.getMax();
+            Integer decimals = numProps.getDecimals();
+            String pattern = numProps.getPattern();
 
-			if (min != null || max != null) {
-				double numValue = num.doubleValue();
+            if (min != null || max != null) {
+                double numValue = num.doubleValue();
 
-				if (min != null && max != null) {
-					if (numValue < min.doubleValue() || numValue > max.doubleValue()) {
-						throw new ValidationException(
-								String.format("Field '%s' is invalid. Value %s is outside valid range [%s, %s]", prettyPrintPath(path), numValue, min, max)
-						);
-					}
-				} else {
-					if (min != null && numValue < min.doubleValue()) {
-						throw new ValidationException(
-								String.format("Field '%s' is invalid. Value %s is less than minimum %s", prettyPrintPath(path), numValue, min)
-						);
-					}
+                if (min != null && max != null) {
+                    if (numValue < min.doubleValue() || numValue > max.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s is outside valid range [%s, %s]", prettyPrintPath(path), numValue, min, max)
+                        );
+                    }
+                } else {
+                    if (min != null && numValue < min.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s is less than minimum %s", prettyPrintPath(path), numValue, min)
+                        );
+                    }
 
-					if (max != null && numValue > max.doubleValue()) {
-						throw new ValidationException(
-								String.format("Field '%s' is invalid. Value %s exceeds maximum %s", prettyPrintPath(path), numValue, max)
-						);
-					}
-				}
-			}
+                    if (max != null && numValue > max.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s exceeds maximum %s", prettyPrintPath(path), numValue, max)
+                        );
+                    }
+                }
+            }
 
-			if (decimals != null) {
-				BigDecimal bd = new BigDecimal(num.toString());
-				int scale = Math.max(0, bd.stripTrailingZeros().scale());
+            if (decimals != null) {
+                BigDecimal bd = new BigDecimal(num.toString());
+                int scale = Math.max(0, bd.stripTrailingZeros().scale());
 
-				System.out.println("num.toString(): " + num.toString());
-				System.out.println("BigDecimal: " + bd);
-				System.out.println("After stripTrailingZeros: " + bd.stripTrailingZeros());
-				System.out.println("scale: " + scale);
-				System.out.println("decimals limit: " + decimals);
+                System.out.println("num.toString(): " + num.toString());
+                System.out.println("BigDecimal: " + bd);
+                System.out.println("After stripTrailingZeros: " + bd.stripTrailingZeros());
+                System.out.println("scale: " + scale);
+                System.out.println("decimals limit: " + decimals);
 
-				if (scale > decimals) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Number has %d decimal places, maximum allowed is %d", prettyPrintPath(path), scale, decimals)
-					);
-				}
-			}
+                if (scale > decimals) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Number has %d decimal places, maximum allowed is %d", prettyPrintPath(path), scale, decimals)
+                    );
+                }
+            }
 
-			if (pattern != null) {
-				String numStr = getNumericString(num);
-				if (!Pattern.compile(pattern).matcher(numStr).matches()) {
-					throw new ValidationException(
-							String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
-					);
-				}
-			}
-		}
-	}
+            if (pattern != null) {
+                String numStr = getNumericString(num);
+                if (!Pattern.compile(pattern).matcher(numStr).matches()) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
+                    );
+                }
+            }
+        }
+    }
 
-	private String getNumericString(Number num) {
-		if (num instanceof Double || num instanceof Float) {
-			BigDecimal bd = new BigDecimal(num.toString());
-			return bd.stripTrailingZeros().toPlainString();
-		}
-		return num.toString();
-	}
+    private String getNumericString(Number num) {
+        if (num instanceof Double || num instanceof Float) {
+            BigDecimal bd = new BigDecimal(num.toString());
+            return bd.stripTrailingZeros().toPlainString();
+        }
+        return num.toString();
+    }
 
-	private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
-		if (typeInfo.getProperties() instanceof DateProperties dateProps) {
-			// TODO: complete the date object and then use it for validation here to throw the exception
+    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
+        if (typeInfo.getProperties() instanceof DateProperties dateProps) {
+            // TODO: complete the date object and then use it for validation here to throw the exception
 //            if (!dateProps.isFormatToString()) {
 //                throw new ValidationException(
 //                        String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
 //                );
 //            }
-		}
-	}
+        }
+    }
 
-	private void validateBoolean(Object value, Deque<String> path) throws ValidationException {
-		if (!(value instanceof Boolean)) {
-			throw new ValidationException(
-					String.format("Field '%s' is invalid. Value should be true or false", prettyPrintPath(path))
-			);
-		}
-	}
+    private void validateBoolean(Object value, Deque<String> path) throws ValidationException {
+        if (!(value instanceof Boolean)) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid. Value should be true or false", prettyPrintPath(path))
+            );
+        }
+    }
 
-	private void validateSelection(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
-		List<IdLabel> valuesList = typeInfo.getValues();
+    private void validateSelection(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        List<IdLabel> valuesList = typeInfo.getValues();
 
-		if (valuesList == null || valuesList.isEmpty()) {
-			throw new ValidationException(
-					String.format("Field '%s' has invalid configuration: no selection values defined", prettyPrintPath(path))
-			);
-		}
+        if (valuesList == null || valuesList.isEmpty()) {
+            throw new ValidationException(
+                    String.format("Field '%s' has invalid configuration: no selection values defined", prettyPrintPath(path))
+            );
+        }
 
-		List<String> validIds = new ArrayList<>();
-		for (IdLabel item : valuesList) {
-			String id = item.id();
-			if (id != null) {
-				validIds.add(id);
-			}
-		}
+        List<String> validIds = new ArrayList<>();
+        for (IdLabel item : valuesList) {
+            String id = item.id();
+            if (id != null) {
+                validIds.add(id);
+            }
+        }
 
-		String valueStr = value.toString();
-		if (!validIds.contains(valueStr)) {
-			throw new ValidationException(
-					String.format("Field '%s' is invalid. Value '%s' is not in allowed values: %s", prettyPrintPath(path), valueStr, validIds)
-			);
-		}
-	}
+        String valueStr = value.toString();
+        if (!validIds.contains(valueStr)) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid. Value '%s' is not in allowed values: %s", prettyPrintPath(path), valueStr, validIds)
+            );
+        }
+    }
 
-	private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
-		if (value != null) {
-			String stringValue = value.toString().trim();
-			if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
-				throw new ValidationException(
-						String.format("Field '%s' is invalid.", prettyPrintPath(path))
-				);
-			}
-		}
-	}
+    private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
+        if (value != null) {
+            String stringValue = value.toString().trim();
+            if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                );
+            }
+        }
+    }
 
-	public void validateUrl(UiField field, URL urlForValidation) {
-		try {
-			String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
-			URI uri = new URL(cleanedUrlString).toURI(); // validate and clean
+    public void validateUrl(UiField field, URL urlForValidation) {
+        try {
+            String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
+            URI uri = new URL(cleanedUrlString).toURI(); // validate and clean
 
-			// add timeout
-			ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
-					HttpClient.create()
-							.followRedirect(true)
-							.responseTimeout(Duration.ofSeconds(5))
-							.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-			);
-			WebClient webClient = WebClient.builder()
-					.clientConnector(connector)
-					.build();
+            // add timeout
+            ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+                    HttpClient.create()
+                            .followRedirect(true)
+                            .responseTimeout(Duration.ofSeconds(5))
+                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+            );
+            WebClient webClient = WebClient.builder()
+                    .clientConnector(connector)
+                    .build();
 
-			ClientResponse response = webClient.get()
-					.uri(uri)
-					.exchangeToMono(Mono::just)
-					.block();
+            ClientResponse response = webClient.get()
+                    .uri(uri)
+                    .exchangeToMono(Mono::just)
+                    .block();
 
-			HttpStatusCode statusCode = response.statusCode();
-			if (!statusCode.is2xxSuccessful()) {
-				String fieldName = (field != null) ? field.getName() : "unknown";
-				throw new ValidationException(
-						String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
-								fieldName, urlForValidation, statusCode.value()));
-			}
-		} catch (URISyntaxException | MalformedURLException | WebClientResponseException |
-				 WebClientRequestException e) {
-			throw new ValidationException("Failed to validate URL: " + urlForValidation);
-		}
-	}
+            HttpStatusCode statusCode = response.statusCode();
+            if (!statusCode.is2xxSuccessful()) {
+                String fieldName = (field != null) ? field.getName() : "unknown";
+                throw new ValidationException(
+                        String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
+                                fieldName, urlForValidation, statusCode.value()));
+            }
+        } catch (URISyntaxException | MalformedURLException | WebClientResponseException |
+                 WebClientRequestException e) {
+            throw new ValidationException("Failed to validate URL: " + urlForValidation);
+        }
+    }
 
-	//TODO: also validate parent-child relationship (eg. Category-Subcategory) -> VocabularyValidationUtils()
-	private void validateVocabulary(Object value, UiField field, Deque<String> path) {
-		if (value != null) {
-			String stringValue = value.toString().trim();
-			List<IdLabel> allowedValues = field.getTypeInfo().getValues();
+    //TODO: also validate parent-child relationship (eg. Category-Subcategory) -> VocabularyValidationUtils()
+    private void validateVocabulary(Object value, UiField field, Deque<String> path) {
+        if (value != null) {
+            String stringValue = value.toString().trim();
+            List<IdLabel> allowedValues = field.getTypeInfo().getValues();
 
-			if (allowedValues == null || allowedValues.isEmpty()) {
-				// TODO: break it down to two cases predetermined values from model and getting them from elsewhere
-				// This is where the "elsewhere" is for NOT predetermined values
-				logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
-				return;
-			}
+            if (allowedValues == null || allowedValues.isEmpty()) {
+                // TODO: break it down to two cases predetermined values from model and getting them from elsewhere
+                // This is where the "elsewhere" is for NOT predetermined values
+                logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
+                return;
+            }
 
-			if (!stringValue.isEmpty() && !allowedValues.contains(stringValue)) {
-				throw new ValidationException(
-						String.format("Field '%s' is invalid.", prettyPrintPath(path))
-				);
-			}
-		}
-	}
+            if (!stringValue.isEmpty() && !allowedValues.contains(stringValue)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                );
+            }
+        }
+    }
 
-	/**
-	 * Converts the given resource object into a structure suitable for validation
-	 * against the model defined by the provided sections.
-	 *
-	 * @param obj      the resource object to validate
-	 * @param sections the list of {@link Section}s defining the allowed model structure
-	 * @param <T>      the type of the resource object
-	 * @return a {@link LinkedHashMap} representation of the resource for validation
-	 * @throws ValidationException if extra fields are found in the resource object
-	 */
-	private <T> LinkedHashMap resourceToModelValidation(T obj, List<Section> sections) {
-		Map<String, Object> modelFields = new HashMap<>();
-		for (Section section : sections) {
-			for (Section subSection : section.getSubSections()) {
-				modelFields.putAll(buildModelFieldTree(subSection.getFields()));
-			}
-		}
+    /**
+     * Converts the given resource object into a structure suitable for validation
+     * against the model defined by the provided sections.
+     *
+     * @param obj      the resource object to validate
+     * @param sections the list of {@link Section}s defining the allowed model structure
+     * @param <T>      the type of the resource object
+     * @return a {@link LinkedHashMap} representation of the resource for validation
+     * @throws ValidationException if extra fields are found in the resource object
+     */
+    private <T> LinkedHashMap resourceToModelValidation(T obj, List<Section> sections) {
+        Map<String, Object> modelFields = new HashMap<>();
+        for (Section section : sections) {
+            for (Section subSection : section.getSubSections()) {
+                modelFields.putAll(buildModelFieldTree(subSection.getFields()));
+            }
+        }
 
-		String resourceTypeName = sections.getFirst().getName(); //FIXME: works correctly only for forms with 1 section
-		if (obj instanceof LinkedHashMap<?, ?> mapObj) {
-			boolean found = false;
-			for (Object key : mapObj.keySet()) {
-				if (key.equals(resourceTypeName)) {
-					found = true;
-					Object innerFields = mapObj.get(key);
-					Map<String, Object> resourceTree = buildResourceFieldTree(innerFields);
-					validateTrees(modelFields, resourceTree, resourceTypeName + ".");
-				}
-			}
-			if (!found) {
-				logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
-			}
-		}
-		return null;
-	}
+        String resourceTypeName = sections.getFirst().getName(); //FIXME: works correctly only for forms with 1 section
+        if (obj instanceof LinkedHashMap<?, ?> mapObj) {
+            boolean found = false;
+            for (Object key : mapObj.keySet()) {
+                if (key.equals(resourceTypeName)) {
+                    found = true;
+                    Object innerFields = mapObj.get(key);
+                    Map<String, Object> resourceTree = buildResourceFieldTree(innerFields);
+                    validateTrees(modelFields, resourceTree, resourceTypeName + ".");
+                }
+            }
+            if (!found) {
+                logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
+            }
+        }
+        return null;
+    }
 
-	/**
-	 * Recursively builds a tree representation of the model fields.
-	 *
-	 * @param fields the list of {@link UiField}s to convert into a tree structure
-	 * @return a {@link Map} representing the hierarchical structure of the model fields
-	 */
-	private Map<String, Object> buildModelFieldTree(List<UiField> fields) {
-		Map<String, Object> result = new HashMap<>();
-		for (UiField field : fields) {
-			if (field.getSubFields() == null || field.getSubFields().isEmpty()) {
-				result.put(field.getName(), null);
-			} else {
-				result.put(field.getName(), buildModelFieldTree(field.getSubFields()));
-			}
-		}
-		return result;
-	}
+    /**
+     * Recursively builds a tree representation of the model fields.
+     *
+     * @param fields the list of {@link UiField}s to convert into a tree structure
+     * @return a {@link Map} representing the hierarchical structure of the model fields
+     */
+    private Map<String, Object> buildModelFieldTree(List<UiField> fields) {
+        Map<String, Object> result = new HashMap<>();
+        for (UiField field : fields) {
+            if (field.getSubFields() == null || field.getSubFields().isEmpty()) {
+                result.put(field.getName(), null);
+            } else {
+                result.put(field.getName(), buildModelFieldTree(field.getSubFields()));
+            }
+        }
+        return result;
+    }
 
-	/**
-	 * Recursively builds a tree representation of the resource fields.
-	 *
-	 * @param resource the resource object to convert
-	 * @return a {@link Map} representing the hierarchical structure of the resource fields
-	 */
-	private Map<String, Object> buildResourceFieldTree(Object resource) {
-		Map<String, Object> result = new HashMap<>();
+    /**
+     * Recursively builds a tree representation of the resource fields.
+     *
+     * @param resource the resource object to convert
+     * @return a {@link Map} representing the hierarchical structure of the resource fields
+     */
+    private Map<String, Object> buildResourceFieldTree(Object resource) {
+        Map<String, Object> result = new HashMap<>();
 
-		if (resource instanceof Map<?, ?> map) {
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				String key = String.valueOf(entry.getKey());
-				Object value = entry.getValue();
+        if (resource instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = String.valueOf(entry.getKey());
+                Object value = entry.getValue();
 
-				if (value instanceof Map<?, ?>) {
-					result.put(key, buildResourceFieldTree(value));
-				} else if (value instanceof List<?> list) {
-					result.put(key, extractListTree(list));
-				} else if (value == null) {
-					continue;
-				} else {
-					result.put(key, null);
-				}
-			}
-			return result;
-		}
-		return result;
-	}
+                if (value instanceof Map<?, ?>) {
+                    result.put(key, buildResourceFieldTree(value));
+                } else if (value instanceof List<?> list) {
+                    result.put(key, extractListTree(list));
+                } else if (value == null) {
+                    continue;
+                } else {
+                    result.put(key, null);
+                }
+            }
+            return result;
+        }
+        return result;
+    }
 
-	/**
-	 * Converts a list of resource elements into a tree structure for validation.
-	 *
-	 * @param list the list of resource elements
-	 * @return a {@link Map} representing the merged tree structure of the list
-	 */
-	private Map<String, Object> extractListTree(List<?> list) {
-		Map<String, Object> merged = new HashMap<>();
-		for (Object element : list) {
-			if (element instanceof Map<?, ?>) {
-				Map<String, Object> subtree = buildResourceFieldTree(element);
-				subtree.forEach(merged::putIfAbsent);
-			} else {
-				merged.put("value", null);
-			}
-		}
-		return merged;
-	}
+    /**
+     * Converts a list of resource elements into a tree structure for validation.
+     *
+     * @param list the list of resource elements
+     * @return a {@link Map} representing the merged tree structure of the list
+     */
+    private Map<String, Object> extractListTree(List<?> list) {
+        Map<String, Object> merged = new HashMap<>();
+        for (Object element : list) {
+            if (element instanceof Map<?, ?>) {
+                Map<String, Object> subtree = buildResourceFieldTree(element);
+                subtree.forEach(merged::putIfAbsent);
+            } else {
+                merged.put("value", null);
+            }
+        }
+        return merged;
+    }
 
-	/**
-	 * Recursively validates the resource tree against the model tree.
-	 * Throws a {@link ValidationException} if any extra fields are found
-	 * in the resource that are not defined in the model.
-	 *
-	 * @param model    the model tree defining allowed fields
-	 * @param resource the resource tree to validate
-	 * @param path     the path prefix used for building error messages for nested fields
-	 * @throws ValidationException if an extra field is detected
-	 */
-	private void validateTrees(Map<String, Object> model, Map<String, Object> resource, String path) {
-		for (String field : resource.keySet()) {
-			if (!model.containsKey(field)) {
-				throw new ValidationException("Extra field found: " + path + field);
-			}
-		}
-		for (Map.Entry<String, Object> modelEntry : model.entrySet()) {
-			String field = modelEntry.getKey();
-			Object modelChild = modelEntry.getValue();
-			Object resourceChild = resource.get(field);
-			if (modelChild instanceof Map && resourceChild instanceof Map) {
-				validateTrees(
-						(Map<String, Object>) modelChild,
-						(Map<String, Object>) resourceChild,
-						path + field + "."
-				);
-			}
-		}
-	}
+    /**
+     * Recursively validates the resource tree against the model tree.
+     * Throws a {@link ValidationException} if any extra fields are found
+     * in the resource that are not defined in the model.
+     *
+     * @param model    the model tree defining allowed fields
+     * @param resource the resource tree to validate
+     * @param path     the path prefix used for building error messages for nested fields
+     * @throws ValidationException if an extra field is detected
+     */
+    private void validateTrees(Map<String, Object> model, Map<String, Object> resource, String path) {
+        for (String field : resource.keySet()) {
+            if (!model.containsKey(field)) {
+                throw new ValidationException("Extra field found: " + path + field);
+            }
+        }
+        for (Map.Entry<String, Object> modelEntry : model.entrySet()) {
+            String field = modelEntry.getKey();
+            Object modelChild = modelEntry.getValue();
+            Object resourceChild = resource.get(field);
+            if (modelChild instanceof Map && resourceChild instanceof Map) {
+                validateTrees(
+                        (Map<String, Object>) modelChild,
+                        (Map<String, Object>) resourceChild,
+                        path + field + "."
+                );
+            }
+        }
+    }
 
 }
