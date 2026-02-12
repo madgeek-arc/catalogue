@@ -44,7 +44,6 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -343,7 +342,7 @@ public class ModelResponseValidator {
             case url -> {
                 validatePattern(value, URL_PATTERN, path);
                 if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-                    validateUrl(field, (URL) value);
+                    validateUrl(field, value.toString().trim());
                 }
             }
             // TODO: Vocabulary is scheduled to change
@@ -539,10 +538,9 @@ public class ModelResponseValidator {
         }
     }
 
-    public void validateUrl(UiField field, URL urlForValidation) {
+    public void validateUrl(UiField field, String url) {
         try {
-            String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
-            URI uri = new URL(cleanedUrlString).toURI(); // validate and clean
+            URI uri = new URI(url); // validate and clean
 
             // add timeout
             ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
@@ -565,11 +563,12 @@ public class ModelResponseValidator {
                 String fieldName = (field != null) ? field.getName() : "unknown";
                 throw new ValidationException(
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
-                                fieldName, urlForValidation, statusCode.value()));
+                                fieldName, uri, statusCode.value()));
             }
-        } catch (URISyntaxException | MalformedURLException | WebClientResponseException |
-                 WebClientRequestException e) {
-            throw new ValidationException("Failed to validate URL: " + urlForValidation);
+        } catch (WebClientResponseException | WebClientRequestException e) {
+            throw new ValidationException("Failed to validate URL: " + url);
+        } catch (URISyntaxException e) {
+            throw new ValidationException("Failed to parse URI: " + url);
         }
     }
 
