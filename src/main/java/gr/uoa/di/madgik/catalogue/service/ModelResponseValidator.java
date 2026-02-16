@@ -47,6 +47,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -483,15 +485,69 @@ public class ModelResponseValidator {
         return num.toString();
     }
 
-    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
-        if (typeInfo.getProperties() instanceof DateProperties dateProps) {
+//    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
+//        if (typeInfo.getProperties() instanceof DateProperties dateProps) {
             // TODO: complete the date object and then use it for validation here to throw the exception
 //            if (!dateProps.isFormatToString()) {
 //                throw new ValidationException(
 //                        String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
 //                );
 //            }
+//        }
+//    }
+
+    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
+        if (!(typeInfo.getProperties() instanceof DateProperties dateProps)) {
+            return;
         }
+
+        // Date formats WITHOUT timestamps
+        String[] dateOnlyFormats = {
+                "yyyy-MM-dd",             // "2004-12-12"
+                "dd/MM/yyyy",             // "12/12/2004"
+                "MM/dd/yyyy",             // "12/12/2004"
+                "dd-MM-yyyy",             // "12-12-2004"
+                "yyyy/MM/dd",             // "2004/12/12"
+                "dd.MM.yyyy",             // "12.12.2004"
+        };
+
+        if (dateProps.isFormatToString()) {
+            // Expecting a String value that can be parsed to a Date
+            // TODO: At the end do we change the string into a date object so that the frontend can read it correctly?
+            if (!(value instanceof String dateStr)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid. Expected String but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
+                );
+            }
+
+            if (!tryParseDate(dateStr, dateOnlyFormats)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid. String '%s' cannot be parsed as a valid date", prettyPrintPath(path), dateStr)
+                );
+            }
+
+        } else {
+            // Expecting a Date object
+            if (!(value instanceof Date)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid. Expected Date object but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
+                );
+            }
+        }
+    }
+
+    private boolean tryParseDate(String dateStr, String[] formats) {
+        for (String format : formats) {
+            try {
+                SimpleDateFormat formatter = new SimpleDateFormat(format);
+                formatter.setLenient(false);
+                formatter.parse(dateStr);
+                return true; // Successfully parsed
+            } catch (ParseException e) {
+                // Try next format
+            }
+        }
+        return false; // None of the formats worked
     }
 
     private void validateBoolean(Object value, Deque<String> path) throws ValidationException {
