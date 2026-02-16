@@ -146,6 +146,13 @@ public class GenericResourceManager implements GenericResourceService {
     }
 
     @Override
+    public <T> List<T> recommend(FacetFilter filter, String id) {
+        return convertToList(
+                searchService.recommend(filter, new SearchService.KeyValue("resource_internal_id", id)),
+                filter.getResourceType());
+    }
+
+    @Override
     public <T> T add(String resourceTypeName, T resource) {
         return add(resourceTypeName, resource, true);
     }
@@ -225,6 +232,22 @@ public class GenericResourceManager implements GenericResourceService {
         Browsing<T> browsing = getResults(filter);
         browsing.setFacets(transformer.apply(browsing.getFacets()));
         return browsing;
+    }
+
+    public <T> List<T> convertToList(@NotNull List<Resource> resources, String resourceTypeName) {
+        Class<?> clazz = getClassFromResourceType(resourceTypeName);
+        List<T> results = new ArrayList<>();
+        for (Resource resource : resources) {
+            if (resource == null) {
+                continue;
+            }
+            if (clazz == null) {
+                clazz = getClassFromResourceType(resource.getResourceTypeName());
+            }
+            T r = (T) parserPool.deserialize(resource, clazz);
+            results.add(r);
+        }
+        return results;
     }
 
     public <T> Browsing<T> convertToBrowsing(@NotNull Paging<Resource> paging, String resourceTypeName) {
