@@ -46,10 +46,12 @@ import reactor.netty.http.client.HttpClient;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -85,6 +87,15 @@ public class ModelResponseValidator {
     private static final Pattern URL_PATTERN = Pattern.compile(
             "^https?://[^\\s/$.?#][^\\s]*$"
     );
+
+    private static final String[] DATE_FORMATS = {
+            "yyyy-MM-dd",
+            "dd/MM/yyyy",
+//          "MM/dd/yyyy",   // American format - ambiguous with dd/MM/yyyy for inputs like "01/03/1995"
+            "dd-MM-yyyy",
+            "yyyy/MM/dd",
+            "dd.MM.yyyy",
+    };
 
     /**
      * Validates a {@link T resource} based on its {@link Model}.
@@ -453,12 +464,6 @@ public class ModelResponseValidator {
                 BigDecimal bd = new BigDecimal(num.toString());
                 int scale = Math.max(0, bd.stripTrailingZeros().scale());
 
-                System.out.println("num.toString(): " + num.toString());
-                System.out.println("BigDecimal: " + bd);
-                System.out.println("After stripTrailingZeros: " + bd.stripTrailingZeros());
-                System.out.println("scale: " + scale);
-                System.out.println("decimals limit: " + decimals);
-
                 if (scale > decimals) {
                     throw new ValidationException(
                             String.format("Field '%s' is invalid. Number has %d decimal places, maximum allowed is %d", prettyPrintPath(path), scale, decimals)
@@ -485,69 +490,77 @@ public class ModelResponseValidator {
         return num.toString();
     }
 
-//    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
-//        if (typeInfo.getProperties() instanceof DateProperties dateProps) {
-            // TODO: complete the date object and then use it for validation here to throw the exception
-//            if (!dateProps.isFormatToString()) {
-//                throw new ValidationException(
-//                        String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
-//                );
-//            }
-//        }
-//    }
-
     private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
         if (!(typeInfo.getProperties() instanceof DateProperties dateProps)) {
             return;
         }
 
-        // Date formats WITHOUT timestamps
-        String[] dateOnlyFormats = {
-                "yyyy-MM-dd",             // "2004-12-12"
-                "dd/MM/yyyy",             // "12/12/2004"
-                "MM/dd/yyyy",             // "12/12/2004"
-                "dd-MM-yyyy",             // "12-12-2004"
-                "yyyy/MM/dd",             // "2004/12/12"
-                "dd.MM.yyyy",             // "12.12.2004"
-        };
-
         if (dateProps.isFormatToString()) {
-            // Expecting a String value that can be parsed to a Date
-            // TODO: At the end do we change the string into a date object so that the frontend can read it correctly?
             if (!(value instanceof String dateStr)) {
                 throw new ValidationException(
                         String.format("Field '%s' is invalid. Expected String but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
                 );
             }
 
-            if (!tryParseDate(dateStr, dateOnlyFormats)) {
+            if (isInvalidDate(dateStr)) {
                 throw new ValidationException(
                         String.format("Field '%s' is invalid. String '%s' cannot be parsed as a valid date", prettyPrintPath(path), dateStr)
                 );
             }
 
         } else {
-            // Expecting a Date object
-            if (!(value instanceof Date)) {
-                throw new ValidationException(
-                        String.format("Field '%s' is invalid. Expected Date object but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
+            switch (value) {
+                case Long l -> { /* Any long is a valid epoch millisecond */ }
+                case Date d -> { /* Already a valid Date */ }
+                case String str -> {
+                    if (isInvalidDateTime(str)) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. String '%s' cannot be parsed as a valid date", prettyPrintPath(path), str)
+                        );
+                    }
+                }
+                default -> throw new ValidationException(
+                        String.format("Field '%s' is invalid. Expected Date, Long, or String but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
                 );
             }
         }
     }
 
-    private boolean tryParseDate(String dateStr, String[] formats) {
-        for (String format : formats) {
+    private boolean isInvalidDate(String dateStr) {
+        for (String format : DATE_FORMATS) {
             try {
-                SimpleDateFormat formatter = new SimpleDateFormat(format);
-                formatter.setLenient(false);
-                formatter.parse(dateStr);
-                return true; // Successfully parsed
-            } catch (ParseException e) {
-                // Try next format
+                DateTimeFormatter.ofPattern(format).parse(dateStr);
+                return false;
+            } catch (DateTimeParseException ignored) {
             }
         }
-        return false; // None of the formats worked
+        return true;
+    }
+
+    private boolean isInvalidDateTime(String dateStr) {
+        try {
+            OffsetDateTime.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            LocalDateTime.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            LocalDate.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        for (String format : DATE_FORMATS) {
+            try {
+                DateTimeFormatter.ofPattern(format).parse(dateStr);
+                return false;
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return true;
     }
 
     private void validateBoolean(Object value, Deque<String> path) throws ValidationException {
@@ -584,20 +597,20 @@ public class ModelResponseValidator {
     }
 
     private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
-        if (value != null) {
-            String stringValue = value.toString().trim();
-            if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
-                throw new ValidationException(
-                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
-                );
-            }
+        String stringValue = value.toString().trim();
+        if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid.", prettyPrintPath(path))
+            );
         }
     }
+
 
     public void validateUrl(UiField field, String url) {
         try {
             URI uri = new URI(url); // validate and clean
 
+            // TODO: check if this is redundant and you can create the webClient outside of this function once and then use it as many times as you want for every call.
             // add timeout
             ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
                     HttpClient.create()
