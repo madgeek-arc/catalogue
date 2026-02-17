@@ -321,28 +321,33 @@ public class ModelResponseValidator {
      * @return {@link Boolean}
      */
     private boolean containsAndValidatesValue(Object obj, UiField field, Deque<String> path) {
-        if (obj instanceof LinkedHashMap<?, ?> map) {
-            for (Object key : map.keySet()) {
-                if (key.equals(field.getName())) {
-                    Object value = map.get(key);
-                    if (value instanceof LinkedHashMap || value instanceof List) {
-                        if (containsAndValidatesValue(value, field, path)) {
-                            return true;
-                        }
-                    } else if (value != null && !value.equals("")) {
-                        checkValidation(value, field, path);
-                        return true;
-                    }
-                    break;
-                }
+        if (obj instanceof Map<?, ?> map) {
+            Object value = map.get(field.getName());
+            if (value == null) {
+                return false;
             }
-        } else if (obj instanceof
-                List<?> list) {
+            return validateValueRecursive(value, field, path);
+        }
+        if (obj instanceof List<?> list) {
+            boolean foundAny = false;
+
             for (Object item : list) {
-                if (containsAndValidatesValue(item, field, path)) {
-                    return true;
-                }
+                boolean validated = validateValueRecursive(item, field, path);
+                foundAny |= validated;
             }
+            return foundAny;
+        }
+        return false;
+    }
+
+    private boolean validateValueRecursive(Object value, UiField field, Deque<String> path) {
+        if (value instanceof Map<?, ?> || value instanceof List<?>) {
+            return containsAndValidatesValue(value, field, path);
+        }
+
+        if (value != null && !value.toString().isBlank()) {
+            checkValidation(value, field, path); // must throw or record error
+            return true;
         }
         return false;
     }
