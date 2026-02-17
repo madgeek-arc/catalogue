@@ -40,6 +40,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -611,29 +612,33 @@ public class ModelResponseValidator {
     }
 
 
-    public void validateUrl(UiField field, String url) {
-        try {
-            URI uri = new URI(url); // validate and clean
-
-            // TODO: check if this is redundant and you can create the webClient outside of this function once and then use it as many times as you want for every call.
-            // add timeout
-            ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+    // Class-level field - created once, reused everywhere
+    private final WebClient webClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(
                     HttpClient.create()
                             .followRedirect(true)
                             .responseTimeout(Duration.ofSeconds(5))
                             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-            );
-            WebClient webClient = WebClient.builder()
-                    .clientConnector(connector)
-                    .build();
+            ))
+            .build();
+
+    public void validateUrl(UiField field, String url) {
+        try {
+            URI uri = new URI(url); // parse and validate the URL string, throws URISyntaxException if malformed
 
             ClientResponse response = webClient.get()
                     .uri(uri)
                     .exchangeToMono(Mono::just)
                     .block();
 
+            if (response == null) {
+                throw new ValidationException("Failed to validate URL: " + url);
+            }
+
             HttpStatusCode statusCode = response.statusCode();
-            if (!statusCode.is2xxSuccessful()) {
+            if (statusCode.isSameCodeAs(HttpStatus.OK)) {
+                return;
+            } else if (!statusCode.is2xxSuccessful()) {
                 String fieldName = (field != null) ? field.getName() : "unknown";
                 throw new ValidationException(
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
@@ -646,22 +651,69 @@ public class ModelResponseValidator {
         }
     }
 
-    //TODO: also validate parent-child relationship (eg. Category-Subcategory) -> VocabularyValidationUtils()
     private void validateVocabulary(Object value, UiField field, Deque<String> path) {
-        if (value != null) {
-            String stringValue = value.toString().trim();
-            List<IdLabel> allowedValues = field.getTypeInfo().getValues();
+        String stringValue = value.toString().trim();
 
-            if (allowedValues == null || allowedValues.isEmpty()) {
-                // TODO: break it down to two cases predetermined values from model and getting them from elsewhere
-                // This is where the "elsewhere" is for NOT predetermined values
-                logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
+        if (!stringValue.isEmpty()) {
+            if (!(field.getTypeInfo().getProperties() instanceof VocabularyProperties vocabProps)) {
                 return;
             }
 
-            if (!stringValue.isEmpty() && !allowedValues.contains(stringValue)) {
+            URI vocabularyUrl = vocabProps.getUrl();
+
+            try {
+                ClientResponse response;
+
+                if (vocabularyUrl.isAbsolute()) {
+                    response = webClient.get()
+                            .uri(URI.create(vocabularyUrl + "/" + stringValue))
+                            .exchangeToMono(Mono::just)
+                            .block();
+                } else {
+                    String base = ServletUriComponentsBuilder
+                            .fromCurrentContextPath()
+                            .build()
+                            .toUriString();
+
+                    String basePath = URI.create(base).getPath();
+                    String vocabPath = vocabularyUrl.toString();
+
+                    // Find the longest overlap between end of basePath and start of vocabPath
+                    for (int i = Math.min(basePath.length(), vocabPath.length()); i > 0; i--) {
+                        if (basePath.endsWith(vocabPath.substring(0, i))) {
+                            vocabPath = vocabPath.substring(i); // strip the overlapping part from vocabPath
+                            break;
+                        }
+                    }
+
+                    String resolvedPath = vocabPath + "/" + stringValue;
+                    response = webClient.mutate().baseUrl(base).build().get()
+                            .uri(resolvedPath)
+                            .exchangeToMono(Mono::just)
+                            .block();
+                }
+
+                if (response == null) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary validation received no response for value '%s'", prettyPrintPath(path), stringValue)
+                    );
+                }
+
+                HttpStatusCode statusCode = response.statusCode();
+                if (statusCode.isSameCodeAs(HttpStatus.OK)) {
+                    return;
+                } else if (statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary value '%s' was not found (404)", prettyPrintPath(path), stringValue)
+                    );
+                } else {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary validation failed for value '%s' with status %d", prettyPrintPath(path), stringValue, statusCode.value())
+                    );
+                }
+            } catch (WebClientResponseException | WebClientRequestException e) {
                 throw new ValidationException(
-                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                        String.format("Field '%s' is invalid. Vocabulary service is unreachable for value '%s'", prettyPrintPath(path), stringValue)
                 );
             }
         }
