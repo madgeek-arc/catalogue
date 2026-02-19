@@ -263,6 +263,7 @@ public class ModelResponseValidator {
         }
     }
 
+    //TODO: test me that I work as intended
     /**
      * Checks if a specific field exists in {@link Object obj}.
      * In case {@link Object obj} is a {@link List}, the method checks if every list entry contains a value for this field.
@@ -273,27 +274,40 @@ public class ModelResponseValidator {
      * @throws ValidationException containing a detailed message for the missing field
      */
     private void checkMandatoryField(Object obj, UiField field, Deque<String> path) throws ValidationException {
-        if (obj == null) {
+        if (!isMeaningful(obj)) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-        } else if (obj instanceof List) {
-            if (((List<?>) obj).isEmpty()) {
-                throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-            } else if (((List<?>) obj).stream().allMatch(item -> item == null || "".equals(item))) {
-                throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
-            } else {
-                for (int i = 0; i < ((List<?>) obj).size(); i++) {
-                    // check each list entry for the required field
-                    if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
-                        LinkedHashMap<?, ?> entry = (LinkedHashMap<?, ?>) ((List<?>) obj).get(i);
-                        if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
-                            throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
-                        }
+        }
+        if (obj instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> entry) {
+                    Object value = entry.get(field.getName());
+                    if (!isMeaningful(value)) {
+                        throw new ValidationException(String.format("Mandatory field '%s' is missing.",
+                                prettyPrintPath(path)));
                     }
                 }
             }
-        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?, ?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?, ?>) obj).get(field.getName())))) {
-            throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         }
+        if (obj instanceof Map<?, ?> map) {
+            Object value = map.get(field.getName());
+            if (!isMeaningful(value)) {throw new ValidationException(String.format("Mandatory field '%s' is empty.",
+                    prettyPrintPath(path)));
+            }
+        }
+    }
+
+    private boolean isMeaningful(Object value) {
+        if (value == null) return false;
+        if (value instanceof String s) {
+            return !s.isBlank();
+        }
+        if (value instanceof List<?> list) {
+            return list.stream().anyMatch(this::isMeaningful);
+        }
+        if (value instanceof Map<?, ?> map) {
+            return map.values().stream().anyMatch(this::isMeaningful);
+        }
+        return true;
     }
 
     /**
