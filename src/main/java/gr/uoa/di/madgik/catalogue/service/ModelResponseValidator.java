@@ -47,6 +47,8 @@ import reactor.netty.http.client.HttpClient;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -679,8 +681,9 @@ public class ModelResponseValidator {
                 ClientResponse response;
 
                 if (vocabularyUrl.isAbsolute()) {
+                    String decodedValue = URLDecoder.decode(vocabularyUrl.toString(), StandardCharsets.UTF_8);
                     response = webClient.get()
-                            .uri(URI.create(vocabularyUrl + "/" + stringValue))
+                            .uri(URI.create(vocabularyUrl + "/" + decodedValue))
                             .exchangeToMono(Mono::just)
                             .block();
                 } else {
@@ -701,8 +704,9 @@ public class ModelResponseValidator {
                     }
 
                     String resolvedPath = vocabPath + "/" + stringValue;
+                    String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
                     response = webClient.mutate().baseUrl(base).build().get()
-                            .uri(resolvedPath)
+                            .uri(decodedValue)
                             .exchangeToMono(Mono::just)
                             .block();
                 }
