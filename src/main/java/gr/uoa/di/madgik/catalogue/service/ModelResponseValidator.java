@@ -32,6 +32,7 @@ import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -40,7 +41,6 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -67,6 +67,9 @@ public class ModelResponseValidator {
     private final ModelService modelService;
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public ModelResponseValidator(ModelService modelService,
                                   CatalogueLibProperties properties,
@@ -266,6 +269,7 @@ public class ModelResponseValidator {
     }
 
     //TODO: test me that I work as intended
+
     /**
      * Checks if a specific field exists in {@link Object obj}.
      * In case {@link Object obj} is a {@link List}, the method checks if every list entry contains a value for this field.
@@ -292,8 +296,9 @@ public class ModelResponseValidator {
         }
         if (obj instanceof Map<?, ?> map) {
             Object value = map.get(field.getName());
-            if (!isMeaningful(value)) {throw new ValidationException(String.format("Mandatory field '%s' is empty.",
-                    prettyPrintPath(path)));
+            if (!isMeaningful(value)) {
+                throw new ValidationException(String.format("Mandatory field '%s' is empty.",
+                        prettyPrintPath(path)));
             }
         }
     }
@@ -679,33 +684,26 @@ public class ModelResponseValidator {
 
             try {
                 ClientResponse response;
+                URI uriToCall;
 
                 if (vocabularyUrl.isAbsolute()) {
-                    String decodedValue = URLDecoder.decode(vocabularyUrl.toString(), StandardCharsets.UTF_8);
+                    String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
+                    uriToCall = URI.create(vocabularyUrl + "/" + decodedValue);
                     response = webClient.get()
-                            .uri(URI.create(vocabularyUrl + "/" + decodedValue))
+                            .uri(uriToCall)
                             .exchangeToMono(Mono::just)
                             .block();
                 } else {
-                    String base = ServletUriComponentsBuilder
-                            .fromCurrentContextPath()
-                            .build()
-                            .toUriString();
-
-                    String basePath = URI.create(base).getPath();
                     String vocabPath = vocabularyUrl.toString();
-
-                    // Find the longest overlap between end of basePath and start of vocabPath
-                    for (int i = Math.min(basePath.length(), vocabPath.length()); i > 0; i--) {
-                        if (basePath.endsWith(vocabPath.substring(0, i))) {
-                            vocabPath = vocabPath.substring(i); // strip the overlapping part from vocabPath
-                            break;
-                        }
+                    if (!baseUrl.endsWith("/") && !vocabPath.startsWith("/")) {
+                        vocabPath = "/" + vocabPath;
                     }
-
                     String resolvedPath = vocabPath + "/" + stringValue;
                     String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
-                    response = webClient.mutate().baseUrl(base).build().get()
+                    response = webClient.mutate()
+                            .baseUrl(baseUrl)
+                            .build()
+                            .get()
                             .uri(decodedValue)
                             .exchangeToMono(Mono::just)
                             .block();
