@@ -22,10 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.domain.Section;
-import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
-import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
+import gr.uoa.di.madgik.catalogue.ui.domain.*;
 import gr.uoa.di.madgik.catalogue.ui.domain.types.*;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
@@ -70,6 +67,8 @@ public class ModelResponseValidator {
 
     @Value("${catalogue-lib.validation.base-url}")
     private String baseUrl;
+
+    private String modelId;
 
     public ModelResponseValidator(ModelService modelService,
                                   CatalogueLibProperties properties,
@@ -130,6 +129,7 @@ public class ModelResponseValidator {
                 throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
             }
             Model model = models.getFirst();
+            modelId = model.getId();
             validateResourceAgainstModel(resource, model.getSections());
             return validateSections(resource, model.getSections());
         }
@@ -348,13 +348,13 @@ public class ModelResponseValidator {
             if (value == null) {
                 return false;
             }
-            return validateValueRecursive(value, field, path);
+            return validateValueRecursive(value, field, path, obj);
         }
         if (obj instanceof List<?> list) {
             boolean foundAny = false;
 
             for (Object item : list) {
-                boolean validated = validateValueRecursive(item, field, path);
+                boolean validated = validateValueRecursive(item, field, path, obj);
                 foundAny |= validated;
             }
             return foundAny;
@@ -362,19 +362,19 @@ public class ModelResponseValidator {
         return false;
     }
 
-    private boolean validateValueRecursive(Object value, UiField field, Deque<String> path) {
+    private boolean validateValueRecursive(Object value, UiField field, Deque<String> path, Object obj) {
         if (value instanceof Map<?, ?> || value instanceof List<?>) {
             return containsAndValidatesValue(value, field, path);
         }
 
         if (value != null && !value.toString().isBlank()) {
-            checkValidation(value, field, path); // must throw or record error
+            checkValidation(value, field, path, obj); // must throw or record error
             return true;
         }
         return false;
     }
 
-    private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
+    private void checkValidation(Object value, UiField field, Deque<String> path, Object obj) throws ValidationException {
         TypeInfo typeInfo = field.getTypeInfo();
         switch (typeInfo.getType()) {
             case email -> validatePattern(value, getPatternOrDefault(typeInfo, EMAIL_PATTERN), path);
@@ -386,7 +386,7 @@ public class ModelResponseValidator {
                 }
             }
             // TODO: Vocabulary is scheduled to change
-            case vocabulary -> validateVocabulary(value, field, path);
+            case vocabulary -> validateVocabulary(value, field, path, obj);
             case string, largeText -> validateText(value, typeInfo, path);
             case number -> validateNumber(value, typeInfo, path);
             case date -> validateDate(value, typeInfo, path);
@@ -672,7 +672,27 @@ public class ModelResponseValidator {
         }
     }
 
-    private void validateVocabulary(Object value, UiField field, Deque<String> path) {
+    private void validateVocabulary(Object value, UiField field, Deque<String> path, Object obj) {
+        String dependedOn = null;
+
+        // check for dependsOn field
+        if (field.getForm().getDependsOn() != null) {
+            FieldIdNameValue fieldIdNameValue = field.getForm().getDependsOn();
+            if (fieldIdNameValue != null) {
+                String dependsOnFieldName = field.getForm().getDependsOn().getName();
+                List<UiField> fields = modelService.getAllFields(modelService.get(modelId));
+                for (UiField uiField : fields) {
+                    //TODO: check fields for dependsOn too
+                    List<UiField> subfields = uiField.getSubFields();
+                    for (UiField subfield : subfields) {
+                        if (subfield.getName().equals(dependsOnFieldName)) {
+                            dependedOn = (String) ((LinkedHashMap) obj).get(dependsOnFieldName);
+                        }
+                    }
+                }
+            }
+        }
+
         String stringValue = value.toString().trim();
 
         if (!stringValue.isEmpty()) {
@@ -681,6 +701,14 @@ public class ModelResponseValidator {
             }
 
             URI vocabularyUrl = vocabProps.getUrl();
+            List<UrlParameter> urlParams = vocabProps.getUrlParams();
+            if (urlParams != null && !urlParams.isEmpty()) {
+                String placeholder = urlParams.getFirst().getPlaceholder(); //FIXME: getFirst is wrong
+                if (vocabularyUrl.toString().contains(placeholder) && dependedOn != null) {
+                    String updatedVocabularyUrl = vocabularyUrl.toString().replace(placeholder, dependedOn);
+                    vocabularyUrl = URI.create(updatedVocabularyUrl);
+                }
+            }
 
             try {
                 ClientResponse response;
