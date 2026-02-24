@@ -68,7 +68,7 @@ public class ModelResponseValidator {
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.base-url}")
+    @Value("${catalogue-lib.validation.base-url}")
     private String baseUrl;
 
     public ModelResponseValidator(ModelService modelService,

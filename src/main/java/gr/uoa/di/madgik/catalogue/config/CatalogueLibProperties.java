@@ -18,7 +18,10 @@ package gr.uoa.di.madgik.catalogue.config;
 
 import gr.uoa.di.madgik.catalogue.controller.UiController;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.Null;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.PlaceholderResolutionException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,13 @@ public class CatalogueLibProperties {
      * Jaxb properties.
      */
     private JaxbProperties jaxb = new JaxbProperties();
+
+    @PostConstruct
+    void validate() {
+        if (validation.isEnabled() && (validation.getBaseUrl() == null || validation.getBaseUrl().isBlank())) {
+            throw new RuntimeException("Could not resolve placeholder 'catalogue-lib.validation.base-url' in value \"${catalogue-lib.validation.base-url}\"");
+        }
+    }
 
     public CatalogueValidation getValidation() {
         return validation;
@@ -59,12 +69,26 @@ public class CatalogueLibProperties {
          */
         private boolean enabled = true;
 
+        /**
+         * The base url for validating vocabularies (if absolute path is not provided in the field).
+         */
+        @jakarta.validation.constraints.Null
+        private String baseUrl;
+
         public boolean isEnabled() {
             return enabled;
         }
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public void setBaseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
         }
     }
 
