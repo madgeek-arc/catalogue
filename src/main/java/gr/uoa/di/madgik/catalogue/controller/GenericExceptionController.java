@@ -33,6 +33,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.sql.SQLException;
 
@@ -74,6 +75,10 @@ public class GenericExceptionController {
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.CONFLICT;
         } else if (ex instanceof ResourceNotFoundException) {
+            logger.info(ex.getMessage());
+            logger.debug(ex.getMessage(), ex);
+            status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof NoResourceFoundException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.NOT_FOUND;
