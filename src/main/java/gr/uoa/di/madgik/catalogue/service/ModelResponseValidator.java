@@ -261,7 +261,7 @@ public class ModelResponseValidator {
      * @param empty  condition to remove field
      */
     void removeCompositeFieldIfEmpty(UiField field, Object object, boolean empty) {
-        if ("composite".equals(field.getTypeInfo().getType()) && empty) {
+        if (field.getTypeInfo().getType() == FieldType.composite && empty) {
             if (object instanceof LinkedHashMap) {
                 ((LinkedHashMap) object).put(field.getName(), null);
             }
