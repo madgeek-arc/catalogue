@@ -18,8 +18,11 @@ package gr.uoa.di.madgik.catalogue.controller;
 
 import gr.uoa.di.madgik.catalogue.service.GenericResourceService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
+import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.HighlightedResult;
 import gr.uoa.di.madgik.registry.domain.Paging;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -73,9 +76,19 @@ public class GenericItemController {
     @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
             content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
     public ResponseEntity<Paging<Object>> browseByResourceType(@Parameter(hidden = true)
-                                                              @RequestParam MultiValueMap<String, Object> params) {
+                                                               @RequestParam MultiValueMap<String, Object> params) {
         FacetFilter ff = FacetFilter.from(params);
         return new ResponseEntity<>(genericResourceService.getResults(ff), HttpStatus.OK);
+    }
+
+    @GetMapping("/highlighted")
+    @BrowseParameters
+    @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
+            content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
+    public ResponseEntity<Paging<HighlightedResult<Object>>> highlightedBrowseByResourceType(
+            @Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> params) {
+        FacetFilter ff = FacetFilter.from(params);
+        return new ResponseEntity<>(genericResourceService.getHighlightedResults(ff), HttpStatus.OK);
     }
 
     @GetMapping("{id}")
@@ -84,6 +97,8 @@ public class GenericItemController {
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
+    @Hidden
+    @Deprecated
     @GetMapping("search")
     public ResponseEntity<Object> getByField(@RequestParam("resourceType") String resourceType,
                                             @RequestParam(value = "field") String field,
