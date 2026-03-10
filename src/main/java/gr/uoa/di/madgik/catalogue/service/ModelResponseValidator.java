@@ -121,6 +121,7 @@ public class ModelResponseValidator {
 
             FacetFilter ff = new FacetFilter();
             ff.addFilter("resourceType", resourceTypeName);
+            //FIXME: how to resolve multiple models on the same resource type (eg. configuration_template_instance)
             List<Model> models = modelService.browse(ff).getResults();
             if (models == null || models.isEmpty()) {
                 logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
