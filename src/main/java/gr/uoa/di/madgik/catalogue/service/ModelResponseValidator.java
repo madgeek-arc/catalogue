@@ -695,6 +695,9 @@ public class ModelResponseValidator {
         }
 
         String stringValue = value.toString().trim();
+        if (isValidUrl(stringValue)) {
+            return;
+        }
 
         if (!stringValue.isEmpty()) {
             if (!(field.getTypeInfo().getProperties() instanceof VocabularyProperties vocabProps)) {
@@ -761,6 +764,15 @@ public class ModelResponseValidator {
                         String.format("Field '%s' is invalid. Vocabulary service is unreachable for value '%s'", prettyPrintPath(path), stringValue)
                 );
             }
+        }
+    }
+
+    public static boolean isValidUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 
