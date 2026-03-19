@@ -341,7 +341,7 @@ public class ModelResponseValidator {
             case url -> {
                 validatePattern(value, URL_PATTERN, path);
                 if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-                    validateUrl(field, (URL)value);
+                    validateUrl(field, URI.create((String) value));
                 }
             }
             case vocabulary -> validateVocabulary(value, field, path);
@@ -359,10 +359,10 @@ public class ModelResponseValidator {
         }
     }
 
-    public void validateUrl(UiField field, URL urlForValidation) {
+    public void validateUrl(UiField field, URI urlForValidation) {
         try {
             String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
-            URI uri = new URL(cleanedUrlString).toURI(); // validate and clean
+            URI uri = URI.create(cleanedUrlString); // validate and clean
 
             // add timeout
             ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
@@ -387,8 +387,7 @@ public class ModelResponseValidator {
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
                                 fieldName, urlForValidation, statusCode.value()));
             }
-        } catch (URISyntaxException | MalformedURLException | WebClientResponseException |
-                 WebClientRequestException e) {
+        } catch (WebClientResponseException | WebClientRequestException e) {
             throw new ValidationException("Failed to validate URL: " + urlForValidation);
         }
     }
