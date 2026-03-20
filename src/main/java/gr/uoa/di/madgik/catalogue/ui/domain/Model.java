@@ -18,6 +18,7 @@ package gr.uoa.di.madgik.catalogue.ui.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -36,6 +37,8 @@ public class Model {
     private String createdBy;
     private Date modificationDate;
     private String modifiedBy;
+    private Date submissionStartAt;
+    private Date submissionCloseAt;
     private List<Section> sections;
     private ModelConfiguration configuration;
     private boolean locked;
@@ -140,6 +143,22 @@ public class Model {
 
     public void setModifiedBy(String modifiedBy) {
         this.modifiedBy = modifiedBy;
+    }
+
+    public Date getSubmissionStartAt() {
+        return submissionStartAt;
+    }
+
+    public void setSubmissionStartAt(Date submissionStartAt) {
+        this.submissionStartAt = submissionStartAt;
+    }
+
+    public Date getSubmissionCloseAt() {
+        return submissionCloseAt;
+    }
+
+    public void setSubmissionCloseAt(Date submissionCloseAt) {
+        this.submissionCloseAt = submissionCloseAt;
     }
 
     public List<Section> getSections() {

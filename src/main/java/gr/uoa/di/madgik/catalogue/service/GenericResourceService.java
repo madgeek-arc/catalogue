@@ -18,6 +18,7 @@ package gr.uoa.di.madgik.catalogue.service;
 
 import gr.uoa.di.madgik.registry.domain.*;
 import gr.uoa.di.madgik.registry.service.SearchService;
+import gr.uoa.di.madgik.registry.service.ServiceException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -42,6 +43,17 @@ public interface GenericResourceService {
      * @return
      */
     <T> T get(String resourceTypeName, SearchService.KeyValue... keyValues);
+
+    /**
+     * Recommends resources that are similar to the resource identified by the given {@code id},
+     * further constrained by the provided {@code filter}.
+     *
+     * @param filter the additional filter criteria to apply
+     * @param id the id of the reference resource for similarity matching
+     * @param <T>
+     * @return a list of recommended resources
+     */
+    <T> List<T> recommend(FacetFilter filter, String id);
 
     /**
      * @param filter

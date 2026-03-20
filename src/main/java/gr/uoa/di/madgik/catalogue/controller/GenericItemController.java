@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +34,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "items", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -48,7 +48,7 @@ public class GenericItemController {
 
     @PostMapping()
     public ResponseEntity<Object> create(@RequestParam("resourceType") String resourceType,
-                                        @RequestBody Object resource) {
+                                         @RequestBody Object resource) {
         Object createdResource;
         createdResource = genericResourceService.add(resourceType, resource);
         return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
@@ -56,8 +56,8 @@ public class GenericItemController {
 
     @PutMapping("{id}")
     public ResponseEntity<Object> update(@PathVariable("id") String id,
-                                        @RequestParam("resourceType") String resourceType,
-                                        @RequestBody Object resource)
+                                         @RequestParam("resourceType") String resourceType,
+                                         @RequestBody Object resource)
             throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Object createdResource;
         createdResource = genericResourceService.update(resourceType, id, resource);
@@ -66,7 +66,7 @@ public class GenericItemController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") String id,
-                                        @RequestParam("resourceType") String resourceType) {
+                                         @RequestParam("resourceType") String resourceType) {
         Object deleted = genericResourceService.delete(resourceType, id);
         return new ResponseEntity<>(deleted, HttpStatus.OK);
     }
@@ -97,12 +97,23 @@ public class GenericItemController {
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
+    @GetMapping("{id}/recommendations")
+    @BrowseParameters
+    @Parameter(in = ParameterIn.QUERY, name = "resourceType", required = true, description = "Resource Type to search",
+            content = @Content(schema = @Schema(type = "string", defaultValue = "resourceTypes")))
+    public ResponseEntity<List<?>> recommend(@PathVariable("id") String id,
+                                             @Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> params) {
+        FacetFilter ff = FacetFilter.from(params);
+        List<?> ret = genericResourceService.recommend(ff, id);
+        return new ResponseEntity<>(ret, HttpStatus.OK);
+    }
+
     @Hidden
     @Deprecated
     @GetMapping("search")
     public ResponseEntity<Object> getByField(@RequestParam("resourceType") String resourceType,
-                                            @RequestParam(value = "field") String field,
-                                            @RequestParam(value = "value") String value) {
+                                             @RequestParam(value = "field") String field,
+                                             @RequestParam(value = "value") String value) {
         Object ret = genericResourceService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
