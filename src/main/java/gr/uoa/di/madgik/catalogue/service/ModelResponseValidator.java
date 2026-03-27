@@ -22,16 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.domain.Section;
-import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
-import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
-import gr.uoa.di.madgik.catalogue.ui.domain.types.UrlProperties;
+import gr.uoa.di.madgik.catalogue.ui.domain.*;
+import gr.uoa.di.madgik.catalogue.ui.domain.types.*;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -43,13 +41,20 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
-import java.net.MalformedURLException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @Service
 public class ModelResponseValidator {
@@ -59,6 +64,11 @@ public class ModelResponseValidator {
     private final ModelService modelService;
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
+
+    @Value("${catalogue-lib.validation.base-url}")
+    private String baseUrl;
+
+    private String modelId;
 
     public ModelResponseValidator(ModelService modelService,
                                   CatalogueLibProperties properties,
@@ -83,6 +93,15 @@ public class ModelResponseValidator {
             "^https?://[^\\s/$.?#][^\\s]*$"
     );
 
+    private static final String[] DATE_FORMATS = {
+            "yyyy-MM-dd",
+            "dd/MM/yyyy",
+//          "MM/dd/yyyy",   // American format - ambiguous with dd/MM/yyyy for inputs like "01/03/1995"
+            "dd-MM-yyyy",
+            "yyyy/MM/dd",
+            "dd.MM.yyyy",
+    };
+
     /**
      * Validates a {@link T resource} based on its {@link Model}.
      *
@@ -102,6 +121,7 @@ public class ModelResponseValidator {
 
             FacetFilter ff = new FacetFilter();
             ff.addFilter("resourceType", resourceTypeName);
+            //FIXME: how to resolve multiple models on the same resource type (eg. configuration_template_instance)
             List<Model> models = modelService.browse(ff).getResults();
             if (models == null || models.isEmpty()) {
                 logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
@@ -110,6 +130,7 @@ public class ModelResponseValidator {
                 throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
             }
             Model model = models.getFirst();
+            modelId = model.getId();
             validateResourceAgainstModel(resource, model.getSections());
             return validateSections(resource, model.getSections());
         }
@@ -248,6 +269,8 @@ public class ModelResponseValidator {
         }
     }
 
+    //TODO: test me that I work as intended
+
     /**
      * Checks if a specific field exists in {@link Object obj}.
      * In case {@link Object obj} is a {@link List}, the method checks if every list entry contains a value for this field.
@@ -258,27 +281,41 @@ public class ModelResponseValidator {
      * @throws ValidationException containing a detailed message for the missing field
      */
     private void checkMandatoryField(Object obj, UiField field, Deque<String> path) throws ValidationException {
-        if (obj == null) {
+        if (!isMeaningful(obj)) {
             throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-        } else if (obj instanceof List) {
-            if (((List<?>) obj).isEmpty()) {
-                throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
-            } else if (((List<?>) obj).stream().allMatch(item -> item == null || "".equals(item))) {
-                throw new ValidationException(String.format("Mandatory field '%s' has only null entries.", prettyPrintPath(path)));
-            } else {
-                for (int i = 0; i < ((List<?>) obj).size(); i++) {
-                    // check each list entry for the required field
-                    if (((List<?>) obj).get(i) instanceof LinkedHashMap) {
-                        LinkedHashMap<?, ?> entry = (LinkedHashMap<?, ?>) ((List<?>) obj).get(i);
-                        if (entry.get(field.getName()) == null || "".equals(entry.get(field.getName()))) {
-                            throw new ValidationException(String.format("Mandatory field '%s' is missing.", prettyPrintPath(path)));
-                        }
+        }
+        if (obj instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> entry) {
+                    Object value = entry.get(field.getName());
+                    if (!isMeaningful(value)) {
+                        throw new ValidationException(String.format("Mandatory field '%s' is missing.",
+                                prettyPrintPath(path)));
                     }
                 }
             }
-        } else if (obj instanceof LinkedHashMap && (((LinkedHashMap<?, ?>) obj).get(field.getName()) == null || "".equals(((LinkedHashMap<?, ?>) obj).get(field.getName())))) {
-            throw new ValidationException(String.format("Mandatory field '%s' is empty.", prettyPrintPath(path)));
         }
+        if (obj instanceof Map<?, ?> map) {
+            Object value = map.get(field.getName());
+            if (!isMeaningful(value)) {
+                throw new ValidationException(String.format("Mandatory field '%s' is empty.",
+                        prettyPrintPath(path)));
+            }
+        }
+    }
+
+    private boolean isMeaningful(Object value) {
+        if (value == null) return false;
+        if (value instanceof String s) {
+            return !s.isBlank();
+        }
+        if (value instanceof List<?> list) {
+            return list.stream().anyMatch(this::isMeaningful);
+        }
+        if (value instanceof Map<?, ?> map) {
+            return map.values().stream().anyMatch(this::isMeaningful);
+        }
+        return true;
     }
 
     /**
@@ -307,109 +344,435 @@ public class ModelResponseValidator {
      * @return {@link Boolean}
      */
     private boolean containsAndValidatesValue(Object obj, UiField field, Deque<String> path) {
-        if (obj instanceof LinkedHashMap<?, ?> map) {
-            for (Object key : map.keySet()) {
-                if (key.equals(field.getName())) {
-                    Object value = map.get(key);
-                    if (value instanceof LinkedHashMap || value instanceof List) {
-                        if (containsAndValidatesValue(value, field, path)) {
-                            return true;
-                        }
-                    } else if (value != null && !value.equals("")) {
-                        checkValidation(value, field, path);
-                        return true;
-                    }
-                    break;
-                }
+        if (obj instanceof Map<?, ?> map) {
+            Object value = map.get(field.getName());
+            if (value == null) {
+                return false;
             }
-        } else if (obj instanceof
-                List<?> list) {
+            return validateValueRecursive(value, field, path, obj);
+        }
+        if (obj instanceof List<?> list) {
+            boolean foundAny = false;
+
             for (Object item : list) {
-                if (containsAndValidatesValue(item, field, path)) {
-                    return true;
-                }
+                boolean validated = validateValueRecursive(item, field, path, obj);
+                foundAny |= validated;
             }
+            return foundAny;
         }
         return false;
     }
 
-    private void checkValidation(Object value, UiField field, Deque<String> path) throws ValidationException {
+    private boolean validateValueRecursive(Object value, UiField field, Deque<String> path, Object obj) {
+        if (value instanceof Map<?, ?> || value instanceof List<?>) {
+            return containsAndValidatesValue(value, field, path);
+        }
+
+        if (value != null && !value.toString().isBlank()) {
+            checkValidation(value, field, path, obj); // must throw or record error
+            return true;
+        }
+        return false;
+    }
+
+    private void checkValidation(Object value, UiField field, Deque<String> path, Object obj) throws ValidationException {
         TypeInfo typeInfo = field.getTypeInfo();
         switch (typeInfo.getType()) {
-            case email -> validatePattern(value, EMAIL_PATTERN, path); // TODO: use custom pattern (if provided)
-            case phone -> validatePattern(value, PHONE_PATTERN, path); // TODO: use custom pattern (if provided)
+            case email -> validatePattern(value, getPatternOrDefault(typeInfo, EMAIL_PATTERN), path);
+            case phone -> validatePattern(value, getPatternOrDefault(typeInfo, PHONE_PATTERN), path);
             case url -> {
                 validatePattern(value, URL_PATTERN, path);
                 if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-                    validateUrl(field, URI.create((String) value));
+                    validateUrl(field, value.toString().trim());
                 }
             }
-            case vocabulary -> validateVocabulary(value, field, path);
+            // TODO: Vocabulary is scheduled to change
+            case vocabulary -> validateVocabulary(value, field, path, obj);
+            case string, largeText -> validateText(value, typeInfo, path);
+            case number -> validateNumber(value, typeInfo, path);
+            case date -> validateDate(value, typeInfo, path);
+            // Comment: When the field is not mandatory, it'll never reach here and the possible null default value will be sent normally, which is wrong
+            case bool, checkbox -> validateBoolean(value, path);
+            case radio, select, scale -> validateSelection(value, typeInfo, path);
         }
     }
 
-    private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
-        if (value != null) {
-            String stringValue = value.toString().trim();
-            if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+    private Pattern getPatternOrDefault(TypeInfo typeInfo, Pattern defaultPattern) {
+        if (typeInfo.getProperties() instanceof PatternProperties patternProps && patternProps.getPattern() != null) {
+            try {
+                return Pattern.compile(patternProps.getPattern());
+            } catch (PatternSyntaxException e) {
+                logger.warn("Invalid expression: \"{}\", default value was used", patternProps.getPattern());
+                return defaultPattern;
+            }
+        }
+        return defaultPattern;
+    }
+
+    private void validateText(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        if (typeInfo.getProperties() instanceof TextProperties textProps && value instanceof String str) {
+            Integer minLength = textProps.getMinLength();
+            Integer maxLength = textProps.getMaxLength();
+
+            if (minLength == null && maxLength == null) {
+                return;
+            }
+
+            int length = str.length();
+
+            if (minLength != null && maxLength != null) {
+                if (length < minLength || length > maxLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d is outside valid range [%d, %d]", prettyPrintPath(path), length, minLength, maxLength)
+                    );
+                }
+            } else {
+                if (minLength != null && length < minLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d is less than minimum %d", prettyPrintPath(path), length, minLength)
+                    );
+                }
+                if (maxLength != null && length > maxLength) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Text length %d exceeds maximum %d", prettyPrintPath(path), length, maxLength)
+                    );
+                }
+            }
+        }
+    }
+
+    private void validateNumber(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        if (typeInfo.getProperties() instanceof NumberProperties numProps) {
+            Number num = null;
+
+            if (value instanceof Number) {
+                num = (Number) value;
+            } else if (value instanceof String str) {
+                try {
+                    num = Double.parseDouble(str);
+                } catch (NumberFormatException e) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Value '%s' is not a valid number", prettyPrintPath(path), str)
+                    );
+                }
+            } else {
+                return;
+            }
+
+            Number min = numProps.getMin();
+            Number max = numProps.getMax();
+            Integer decimals = numProps.getDecimals();
+            String pattern = numProps.getPattern();
+
+            if (min != null || max != null) {
+                double numValue = num.doubleValue();
+
+                if (min != null && max != null) {
+                    if (numValue < min.doubleValue() || numValue > max.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s is outside valid range [%s, %s]", prettyPrintPath(path), numValue, min, max)
+                        );
+                    }
+                } else {
+                    if (min != null && numValue < min.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s is less than minimum %s", prettyPrintPath(path), numValue, min)
+                        );
+                    }
+
+                    if (max != null && numValue > max.doubleValue()) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. Value %s exceeds maximum %s", prettyPrintPath(path), numValue, max)
+                        );
+                    }
+                }
+            }
+
+            if (decimals != null) {
+                BigDecimal bd = new BigDecimal(num.toString());
+                int scale = Math.max(0, bd.stripTrailingZeros().scale());
+
+                if (scale > decimals) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Number has %d decimal places, maximum allowed is %d", prettyPrintPath(path), scale, decimals)
+                    );
+                }
+            }
+
+            if (pattern != null) {
+                String numStr = getNumericString(num);
+                if (!Pattern.compile(pattern).matcher(numStr).matches()) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Number '%s' does not match pattern '%s'", prettyPrintPath(path), numStr, pattern)
+                    );
+                }
+            }
+        }
+    }
+
+    private String getNumericString(Number num) {
+        if (num instanceof Double || num instanceof Float) {
+            BigDecimal bd = new BigDecimal(num.toString());
+            return bd.stripTrailingZeros().toPlainString();
+        }
+        return num.toString();
+    }
+
+    private void validateDate(Object value, TypeInfo typeInfo, Deque<String> path) {
+        if (!(typeInfo.getProperties() instanceof DateProperties dateProps)) {
+            return;
+        }
+
+        if (dateProps.isFormatToString()) {
+            if (!(value instanceof String dateStr)) {
                 throw new ValidationException(
-                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                        String.format("Field '%s' is invalid. Expected String but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
+                );
+            }
+
+            if (isInvalidDate(dateStr)) {
+                throw new ValidationException(
+                        String.format("Field '%s' is invalid. String '%s' cannot be parsed as a valid date", prettyPrintPath(path), dateStr)
+                );
+            }
+
+        } else {
+            switch (value) {
+                case Long l -> { /* Any long is a valid epoch millisecond */ }
+                case Date d -> { /* Already a valid Date */ }
+                case String str -> {
+                    if (isInvalidDateTime(str)) {
+                        throw new ValidationException(
+                                String.format("Field '%s' is invalid. String '%s' cannot be parsed as a valid date", prettyPrintPath(path), str)
+                        );
+                    }
+                }
+                default -> throw new ValidationException(
+                        String.format("Field '%s' is invalid. Expected Date, Long, or String but got %s", prettyPrintPath(path), value.getClass().getSimpleName())
                 );
             }
         }
     }
 
-    public void validateUrl(UiField field, URI urlForValidation) {
-        try {
-            String cleanedUrlString = urlForValidation.toString().replaceAll("\\s", "%20");
-            URI uri = URI.create(cleanedUrlString); // validate and clean
+    private boolean isInvalidDate(String dateStr) {
+        for (String format : DATE_FORMATS) {
+            try {
+                DateTimeFormatter.ofPattern(format).parse(dateStr);
+                return false;
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return true;
+    }
 
-            // add timeout
-            ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+    private boolean isInvalidDateTime(String dateStr) {
+        try {
+            OffsetDateTime.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            LocalDateTime.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            LocalDate.parse(dateStr);
+            return false;
+        } catch (DateTimeParseException ignored) {
+        }
+        for (String format : DATE_FORMATS) {
+            try {
+                DateTimeFormatter.ofPattern(format).parse(dateStr);
+                return false;
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return true;
+    }
+
+    private void validateBoolean(Object value, Deque<String> path) throws ValidationException {
+        if (!(value instanceof Boolean)) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid. Value should be true or false", prettyPrintPath(path))
+            );
+        }
+    }
+
+    private void validateSelection(Object value, TypeInfo typeInfo, Deque<String> path) throws ValidationException {
+        List<IdLabel> valuesList = typeInfo.getValues();
+
+        if (valuesList == null || valuesList.isEmpty()) {
+            throw new ValidationException(
+                    String.format("Field '%s' has invalid configuration: no selection values defined", prettyPrintPath(path))
+            );
+        }
+
+        List<String> validIds = new ArrayList<>();
+        for (IdLabel item : valuesList) {
+            String id = item.id();
+            if (id != null) {
+                validIds.add(id);
+            }
+        }
+
+        String valueStr = value.toString();
+        if (!validIds.contains(valueStr)) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid. Value '%s' is not in allowed values: %s", prettyPrintPath(path), valueStr, validIds)
+            );
+        }
+    }
+
+    private void validatePattern(Object value, Pattern pattern, Deque<String> path) {
+        String stringValue = value.toString().trim();
+        if (!stringValue.isEmpty() && !pattern.matcher(stringValue).matches()) {
+            throw new ValidationException(
+                    String.format("Field '%s' is invalid.", prettyPrintPath(path))
+            );
+        }
+    }
+
+
+    // Class-level field - created once, reused everywhere
+    private final WebClient webClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(
                     HttpClient.create()
                             .followRedirect(true)
                             .responseTimeout(Duration.ofSeconds(5))
                             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-            );
-            WebClient webClient = WebClient.builder()
-                    .clientConnector(connector)
-                    .build();
+            ))
+            .build();
+
+    public void validateUrl(UiField field, String url) {
+        try {
+            URI uri = new URI(url); // parse and validate the URL string, throws URISyntaxException if malformed
 
             ClientResponse response = webClient.get()
                     .uri(uri)
                     .exchangeToMono(Mono::just)
                     .block();
 
+            if (response == null) {
+                throw new ValidationException("Failed to validate URL: " + url);
+            }
+
             HttpStatusCode statusCode = response.statusCode();
-            if (!statusCode.is2xxSuccessful()) {
+            if (statusCode.isSameCodeAs(HttpStatus.OK)) {
+                return;
+            } else if (!statusCode.is2xxSuccessful()) {
                 String fieldName = (field != null) ? field.getName() : "unknown";
                 throw new ValidationException(
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
-                                fieldName, urlForValidation, statusCode.value()));
+                                fieldName, uri, statusCode.value()));
             }
         } catch (WebClientResponseException | WebClientRequestException e) {
-            throw new ValidationException("Failed to validate URL: " + urlForValidation);
+            throw new ValidationException("Failed to validate URL: " + url);
+        } catch (URISyntaxException e) {
+            throw new ValidationException("Failed to parse URI: " + url);
         }
     }
 
-    //TODO: also validate parent-child relationship (eg. Category-Subcategory) -> VocabularyValidationUtils()
-    private void validateVocabulary(Object value, UiField field, Deque<String> path) {
-        if (value != null) {
-            String stringValue = value.toString().trim();
-            List<IdLabel> allowedValues = field.getTypeInfo().getValues();
+    private void validateVocabulary(Object value, UiField field, Deque<String> path, Object obj) {
+        String dependedOn = null;
 
-            if (allowedValues == null || allowedValues.isEmpty()) {
-                // TODO: break it down to two cases predetermined values from model and getting them from elsewhere
-                // This is where the "elsewhere" is for NOT predetermined values
-                logger.warn("Vocabulary values empty for field '{}'", prettyPrintPath(path));
+        // check for dependsOn field
+        if (field.getForm().getDependsOn() != null) {
+            FieldIdNameValue fieldIdNameValue = field.getForm().getDependsOn();
+            if (fieldIdNameValue != null) {
+                String dependsOnFieldName = field.getForm().getDependsOn().getName();
+                List<UiField> fields = modelService.getAllFields(modelService.get(modelId));
+                for (UiField uiField : fields) {
+                    //TODO: check fields for dependsOn too
+                    List<UiField> subfields = uiField.getSubFields();
+                    for (UiField subfield : subfields) {
+                        if (subfield.getName().equals(dependsOnFieldName)) {
+                            dependedOn = (String) ((LinkedHashMap) obj).get(dependsOnFieldName);
+                        }
+                    }
+                }
+            }
+        }
+
+        String stringValue = value.toString().trim();
+        if (isValidUrl(stringValue)) {
+            return;
+        }
+
+        if (!stringValue.isEmpty()) {
+            if (!(field.getTypeInfo().getProperties() instanceof VocabularyProperties vocabProps)) {
                 return;
             }
 
-            if (!stringValue.isEmpty() && !allowedValues.contains(stringValue)) {
+            URI vocabularyUrl = vocabProps.getUrl();
+            List<UrlParameter> urlParams = vocabProps.getUrlParams();
+            if (urlParams != null && !urlParams.isEmpty()) {
+                String placeholder = urlParams.getFirst().getPlaceholder(); //FIXME: getFirst is wrong
+                if (vocabularyUrl.toString().contains(placeholder) && dependedOn != null) {
+                    String updatedVocabularyUrl = vocabularyUrl.toString().replace(placeholder, dependedOn);
+                    vocabularyUrl = URI.create(updatedVocabularyUrl);
+                }
+            }
+
+            try {
+                ClientResponse response;
+                URI uriToCall;
+
+                if (vocabularyUrl.isAbsolute()) {
+                    String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
+                    uriToCall = URI.create(vocabularyUrl + "/" + decodedValue);
+                    response = webClient.get()
+                            .uri(uriToCall)
+                            .exchangeToMono(Mono::just)
+                            .block();
+                } else {
+                    String vocabPath = vocabularyUrl.toString();
+                    if (!baseUrl.endsWith("/") && !vocabPath.startsWith("/")) {
+                        vocabPath = "/" + vocabPath;
+                    }
+                    String resolvedPath = vocabPath + "/" + stringValue;
+                    String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
+                    response = webClient.mutate()
+                            .baseUrl(baseUrl)
+                            .build()
+                            .get()
+                            .uri(decodedValue)
+                            .exchangeToMono(Mono::just)
+                            .block();
+                }
+
+                if (response == null) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary validation received no response for value '%s'", prettyPrintPath(path), stringValue)
+                    );
+                }
+
+                HttpStatusCode statusCode = response.statusCode();
+                if (statusCode.isSameCodeAs(HttpStatus.OK)) {
+                    return;
+                } else if (statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary value '%s' was not found (404)", prettyPrintPath(path), stringValue)
+                    );
+                } else {
+                    throw new ValidationException(
+                            String.format("Field '%s' is invalid. Vocabulary validation failed for value '%s' with status %d", prettyPrintPath(path), stringValue, statusCode.value())
+                    );
+                }
+            } catch (WebClientResponseException | WebClientRequestException e) {
                 throw new ValidationException(
-                        String.format("Field '%s' is invalid.", prettyPrintPath(path))
+                        String.format("Field '%s' is invalid. Vocabulary service is unreachable for value '%s'", prettyPrintPath(path), stringValue)
                 );
             }
+        }
+    }
+
+    public static boolean isValidUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 
