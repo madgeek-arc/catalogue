@@ -9,7 +9,7 @@
     </parent>
     <groupId>gr.uoa.di.madgik</groupId>
     <artifactId>catalogue</artifactId>
-    <version>9.1.0-SNAPSHOT</version>
+    <version>10.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>catalogue</name>
     <description>Catalogue project</description>
@@ -24,10 +24,22 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>2.8.16</springdoc.version>
-        <registry-core.version>4.2.0-SNAPSHOT</registry-core.version>
+        <registry.version>5.0.0-SNAPSHOT</registry.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>gr.uoa.di.madgik</groupId>
+                <artifactId>registry-bom</artifactId>
+                <version>${registry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -91,12 +103,10 @@
         <dependency>
             <groupId>gr.uoa.di.madgik</groupId>
             <artifactId>registry-core-rest</artifactId>
-            <version>${registry-core.version}</version>
         </dependency>
         <dependency>
             <groupId>gr.uoa.di.madgik</groupId>
             <artifactId>registry-core-helper</artifactId>
-            <version>${registry-core.version}</version>
         </dependency>
 
         <dependency>

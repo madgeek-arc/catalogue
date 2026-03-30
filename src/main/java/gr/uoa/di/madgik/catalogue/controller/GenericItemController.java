@@ -16,9 +16,8 @@
 
 package gr.uoa.di.madgik.catalogue.controller;
 
-import gr.uoa.di.madgik.catalogue.service.GenericResourceService;
+import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
-import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.HighlightedResult;
 import gr.uoa.di.madgik.registry.domain.Paging;
@@ -60,7 +59,7 @@ public class GenericItemController {
                                          @RequestBody Object resource)
             throws NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
         Object createdResource;
-        createdResource = genericResourceService.update(resourceType, id, resource);
+        createdResource = genericResourceService.update(resourceType, resource);
         return new ResponseEntity<>(createdResource, HttpStatus.OK);
     }
 
@@ -105,16 +104,6 @@ public class GenericItemController {
                                              @Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> params) {
         FacetFilter ff = FacetFilter.from(params);
         List<?> ret = genericResourceService.recommend(ff, id);
-        return new ResponseEntity<>(ret, HttpStatus.OK);
-    }
-
-    @Hidden
-    @Deprecated
-    @GetMapping("search")
-    public ResponseEntity<Object> getByField(@RequestParam("resourceType") String resourceType,
-                                             @RequestParam(value = "field") String field,
-                                             @RequestParam(value = "value") String value) {
-        Object ret = genericResourceService.get(resourceType, field, value, true);
         return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 }

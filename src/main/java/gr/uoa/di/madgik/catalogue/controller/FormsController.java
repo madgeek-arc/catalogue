@@ -19,10 +19,9 @@ package gr.uoa.di.madgik.catalogue.controller;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
-import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Paging;
 import io.swagger.v3.oas.annotations.Parameter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +59,7 @@ public class FormsController {
 
     @BrowseParameters
     @GetMapping("models")
-    public ResponseEntity<Browsing<Model>> getModels(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
+    public ResponseEntity<Paging<Model>> getModels(@Parameter(hidden = true) @RequestParam MultiValueMap<String, Object> allRequestParams) {
         String resourceType = allRequestParams.get("resourceType") != null ? (String) allRequestParams.remove("resourceType").get(0) : null;
         FacetFilter ff = FacetFilter.from(allRequestParams);
         if (StringUtils.hasText(resourceType)) {

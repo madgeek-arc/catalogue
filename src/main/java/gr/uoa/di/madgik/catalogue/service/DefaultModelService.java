@@ -20,15 +20,16 @@ import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
-import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
-import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
-import gr.uoa.di.madgik.registry.domain.Browsing;
+import gr.uoa.di.madgik.registry.domain.Paging;
+import gr.uoa.di.madgik.registry.utils.LoggingUtils;
+import gr.uoa.di.madgik.registry.utils.ReflectUtils;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.Resource;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.registry.service.ParserService;
 import gr.uoa.di.madgik.registry.service.ResourceService;
 import gr.uoa.di.madgik.registry.service.ResourceTypeService;
@@ -78,11 +79,9 @@ public class DefaultModelService implements ModelService {
                 ReflectUtils.setId(obj.getClass(), obj, id);
             }
             existing = genericResourceService.get(resourceTypeName, id);
-        } catch (NoSuchFieldException e) {
-            logger.error(e.getMessage(), e);
         } catch (ResourceNotFoundException e) {
             // skip
-        } catch (InvocationTargetException | NoSuchMethodException e) {
+        } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
         if (existing != null) {
@@ -109,9 +108,7 @@ public class DefaultModelService implements ModelService {
             }
             existing = genericResourceService.searchResource(resourceTypeName, id, true);
             existing.setPayload(parserPool.serialize(obj, ParserService.ParserServiceTypes.JSON));
-        } catch (NoSuchFieldException e) {
-            logger.error(e.getMessage(), e);
-        } catch (InvocationTargetException | NoSuchMethodException e) {
+        } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
 
@@ -165,7 +162,7 @@ public class DefaultModelService implements ModelService {
     }
 
     @Override
-    public Browsing<Model> browse(FacetFilter filter) {
+    public Paging<Model> browse(FacetFilter filter) {
         filter.setResourceType(MODEL_RESOURCE_TYPE_NAME);
         return genericResourceService.getResults(filter);
     }

@@ -16,7 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.config;
 
-import gr.uoa.di.madgik.catalogue.service.GenericResourceService;
+import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.catalogue.service.DefaultModelService;
@@ -47,27 +47,18 @@ public class CatalogueConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(CatalogueConfiguration.class);
 
     /**
-     * Creates the {@link JAXBContext} bean using the classes found in all user-defined packages.
-     * See {@link CatalogueLibProperties.JaxbProperties#getAllPackages()}
-     */
-    @Bean
-    JAXBContext jaxbContext(CatalogueLibProperties properties) throws JAXBException {
-        logger.info("Creating JAXBContext for classes in the following packages: \n{}",
-                String.join("\n", properties.getJaxb().getAllPackages())
-        );
-        Class<?>[] classes = ClasspathUtils.classesToArray(getClassesWithoutInterfaces(properties.getJaxb().getAllPackages()));
-        return JAXBContext.newInstance(classes);
-    }
-
-    /**
+     * Creates the {@link ModelService} bean backed by {@link DefaultModelService}.
      *
-     * @param genericResourceService
-     * @param searchService
-     * @param resourceService
-     * @param resourceTypeService
-     * @param parserService
-     * @param idGenerator
-     * @return
+     * <p>{@code ModelService} manages {@link gr.uoa.di.madgik.catalogue.ui.domain.Model} resources —
+     * the UI field definitions that describe how catalogue resources are structured and displayed.
+     *
+     * @param genericResourceService type-safe CRUD over registry resources
+     * @param searchService          search backend used for browsing models
+     * @param resourceService        low-level resource persistence
+     * @param resourceTypeService    resource type metadata and index field resolution
+     * @param parserService          JSON/XML serialization of model payloads
+     * @param idGenerator            generates unique string IDs for new model resources
+     * @return the configured {@link ModelService} instance
      */
     @Bean
     ModelService modelService(GenericResourceService genericResourceService,

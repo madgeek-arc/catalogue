@@ -18,8 +18,10 @@ package gr.uoa.di.madgik.catalogue.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
+import gr.uoa.di.madgik.registry.service.ResourceValidator;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.catalogue.ui.domain.*;
@@ -30,6 +32,7 @@ import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -57,7 +60,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 @Service
-public class ModelResponseValidator {
+public class ModelResponseValidator implements ResourceValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(ModelResponseValidator.class);
 
@@ -70,7 +73,7 @@ public class ModelResponseValidator {
 
     private String modelId;
 
-    public ModelResponseValidator(ModelService modelService,
+    public ModelResponseValidator(@Lazy ModelService modelService,
                                   CatalogueLibProperties properties,
                                   ObjectMapper objectMapper) {
         this.modelService = modelService;
@@ -146,9 +149,7 @@ public class ModelResponseValidator {
      * @param <T>      the type of the object being validated
      */
     private <T> void validateResourceAgainstModel(T obj, List<Section> sections) {
-        objectMapper.convertValue(resourceToModelValidation(
-                objectMapper.convertValue(obj, LinkedHashMap.class), sections), new TypeReference<T>() {
-        });
+        resourceToModelValidation(objectMapper.convertValue(obj, LinkedHashMap.class), sections);
     }
 
     /**
@@ -160,9 +161,10 @@ public class ModelResponseValidator {
      * @return {@link T}
      */
     private <T> T validateSections(T obj, List<Section> sections) {
-        return objectMapper.convertValue(validateSections(
-                objectMapper.convertValue(obj, LinkedHashMap.class), sections, null), new TypeReference<T>() {
-        });
+        return objectMapper.convertValue(
+                validateSections(objectMapper.convertValue(obj, LinkedHashMap.class), sections, null),
+                new TypeReference<T>() {}
+        );
     }
 
     /**

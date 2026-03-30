@@ -16,8 +16,8 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
+import gr.uoa.di.madgik.registry.domain.Paging;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
@@ -37,7 +37,7 @@ public interface ModelService {
 
     Model get(String id);
 
-    Browsing<Model> browse(FacetFilter filter);
+    Paging<Model> browse(FacetFilter filter);
 
     List<UiField> getAllFields(Model model);
 
