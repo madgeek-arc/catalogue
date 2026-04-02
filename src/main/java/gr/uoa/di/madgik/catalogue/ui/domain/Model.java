@@ -19,7 +19,7 @@ package gr.uoa.di.madgik.catalogue.ui.domain;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(implementation = Object.class)
@@ -33,12 +33,12 @@ public class Model {
     private String subType;
     private Series series;
     private String resourceType;
-    private Date creationDate;
+    private Instant creationDate;
     private String createdBy;
-    private Date modificationDate;
+    private Instant modificationDate;
     private String modifiedBy;
-    private Date submissionStartAt;
-    private Date submissionCloseAt;
+    private Instant submissionStartAt;
+    private Instant submissionCloseAt;
     private List<Section> sections;
     private ModelConfiguration configuration;
     private boolean locked;
@@ -113,11 +113,11 @@ public class Model {
         this.resourceType = resourceType;
     }
 
-    public Date getCreationDate() {
+    public Instant getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(Instant creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -129,11 +129,11 @@ public class Model {
         this.createdBy = createdBy;
     }
 
-    public Date getModificationDate() {
+    public Instant getModificationDate() {
         return modificationDate;
     }
 
-    public void setModificationDate(Date modificationDate) {
+    public void setModificationDate(Instant modificationDate) {
         this.modificationDate = modificationDate;
     }
 
@@ -145,19 +145,19 @@ public class Model {
         this.modifiedBy = modifiedBy;
     }
 
-    public Date getSubmissionStartAt() {
+    public Instant getSubmissionStartAt() {
         return submissionStartAt;
     }
 
-    public void setSubmissionStartAt(Date submissionStartAt) {
+    public void setSubmissionStartAt(Instant submissionStartAt) {
         this.submissionStartAt = submissionStartAt;
     }
 
-    public Date getSubmissionCloseAt() {
+    public Instant getSubmissionCloseAt() {
         return submissionCloseAt;
     }
 
-    public void setSubmissionCloseAt(Date submissionCloseAt) {
+    public void setSubmissionCloseAt(Instant submissionCloseAt) {
         this.submissionCloseAt = submissionCloseAt;
     }
 

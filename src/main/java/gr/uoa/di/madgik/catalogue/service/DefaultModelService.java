@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,7 +132,7 @@ public class DefaultModelService implements ModelService {
     public Model add(Model model) {
         createSectionIds(model);
 
-        Date date = new Date();
+        Instant date = Instant.now();
         model.setCreationDate(date);
         model.setModificationDate(date);
 
@@ -144,7 +145,7 @@ public class DefaultModelService implements ModelService {
     @Override
     public Model update(String id, Model model) {
         createSectionIds(model);
-        model.setModificationDate(new Date());
+        model.setModificationDate(Instant.now());
         validateModel(model);
         createParents(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);

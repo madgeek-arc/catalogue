@@ -25,7 +25,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -99,9 +99,9 @@ class UiElementsTest {
         model.setName("Test Model");
         model.setDescription("This is a model");
         model.setCreatedBy(null);
-        model.setCreationDate(new Date());
+        model.setCreationDate(Instant.now());
         model.setModifiedBy(null);
-        model.setModificationDate(new Date());
+        model.setModificationDate(Instant.now());
         model.setSections(List.of(createSection()));
         return model;
     }

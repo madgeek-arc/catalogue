@@ -41,13 +41,13 @@
       "multivalued": false,
       "name": "creationDate",
       "path": "$.creationDate",
-      "type": "java.util.Date"
+      "type": "java.time.Instant"
     },
     {
       "multivalued": false,
       "name": "modificationDate",
       "path": "$.modificationDate",
-      "type": "java.util.Date"
+      "type": "java.time.Instant"
     },
     {
       "multivalued": true,

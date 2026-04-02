@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatusCode;
 
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * Error reporting class. It is returned every time an exception is thrown.
@@ -40,7 +40,7 @@ public class ServerError {
     /**
      * The timestamp the error occurred.
      */
-    Date timestamp;
+    Instant timestamp;
     /**
      * The requested url that the error occurred.
      */
@@ -51,18 +51,18 @@ public class ServerError {
     String message;
 
     public ServerError() {
-        timestamp = new Date();
+        timestamp = Instant.now();
     }
 
     public ServerError(String traceId, String url, String message) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.traceId = traceId;
         this.url = url;
         this.message = message;
     }
 
     public ServerError(HttpStatusCode status, String traceId, String url, String message) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.status = status.value();
         this.traceId = traceId;
         this.url = url;
@@ -70,7 +70,7 @@ public class ServerError {
     }
 
     public ServerError(int status, String traceId, String url, String message) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.status = status;
         this.traceId = traceId;
         this.url = url;
@@ -78,7 +78,7 @@ public class ServerError {
     }
 
     public ServerError(HttpStatusCode status, HttpServletRequest req, String message) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.status = status.value();
         this.traceId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
@@ -86,7 +86,7 @@ public class ServerError {
     }
 
     public ServerError(HttpStatusCode status, HttpServletRequest req, Exception exception) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.status = status.value();
         this.traceId = MDC.get("traceId");
         this.url = RequestUtils.getUrlWithParams(req);
@@ -94,7 +94,7 @@ public class ServerError {
     }
 
     public ServerError(HttpStatusCode status, String traceId, HttpServletRequest req, Exception exception) {
-        timestamp = new Date();
+        timestamp = Instant.now();
         this.status = status.value();
         this.traceId = traceId;
         this.url = RequestUtils.getUrlWithParams(req);
@@ -117,11 +117,11 @@ public class ServerError {
         this.traceId = traceId;
     }
 
-    public Date getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
 
