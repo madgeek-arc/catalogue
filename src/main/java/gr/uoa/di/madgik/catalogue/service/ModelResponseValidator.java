@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 OpenAIRE AMKE
+ * Copyright 2021-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ public class ModelResponseValidator {
 
             FacetFilter ff = new FacetFilter();
             ff.addFilter("resourceType", resourceTypeName);
+            //FIXME: how to resolve multiple models on the same resource type (eg. configuration_template_instance)
             List<Model> models = modelService.browse(ff).getResults();
             if (models == null || models.isEmpty()) {
                 logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
@@ -694,6 +695,9 @@ public class ModelResponseValidator {
         }
 
         String stringValue = value.toString().trim();
+        if (isValidUrl(stringValue)) {
+            return;
+        }
 
         if (!stringValue.isEmpty()) {
             if (!(field.getTypeInfo().getProperties() instanceof VocabularyProperties vocabProps)) {
@@ -760,6 +764,15 @@ public class ModelResponseValidator {
                         String.format("Field '%s' is invalid. Vocabulary service is unreachable for value '%s'", prettyPrintPath(path), stringValue)
                 );
             }
+        }
+    }
+
+    public static boolean isValidUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 

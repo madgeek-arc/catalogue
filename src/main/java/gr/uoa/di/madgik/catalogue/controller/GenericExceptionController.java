@@ -31,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -78,6 +79,13 @@ public class GenericExceptionController {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
             status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof MethodArgumentNotValidException e) {
+            logger.info(e.getMessage());
+            logger.debug(e.getMessage(), e);
+            status = ((MethodArgumentNotValidException) ex).getStatusCode();
+            return ResponseEntity
+                    .status(status)
+                    .body(new ServerError(status, req, e.getBody().getDetail()));
         } else if (ex instanceof NoResourceFoundException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);
