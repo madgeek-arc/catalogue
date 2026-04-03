@@ -34,6 +34,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.sql.SQLException;
 
@@ -85,6 +86,10 @@ public class GenericExceptionController {
             return ResponseEntity
                     .status(status)
                     .body(new ServerError(status, req, e.getBody().getDetail()));
+        } else if (ex instanceof NoResourceFoundException) {
+            logger.info(ex.getMessage());
+            logger.debug(ex.getMessage(), ex);
+            status = HttpStatus.NOT_FOUND;
         } else if (ex instanceof ValidationException) {
             logger.info(ex.getMessage());
             logger.debug(ex.getMessage(), ex);

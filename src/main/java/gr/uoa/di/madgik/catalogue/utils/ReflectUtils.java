@@ -52,8 +52,6 @@ public class ReflectUtils {
         } catch (NoSuchMethodException e) {
             logger.warn("Could not find 'getId' method in class [{}]", clazz.getName());
             getIdField(clazz, resource);
-        } catch (InvocationTargetException e) {
-            throw e;
         }
         return id;
     }
