@@ -16,16 +16,17 @@
 
 package gr.uoa.di.madgik.catalogue.ui.domain;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 public class Request {
 
     HttpMethod method;
     URL url;
-    HttpHeaders headers;
+    Map<String, List<String>> headers;
     String body;
 
     public Request() {
@@ -48,11 +49,11 @@ public class Request {
         this.url = url;
     }
 
-    public HttpHeaders getHeaders() {
+    public Map<String, List<String>> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(HttpHeaders headers) {
+    public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
     }
 

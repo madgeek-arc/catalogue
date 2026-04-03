@@ -57,7 +57,7 @@ public class DefaultDataRequestService implements DataRequestService {
                     .body(Mono.justOrEmpty(request.getBody()), String.class)
                     .headers(headers -> {
                         if (request.getHeaders() != null) {
-                            headers.addAll(request.getHeaders());
+                            request.getHeaders().forEach(headers::addAll);
                         }
                     })
                     .retrieve()
