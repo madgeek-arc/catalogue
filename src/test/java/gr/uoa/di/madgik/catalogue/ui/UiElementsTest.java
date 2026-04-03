@@ -56,7 +56,6 @@ class UiElementsTest {
         TypeInfo typeInfo = new TypeInfo();
         typeInfo.setType(FieldType.composite);
         typeInfo.setMultiplicity(true);
-        typeInfo.setVocabulary(null);
         List<String> values = new ArrayList<>();
         values.add("item 1");
         values.add("item 2");

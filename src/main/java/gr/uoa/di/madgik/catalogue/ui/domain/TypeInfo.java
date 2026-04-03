@@ -26,8 +26,6 @@ import java.util.List;
 @JsonDeserialize(using = TypeInfoDeserializer.class)
 public class TypeInfo {
 
-    @Deprecated
-    String vocabulary;
     FieldType type;
     String defaultValue;
     List<IdLabel> values;
@@ -39,23 +37,12 @@ public class TypeInfo {
     }
 
     public TypeInfo(String vocabulary, FieldType type, String defaultValue, List<IdLabel> values, TypeProperties properties, boolean multiplicity, DataRequest prefill) {
-        this.vocabulary = vocabulary;
         this.type = type;
         this.defaultValue = defaultValue;
         this.values = values;
         this.properties = properties;
         this.multiplicity = multiplicity;
         this.prefill = prefill;
-    }
-
-    @Deprecated
-    public String getVocabulary() {
-        return vocabulary;
-    }
-
-    @Deprecated
-    public void setVocabulary(String vocabulary) {
-        this.vocabulary = vocabulary;
     }
 
     public FieldType getType() {
