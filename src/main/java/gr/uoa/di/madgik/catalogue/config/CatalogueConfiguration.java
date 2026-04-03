@@ -20,7 +20,6 @@ import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.catalogue.service.DefaultModelService;
-import gr.uoa.di.madgik.catalogue.utils.ClasspathUtils;
 import gr.uoa.di.madgik.registry.service.ParserService;
 import gr.uoa.di.madgik.registry.service.ResourceService;
 import gr.uoa.di.madgik.registry.service.ResourceTypeService;
@@ -32,11 +31,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-
-import static gr.uoa.di.madgik.catalogue.utils.ClasspathUtils.getClassesWithoutInterfaces;
 
 @Configuration
 @ComponentScan(basePackages = "gr.uoa.di.madgik.catalogue")
