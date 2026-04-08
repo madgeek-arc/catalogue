@@ -35,7 +35,16 @@ import org.springframework.web.bind.annotation.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+/**
+ * Legacy generic resource controller kept for backward compatibility with the old {@code /items}
+ * endpoint shape where {@code resourceType} is provided as a query parameter.
+ *
+ * @deprecated Since 10.0.0, use {@link gr.uoa.di.madgik.registry.controllers.GenericController}
+ * instead. The replacement controller exposes the generic API under {@code /records/{resourceType}}
+ * and carries the resource type in the path rather than in request parameters.
+ */
 @Deprecated(since = "10.0.0")
+@Hidden
 @RestController
 @RequestMapping(path = "items", produces = MediaType.APPLICATION_JSON_VALUE)
 public class GenericItemController {
