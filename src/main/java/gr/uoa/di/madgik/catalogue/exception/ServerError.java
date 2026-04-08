@@ -16,8 +16,6 @@
 
 package gr.uoa.di.madgik.catalogue.exception;
 
-import gr.uoa.di.madgik.catalogue.utils.RequestUtils;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatusCode;
@@ -25,8 +23,14 @@ import org.springframework.http.HttpStatusCode;
 import java.time.Instant;
 
 /**
- * Error reporting class. It is returned every time an exception is thrown.
+ * Legacy error payload previously returned by catalogue exception handlers.
+ *
+ * @deprecated Since 10.0.0, use {@link org.springframework.http.ProblemDetail} for HTTP API
+ * error responses instead. {@code ProblemDetail} is now the standard error contract used by the
+ * catalogue exception handling layer, while this class remains only for backward compatibility
+ * with downstream projects that may still reference the old payload shape.
  */
+@Deprecated(since = "10.0.0", forRemoval = true)
 public class ServerError {
 
     /**
@@ -81,7 +85,7 @@ public class ServerError {
         timestamp = Instant.now();
         this.status = status.value();
         this.traceId = MDC.get("traceId");
-        this.url = RequestUtils.getUrlWithParams(req);
+        this.url = getUrlWithParams(req);
         this.message = message;
     }
 
@@ -89,7 +93,7 @@ public class ServerError {
         timestamp = Instant.now();
         this.status = status.value();
         this.traceId = MDC.get("traceId");
-        this.url = RequestUtils.getUrlWithParams(req);
+        this.url = getUrlWithParams(req);
         this.message = exception.getMessage();
     }
 
@@ -97,8 +101,20 @@ public class ServerError {
         timestamp = Instant.now();
         this.status = status.value();
         this.traceId = traceId;
-        this.url = RequestUtils.getUrlWithParams(req);
+        this.url = getUrlWithParams(req);
         this.message = exception.getMessage();
+    }
+
+    public static String getUrlWithParams(HttpServletRequest request) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(request.getMethod());
+        sb.append(": ");
+        sb.append(request.getRequestURI());
+        if (request.getQueryString() != null) {
+            sb.append('?');
+            sb.append(request.getQueryString());
+        }
+        return sb.toString();
     }
 
     public int getStatus() {

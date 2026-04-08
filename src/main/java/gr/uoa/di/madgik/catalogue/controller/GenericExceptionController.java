@@ -16,18 +16,19 @@
 
 package gr.uoa.di.madgik.catalogue.controller;
 
-import gr.uoa.di.madgik.catalogue.exception.ServerError;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -36,6 +37,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.sql.SQLException;
+import java.net.URI;
+import java.time.Instant;
 
 /**
  * Advice handling all thrown exceptions.
@@ -50,82 +53,81 @@ public class GenericExceptionController {
      *
      * @param req http servlet request
      * @param ex  the thrown exception
-     * @return {@link ServerError}
+     * @return {@link ProblemDetail}
      */
     @ExceptionHandler(value = ResourceException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleResourceException(HttpServletRequest req, ResourceException ex) {
+    protected ResponseEntity<ProblemDetail> handleResourceException(HttpServletRequest req, ResourceException ex) {
         logger.info(ex.getMessage(), ex);
         return buildErrorResponse(req, ex.getStatus(), ex);
     }
 
     @ExceptionHandler(value = HttpClientErrorException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleHttpClientError(HttpServletRequest req, HttpClientErrorException ex) {
+    protected ResponseEntity<ProblemDetail> handleHttpClientError(HttpServletRequest req, HttpClientErrorException ex) {
         logger.info(ex.getMessage(), ex);
         return buildErrorResponse(req, ex.getStatusCode(), ex);
     }
 
     @ExceptionHandler(value = AccessDeniedException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleAccessDenied(HttpServletRequest req, AccessDeniedException ex) {
+    protected ResponseEntity<ProblemDetail> handleAccessDenied(HttpServletRequest req, AccessDeniedException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.FORBIDDEN, ex);
     }
 
     @ExceptionHandler(value = InsufficientAuthenticationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleInsufficientAuthentication(HttpServletRequest req,
-                                                                           InsufficientAuthenticationException ex) {
+    protected ResponseEntity<ProblemDetail> handleInsufficientAuthentication(HttpServletRequest req,
+                                                                             InsufficientAuthenticationException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.UNAUTHORIZED, ex);
     }
 
     @ExceptionHandler(value = ResourceAlreadyExistsException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleResourceAlreadyExists(HttpServletRequest req,
-                                                                      ResourceAlreadyExistsException ex) {
+    protected ResponseEntity<ProblemDetail> handleResourceAlreadyExists(HttpServletRequest req,
+                                                                        ResourceAlreadyExistsException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.CONFLICT, ex);
     }
 
     @ExceptionHandler(value = ResourceNotFoundException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleResourceNotFound(HttpServletRequest req, ResourceNotFoundException ex) {
+    protected ResponseEntity<ProblemDetail> handleResourceNotFound(HttpServletRequest req, ResourceNotFoundException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.NOT_FOUND, ex);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleMethodArgumentNotValid(HttpServletRequest req,
-                                                                       MethodArgumentNotValidException ex) {
+    protected ResponseEntity<ProblemDetail> handleMethodArgumentNotValid(HttpServletRequest req,
+                                                                         MethodArgumentNotValidException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         reportException(req, ex, ex.getStatusCode());
-        return ResponseEntity
-                .status(ex.getStatusCode())
-                .body(new ServerError(ex.getStatusCode(), req, ex.getBody().getDetail()));
+        return ResponseEntity.status(ex.getStatusCode()).body(buildProblemDetail(req, ex.getStatusCode(), ex.getBody().getDetail()));
     }
 
     @ExceptionHandler(value = ValidationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleValidation(HttpServletRequest req, ValidationException ex) {
+    protected ResponseEntity<ProblemDetail> handleValidation(HttpServletRequest req, ValidationException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.BAD_REQUEST, ex);
     }
 
     @ExceptionHandler(value = UnsupportedOperationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleUnsupportedOperation(HttpServletRequest req,
-                                                                     UnsupportedOperationException ex) {
+    protected ResponseEntity<ProblemDetail> handleUnsupportedOperation(HttpServletRequest req,
+                                                                       UnsupportedOperationException ex) {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.NOT_IMPLEMENTED, ex);
     }
 
     @ExceptionHandler(value = {SQLException.class, DataAccessException.class}, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handlePersistenceException(HttpServletRequest req, Exception ex) {
+    protected ResponseEntity<ProblemDetail> handlePersistenceException(HttpServletRequest req, Exception ex) {
         logger.error(ex.getMessage(), ex);
+        reportException(req, ex, HttpStatus.UNPROCESSABLE_ENTITY);
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(new ServerError(HttpStatus.UNPROCESSABLE_ENTITY, req, "Could not process request"));
+                .body(buildProblemDetail(req, HttpStatus.UNPROCESSABLE_ENTITY, "Could not process request"));
     }
 
     /**
@@ -133,10 +135,10 @@ public class GenericExceptionController {
      *
      * @param req http servlet request
      * @param ex  the thrown exception
-     * @return {@link ServerError}
+     * @return {@link ProblemDetail}
      */
     @ExceptionHandler(value = Exception.class, produces = MediaType.APPLICATION_JSON_VALUE)
-    protected ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
+    protected ResponseEntity<ProblemDetail> handleException(HttpServletRequest req, Exception ex) {
         logger.error(ex.getMessage(), ex);
         HttpStatusCode status = getStatusFromException(ex);
         return buildErrorResponse(req, status, new RuntimeException("Internal Server Error", ex));
@@ -157,11 +159,23 @@ public class GenericExceptionController {
         return status;
     }
 
-    private ResponseEntity<ServerError> buildErrorResponse(HttpServletRequest req, HttpStatusCode status, Exception ex) {
+    protected ResponseEntity<ProblemDetail> buildErrorResponse(HttpServletRequest req, HttpStatusCode status, Exception ex) {
         reportException(req, ex, status);
         return ResponseEntity
                 .status(status)
-                .body(new ServerError(status, req, ex));
+                .body(buildProblemDetail(req, status, ex.getMessage()));
+    }
+
+    protected ProblemDetail buildProblemDetail(HttpServletRequest req, HttpStatusCode status, String detail) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        if (status instanceof HttpStatus httpStatus) {
+            problemDetail.setTitle(httpStatus.getReasonPhrase());
+        }
+        problemDetail.setInstance(getUriWithParams(req));
+        problemDetail.setProperty("method", req.getMethod());
+        problemDetail.setProperty("traceId", MDC.get("traceId"));
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
     }
 
     /**
@@ -172,5 +186,15 @@ public class GenericExceptionController {
      * @param status the HTTP status returned to the client
      */
     protected void reportException(HttpServletRequest req, Exception ex, HttpStatusCode status) {
+    }
+
+    public static URI getUriWithParams(HttpServletRequest request) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(request.getRequestURI());
+        if (request.getQueryString() != null) {
+            sb.append('?');
+            sb.append(request.getQueryString());
+        }
+        return URI.create(sb.toString());
     }
 }
