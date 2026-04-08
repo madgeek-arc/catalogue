@@ -28,7 +28,7 @@ public interface DataRequestService {
      * Performs an API call, based on the {@link DataRequest} given, to retrieve a value.
      *
      * @param request The request object
-     * @return The value matching the {@link DataRequest#expression}
+     * @return The value matching the {@link DataRequest#getExpression()}
      */
     Mono<?> retrieve(DataRequest request);
 
