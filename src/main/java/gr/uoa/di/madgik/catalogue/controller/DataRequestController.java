@@ -16,7 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.controller;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.DataRequest;
+import gr.uoa.di.madgik.catalogue.domain.DataRequest;
 import gr.uoa.di.madgik.catalogue.service.DataRequestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

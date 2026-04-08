@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.domain;
 
 public class Display {
 

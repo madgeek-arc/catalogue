@@ -1,5 +1,5 @@
 /*
- * Copyright 2026-2026 OpenAIRE AMKE
+ * Copyright 2021-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,25 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain;
 
-public sealed interface TypeProperties permits CustomProperties, DateProperties, NumberProperties, PatternProperties, TextProperties, UrlProperties, VocabularyProperties {
+public enum FieldType {
+    string,
+    url,
+    email,
+    phone,
+    select,
+    radio,
+    largeText,
+    richText,
+
+    composite,
+    chooseOne,
+    number,
+    bool,
+    vocabulary,
+    checkbox,
+    date,
+    scale,
+    array;
 }

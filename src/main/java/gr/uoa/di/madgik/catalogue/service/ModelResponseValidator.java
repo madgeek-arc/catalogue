@@ -18,14 +18,13 @@ package gr.uoa.di.madgik.catalogue.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
+import gr.uoa.di.madgik.catalogue.domain.*;
+import gr.uoa.di.madgik.catalogue.domain.types.*;
 import gr.uoa.di.madgik.registry.service.ResourceValidator;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
-import gr.uoa.di.madgik.catalogue.ui.domain.*;
-import gr.uoa.di.madgik.catalogue.ui.domain.types.*;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;

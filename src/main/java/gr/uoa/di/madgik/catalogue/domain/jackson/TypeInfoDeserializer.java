@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.jackson;
+package gr.uoa.di.madgik.catalogue.domain.jackson;
 
+import gr.uoa.di.madgik.catalogue.domain.types.*;
+import gr.uoa.di.madgik.catalogue.dto.IdLabel;
+import gr.uoa.di.madgik.catalogue.domain.DataRequest;
+import gr.uoa.di.madgik.catalogue.domain.FieldType;
+import gr.uoa.di.madgik.catalogue.domain.TypeInfo;
+import gr.uoa.di.madgik.catalogue.domain.types.*;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import gr.uoa.di.madgik.catalogue.dto.IdLabel;
-import gr.uoa.di.madgik.catalogue.ui.domain.DataRequest;
-import gr.uoa.di.madgik.catalogue.ui.domain.FieldType;
-import gr.uoa.di.madgik.catalogue.ui.domain.TypeInfo;
-import gr.uoa.di.madgik.catalogue.ui.domain.types.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,8 +41,8 @@ public class TypeInfoDeserializer extends StdDeserializer<TypeInfo> {
 
     @Override
     public TypeInfo deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        ObjectMapper mapper = (ObjectMapper) p.getCodec();
-        JsonNode node = mapper.readTree(p);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = (JsonNode) p.readValueAsTree();
 
         FieldType type = mapper.treeToValue(node.path("type"), FieldType.class);
         String defaultValue = node.path("defaultValue").asText(null);

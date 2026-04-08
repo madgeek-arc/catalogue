@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui;
+package gr.uoa.di.madgik.catalogue;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.*;
+import gr.uoa.di.madgik.catalogue.domain.*;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;

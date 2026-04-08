@@ -16,7 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.config;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
+import gr.uoa.di.madgik.catalogue.domain.Model;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

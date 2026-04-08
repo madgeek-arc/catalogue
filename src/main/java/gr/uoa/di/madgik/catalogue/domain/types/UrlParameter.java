@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 OpenAIRE AMKE
+ * Copyright 2026-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
-public final class DateProperties implements TypeProperties {
+public class UrlParameter {
 
-    boolean formatToString = false;
+    private String placeholder;
+    private String valueFromField;
 
-    public DateProperties() {
+    public UrlParameter() {
     }
 
-    public boolean isFormatToString() {
-        return formatToString;
+    public String getPlaceholder() {
+        return placeholder;
     }
 
-    public void setFormatToString(boolean formatToString) {
-        this.formatToString = formatToString;
+    public void setPlaceholder(String placeholder) {
+        this.placeholder = placeholder;
+    }
+
+    public String getValueFromField() {
+        return valueFromField;
+    }
+
+    public void setValueFromField(String valueFromField) {
+        this.valueFromField = valueFromField;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2026 OpenAIRE AMKE
+ * Copyright 2026-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,20 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
-public class RequiredFields {
+public final class UrlProperties implements TypeProperties {
 
-    private int topLevel;
-    private int total;
+    boolean strictValidation = false;
 
-    public RequiredFields() {}
-
-    public RequiredFields(int topLevel, int total) {
-        this.topLevel = topLevel;
-        this.total = total;
+    public UrlProperties() {
     }
 
-    public int getTopLevel() {
-        return topLevel;
+    public boolean isStrictValidation() {
+        return strictValidation;
     }
 
-    public void setTopLevel(int topLevel) {
-        this.topLevel = topLevel;
-    }
-
-    public int getTotal() {
-        return total;
-    }
-
-    public void setTotal(int total) {
-        this.total = total;
+    public void setStrictValidation(boolean strictValidation) {
+        this.strictValidation = strictValidation;
     }
 }

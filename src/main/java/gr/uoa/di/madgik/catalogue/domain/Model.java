@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.Instant;
 import java.time.Instant;
 import java.util.List;
 

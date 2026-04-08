@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.domain;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
-import gr.uoa.di.madgik.catalogue.ui.domain.jackson.TypeInfoDeserializer;
-import gr.uoa.di.madgik.catalogue.ui.domain.types.TypeProperties;
+import gr.uoa.di.madgik.catalogue.domain.jackson.ToolsTypeInfoDeserializer;
+import gr.uoa.di.madgik.catalogue.domain.jackson.TypeInfoDeserializer;
+import gr.uoa.di.madgik.catalogue.domain.types.TypeProperties;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.List;
 
-@JsonDeserialize(using = TypeInfoDeserializer.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = TypeInfoDeserializer.class)
+@JsonDeserialize(using = ToolsTypeInfoDeserializer.class)
 public class TypeInfo {
 
     FieldType type;

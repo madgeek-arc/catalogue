@@ -18,10 +18,11 @@ package gr.uoa.di.madgik.catalogue.service;
 
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.Paging;
+import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.domain.Section;
-import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
+import gr.uoa.di.madgik.catalogue.domain.Model;
+import gr.uoa.di.madgik.catalogue.domain.Section;
+import gr.uoa.di.madgik.catalogue.domain.UiField;
 
 import java.util.List;
 
@@ -32,6 +33,10 @@ public interface ModelService {
     Model add(Model model);
 
     Model update(String id, Model model);
+
+    ResourceType createResourceType(Model model);
+
+    void updateResourceType(Model model);
 
     void delete(String id) throws ResourceNotFoundException;
 

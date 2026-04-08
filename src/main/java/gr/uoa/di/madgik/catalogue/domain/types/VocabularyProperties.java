@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
 import java.net.URI;
 import java.util.List;

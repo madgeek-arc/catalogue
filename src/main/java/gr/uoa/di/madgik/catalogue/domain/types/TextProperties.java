@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
-public final class UrlProperties implements TypeProperties {
+public final class TextProperties implements TypeProperties {
 
-    boolean strictValidation = false;
+    Integer minLength;
+    Integer maxLength;
 
-    public UrlProperties() {
+    public TextProperties() {
     }
 
-    public boolean isStrictValidation() {
-        return strictValidation;
+    public Integer getMinLength() {
+        return minLength;
     }
 
-    public void setStrictValidation(boolean strictValidation) {
-        this.strictValidation = strictValidation;
+    public void setMinLength(Integer minLength) {
+        this.minLength = minLength;
+    }
+
+    public Integer getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(Integer maxLength) {
+        this.maxLength = maxLength;
     }
 }

@@ -14,25 +14,33 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain;
+package gr.uoa.di.madgik.catalogue.domain;
 
-public enum FieldType {
-    string,
-    url,
-    email,
-    phone,
-    select,
-    radio,
-    largeText,
-    richText,
+public class RequiredFields {
 
-    composite,
-    chooseOne,
-    number,
-    bool,
-    vocabulary,
-    checkbox,
-    date,
-    scale,
-    array;
+    private int topLevel;
+    private int total;
+
+    public RequiredFields() {}
+
+    public RequiredFields(int topLevel, int total) {
+        this.topLevel = topLevel;
+        this.total = total;
+    }
+
+    public int getTopLevel() {
+        return topLevel;
+    }
+
+    public void setTopLevel(int topLevel) {
+        this.topLevel = topLevel;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
+    }
 }

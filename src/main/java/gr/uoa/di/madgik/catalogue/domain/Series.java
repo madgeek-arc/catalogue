@@ -1,5 +1,5 @@
 /*
- * Copyright 2026-2026 OpenAIRE AMKE
+ * Copyright 2021-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,31 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain;
 
-public final class PatternProperties implements TypeProperties {
+public class Series {
 
-    String pattern;
+    String name;
+    String referenceYear;
 
-    public PatternProperties() {
+    public Series() {
     }
 
-    public String getPattern() {
-        return pattern;
+    public String getName() {
+        return name;
     }
 
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
+    public Series setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public String getReferenceYear() {
+        return referenceYear;
+    }
+
+    public Series setReferenceYear(String referenceYear) {
+        this.referenceYear = referenceYear;
+        return this;
     }
 }

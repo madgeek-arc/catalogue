@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 OpenAIRE AMKE
+ * Copyright 2026-2026 OpenAIRE AMKE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,13 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
-public final class NumberProperties implements TypeProperties {
+public final class PatternProperties implements TypeProperties {
 
-    Number min;
-    Number max;
-    Integer decimals;
     String pattern;
 
-    public NumberProperties() {
-    }
-
-    public Number getMin() {
-        return min;
-    }
-
-    public void setMin(Number min) {
-        this.min = min;
-    }
-
-    public Number getMax() {
-        return max;
-    }
-
-    public void setMax(Number max) {
-        this.max = max;
-    }
-
-    public Integer getDecimals() {
-        return decimals;
-    }
-
-    public void setDecimals(Integer decimals) {
-        this.decimals = decimals;
+    public PatternProperties() {
     }
 
     public String getPattern() {

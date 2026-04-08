@@ -16,10 +16,12 @@
 
 package gr.uoa.di.madgik.catalogue.config;
 
+import gr.uoa.di.madgik.catalogue.domain.Model;
 import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.catalogue.service.DefaultModelService;
+import gr.uoa.di.madgik.catalogue.service.ModelResourceTypeMapper;
 import gr.uoa.di.madgik.registry.service.ParserService;
 import gr.uoa.di.madgik.registry.service.ResourceService;
 import gr.uoa.di.madgik.registry.service.ResourceTypeService;
@@ -43,7 +45,7 @@ public class CatalogueConfiguration {
     /**
      * Creates the {@link ModelService} bean backed by {@link DefaultModelService}.
      *
-     * <p>{@code ModelService} manages {@link gr.uoa.di.madgik.catalogue.ui.domain.Model} resources —
+     * <p>{@code ModelService} manages {@link Model} resources —
      * the UI field definitions that describe how catalogue resources are structured and displayed.
      *
      * @param genericResourceService type-safe CRUD over registry resources
@@ -58,8 +60,14 @@ public class CatalogueConfiguration {
     ModelService modelService(GenericResourceService genericResourceService,
                               SearchService searchService, ResourceService resourceService,
                               ResourceTypeService resourceTypeService, ParserService parserService,
-                              IdGenerator<String> idGenerator) {
+                              IdGenerator<String> idGenerator,
+                              ModelResourceTypeMapper modelResourceTypeMapper) {
         return new DefaultModelService(genericResourceService, idGenerator, searchService, resourceService,
-                resourceTypeService, parserService);
+                resourceTypeService, parserService, modelResourceTypeMapper);
+    }
+
+    @Bean
+    ModelResourceTypeMapper modelResourceTypeMapper() {
+        return new ModelResourceTypeMapper();
     }
 }

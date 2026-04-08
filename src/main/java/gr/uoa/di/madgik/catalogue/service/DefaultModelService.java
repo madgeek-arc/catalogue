@@ -16,9 +16,9 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
-import gr.uoa.di.madgik.catalogue.ui.domain.Section;
-import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
+import gr.uoa.di.madgik.catalogue.domain.Model;
+import gr.uoa.di.madgik.catalogue.domain.Section;
+import gr.uoa.di.madgik.catalogue.domain.UiField;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
 import gr.uoa.di.madgik.registry.domain.Paging;
 import gr.uoa.di.madgik.registry.utils.LoggingUtils;
@@ -54,19 +54,22 @@ public class DefaultModelService implements ModelService {
     public final ResourceService resourceService;
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
+    private final ModelResourceTypeMapper modelResourceTypeMapper;
 
     public DefaultModelService(GenericResourceService genericResourceService,
                                IdGenerator<String> idGenerator,
                                SearchService searchService,
                                ResourceService resourceService,
                                ResourceTypeService resourceTypeService,
-                               ParserService parserPool) {
+                               ParserService parserPool,
+                               ModelResourceTypeMapper modelResourceTypeMapper) {
         this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
         this.resourceService = resourceService;
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
+        this.modelResourceTypeMapper = modelResourceTypeMapper;
     }
 
     public <T> T add(T obj, String resourceTypeName) {
@@ -150,6 +153,19 @@ public class DefaultModelService implements ModelService {
         createParents(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
         return model;
+    }
+
+    @Override
+    public ResourceType createResourceType(Model model) {
+        createSectionIds(model);
+        validateModel(model);
+        createParents(model);
+        return modelResourceTypeMapper.map(model, new ResourceType());
+    }
+
+    @Override
+    public void updateResourceType(Model model) {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override

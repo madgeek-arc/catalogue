@@ -16,11 +16,12 @@
 
 package gr.uoa.di.madgik.catalogue.controller;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.Model;
+import gr.uoa.di.madgik.catalogue.domain.Model;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.registry.annotation.BrowseParameters;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
 import gr.uoa.di.madgik.registry.domain.Paging;
+import gr.uoa.di.madgik.registry.domain.ResourceType;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,6 +46,11 @@ public class FormsController {
     @PostMapping("models")
     public ResponseEntity<Model> addModel(@RequestBody Model model) {
         return new ResponseEntity<>(modelService.add(model), HttpStatus.CREATED);
+    }
+
+    @PostMapping("resourceTypes")
+    public ResponseEntity<ResourceType> createResourceType(@RequestBody Model model) {
+        return new ResponseEntity<>(modelService.createResourceType(model), HttpStatus.CREATED);
     }
 
     @PutMapping("models/{id}")

@@ -14,9 +14,20 @@
  * limitations under the License.
  */
 
-package gr.uoa.di.madgik.catalogue.ui.domain.types;
+package gr.uoa.di.madgik.catalogue.domain.types;
 
-import java.util.LinkedHashMap;
+public final class DateProperties implements TypeProperties {
 
-public final class CustomProperties extends LinkedHashMap<String, Object> implements TypeProperties {
+    boolean formatToString = false;
+
+    public DateProperties() {
+    }
+
+    public boolean isFormatToString() {
+        return formatToString;
+    }
+
+    public void setFormatToString(boolean formatToString) {
+        this.formatToString = formatToString;
+    }
 }

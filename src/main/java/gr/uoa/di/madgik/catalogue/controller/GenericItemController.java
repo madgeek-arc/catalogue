@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+@Deprecated(since = "10.0.0")
 @RestController
 @RequestMapping(path = "items", produces = MediaType.APPLICATION_JSON_VALUE)
 public class GenericItemController {

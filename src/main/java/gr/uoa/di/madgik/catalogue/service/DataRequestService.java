@@ -16,7 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.catalogue.ui.domain.DataRequest;
+import gr.uoa.di.madgik.catalogue.domain.DataRequest;
 import reactor.core.publisher.Mono;
 
 /**
