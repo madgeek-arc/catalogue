@@ -33,6 +33,21 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Deserializes {@link TypeInfo} for the standard Jackson stack.
+ *
+ * <p>This custom deserializer is required because {@link TypeInfo#getProperties()} is not a single concrete type.
+ * The target subtype must be chosen from the sibling {@code type} field and then materialized as
+ * {@link NumberProperties}, {@link TextProperties}, {@link DateProperties}, {@link UrlProperties},
+ * {@link VocabularyProperties}, {@link PatternProperties}, or {@link CustomProperties}. Default Jackson
+ * binding cannot express that mapping cleanly here because the discriminator lives outside the
+ * {@code properties} object.
+ *
+ * <p>It also preserves compatibility with older persisted payloads that predate the {@code properties}
+ * field. In that case the deserializer reconstructs equivalent defaults from the legacy shape, including
+ * the old {@code vocabulary} representation and historical {@code values} arrays that may contain plain
+ * strings instead of {@link IdLabel} objects.
+ */
 public class TypeInfoDeserializer extends StdDeserializer<TypeInfo> {
 
     public TypeInfoDeserializer() {

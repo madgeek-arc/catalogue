@@ -39,6 +39,19 @@ import tools.jackson.databind.deser.std.StdDeserializer;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Deserializes {@link TypeInfo} for the {@code tools.jackson} stack.
+ *
+ * <p>This class exists for the same reason as {@link TypeInfoDeserializer}, but against the alternate
+ * Jackson API used by the tools layer. {@link TypeInfo#getProperties()} is polymorphic and its concrete type
+ * depends on the sibling {@code type} field, so generic bean deserialization is insufficient. The
+ * deserializer must inspect {@code type} first and then bind {@code properties} to the matching
+ * {@link TypeProperties} implementation.
+ *
+ * <p>It also keeps older serialized models readable by rebuilding missing {@code properties} from the
+ * legacy payload format and by normalizing legacy {@code values} arrays that may still arrive as simple
+ * strings rather than {@link IdLabel} objects.
+ */
 public class ToolsTypeInfoDeserializer extends StdDeserializer<TypeInfo> {
 
     public ToolsTypeInfoDeserializer() {
