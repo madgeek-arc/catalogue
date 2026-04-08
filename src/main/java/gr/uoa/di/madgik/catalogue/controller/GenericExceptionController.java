@@ -38,7 +38,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.sql.SQLException;
 
 /**
- * Advice handling all thrown Exceptions.
+ * Advice handling all thrown exceptions.
  */
 @RestControllerAdvice
 public class GenericExceptionController {
@@ -46,7 +46,90 @@ public class GenericExceptionController {
     private static final Logger logger = LoggerFactory.getLogger(GenericExceptionController.class);
 
     /**
-     * Transforms every thrown exception to a {@link ServerError} response.
+     * Handles registry exceptions that already expose an HTTP status.
+     *
+     * @param req http servlet request
+     * @param ex  the thrown exception
+     * @return {@link ServerError}
+     */
+    @ExceptionHandler(value = ResourceException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleResourceException(HttpServletRequest req, ResourceException ex) {
+        logger.info(ex.getMessage(), ex);
+        return buildErrorResponse(req, ex.getStatus(), ex);
+    }
+
+    @ExceptionHandler(value = HttpClientErrorException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleHttpClientError(HttpServletRequest req, HttpClientErrorException ex) {
+        logger.info(ex.getMessage(), ex);
+        return buildErrorResponse(req, ex.getStatusCode(), ex);
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleAccessDenied(HttpServletRequest req, AccessDeniedException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.FORBIDDEN, ex);
+    }
+
+    @ExceptionHandler(value = InsufficientAuthenticationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleInsufficientAuthentication(HttpServletRequest req,
+                                                                           InsufficientAuthenticationException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.UNAUTHORIZED, ex);
+    }
+
+    @ExceptionHandler(value = ResourceAlreadyExistsException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleResourceAlreadyExists(HttpServletRequest req,
+                                                                      ResourceAlreadyExistsException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.CONFLICT, ex);
+    }
+
+    @ExceptionHandler(value = ResourceNotFoundException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleResourceNotFound(HttpServletRequest req, ResourceNotFoundException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.NOT_FOUND, ex);
+    }
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleMethodArgumentNotValid(HttpServletRequest req,
+                                                                       MethodArgumentNotValidException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        reportException(req, ex, ex.getStatusCode());
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(new ServerError(ex.getStatusCode(), req, ex.getBody().getDetail()));
+    }
+
+    @ExceptionHandler(value = ValidationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleValidation(HttpServletRequest req, ValidationException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(value = UnsupportedOperationException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handleUnsupportedOperation(HttpServletRequest req,
+                                                                     UnsupportedOperationException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.NOT_IMPLEMENTED, ex);
+    }
+
+    @ExceptionHandler(value = {SQLException.class, DataAccessException.class}, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ServerError> handlePersistenceException(HttpServletRequest req, Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ServerError(HttpStatus.UNPROCESSABLE_ENTITY, req, "Could not process request"));
+    }
+
+    /**
+     * Transforms any uncaught exception to a generic internal server error response.
      *
      * @param req http servlet request
      * @param ex  the thrown exception
@@ -54,56 +137,9 @@ public class GenericExceptionController {
      */
     @ExceptionHandler(value = Exception.class, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ServerError> handleException(HttpServletRequest req, Exception ex) {
+        logger.error(ex.getMessage(), ex);
         HttpStatusCode status = getStatusFromException(ex);
-
-        if (ex instanceof ResourceException re) {
-            logger.info(ex.getMessage(), ex);
-            status = re.getStatus();
-        } else if (ex instanceof HttpClientErrorException hcee) {
-            logger.info(ex.getMessage(), ex);
-            status = hcee.getStatusCode();
-        } else if (ex instanceof AccessDeniedException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.FORBIDDEN;
-        } else if (ex instanceof InsufficientAuthenticationException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.UNAUTHORIZED;
-        } else if (ex instanceof ResourceAlreadyExistsException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.CONFLICT;
-        } else if (ex instanceof ResourceNotFoundException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.NOT_FOUND;
-        } else if (ex instanceof MethodArgumentNotValidException e) {
-            logger.info(e.getMessage());
-            logger.debug(e.getMessage(), e);
-            status = ((MethodArgumentNotValidException) ex).getStatusCode();
-            return ResponseEntity
-                    .status(status)
-                    .body(new ServerError(status, req, e.getBody().getDetail()));
-        } else if (ex instanceof ValidationException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.BAD_REQUEST;
-        } else if (ex instanceof UnsupportedOperationException) {
-            logger.info(ex.getMessage());
-            logger.debug(ex.getMessage(), ex);
-            status = HttpStatus.NOT_IMPLEMENTED;
-        } else if (ex instanceof SQLException || ex instanceof DataAccessException) {
-            logger.error(ex.getMessage(), ex);
-            status = HttpStatus.UNPROCESSABLE_ENTITY;
-            return ResponseEntity.status(status).body(new ServerError(status, req, "Could not process request"));
-        } else {
-            logger.error(ex.getMessage(), ex);
-            ex = new RuntimeException("Internal Server Error", ex); // wrap exception to hide unknown error message.
-        }
-        return ResponseEntity
-                .status(status)
-                .body(new ServerError(status, req, ex));
+        return buildErrorResponse(req, status, new RuntimeException("Internal Server Error", ex));
     }
 
     /**
@@ -119,5 +155,22 @@ public class GenericExceptionController {
             status = annotation.value();
         }
         return status;
+    }
+
+    private ResponseEntity<ServerError> buildErrorResponse(HttpServletRequest req, HttpStatusCode status, Exception ex) {
+        reportException(req, ex, status);
+        return ResponseEntity
+                .status(status)
+                .body(new ServerError(status, req, ex));
+    }
+
+    /**
+     * Hook for subclasses that need to report handled exceptions to external systems.
+     *
+     * @param req    http servlet request
+     * @param ex     the handled exception
+     * @param status the HTTP status returned to the client
+     */
+    protected void reportException(HttpServletRequest req, Exception ex, HttpStatusCode status) {
     }
 }
