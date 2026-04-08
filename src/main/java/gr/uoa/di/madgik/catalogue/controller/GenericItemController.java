@@ -43,7 +43,7 @@ import java.util.List;
  * instead. The replacement controller exposes the generic API under {@code /records/{resourceType}}
  * and carries the resource type in the path rather than in request parameters.
  */
-@Deprecated(since = "10.0.0")
+@Deprecated(since = "10.0.0", forRemoval = true)
 @Hidden
 @RestController
 @RequestMapping(path = "items", produces = MediaType.APPLICATION_JSON_VALUE)
