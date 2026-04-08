@@ -32,12 +32,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @Configuration
 @ComponentScan(basePackages = "gr.uoa.di.madgik.catalogue")
 @EnableConfigurationProperties(CatalogueLibProperties.class)
-@EnableAspectJAutoProxy
 public class CatalogueConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(CatalogueConfiguration.class);
