@@ -1,0 +1,60 @@
+{
+    "accessPolicy": "https://test.example.org/policies/access",
+    "accessTypes": [
+        "access_type-open_access"
+    ],
+    "categories": [
+        {
+            "category": "category-compute-cloud",
+            "subcategory": "subcategory-compute-cloud-infrastructure_as_a_service"
+        }
+    ],
+    "description": "A fictional resource used exclusively for automated testing purposes.",
+    "id": "10.23456/ABCDEF99",
+    "jurisdiction": "ds_jurisdiction-european",
+    "logo": "https://test.example.org/assets/logo.svg",
+    "mainContact": {
+        "email": "contact@test-organisation.eu",
+        "firstName": "Jane",
+        "lastName": "Smith"
+    },
+    "name": "Test Resource Alpha",
+    "nodePID": "node-production",
+    "order": null,
+    "orderType": "order_type-fully_open_access",
+    "privacyPolicy": "https://test.example.org/policies/privacy",
+    "publicContacts": [
+        "support@test-organisation.eu"
+    ],
+    "publishingDate": "2024-07-22",
+    "resourceOwner": "21.15000/PRV00XYZ",
+    "scientificDomains": [
+        {
+            "scientificDomain": "scientific_domain-engineering_and_technology",
+            "scientificSubdomain": "scientific_subdomain-engineering_and_technology-civil_engineering"
+        }
+    ],
+    "serviceProviders": [],
+    "tags": [
+        "water",
+        "geospatial",
+        "analysis"
+    ],
+    "termsOfUse": "https://test.example.org/policies/terms",
+    "trl": "trl-7",
+    "type": "DataSource",
+    "webpage": "https://test.example.org/resources/alpha",
+    "contactPhone": "+1 800 555 0199",
+    "status": "active",
+    "visibility": "public",
+    "summary": "A brief summary of the test resource.",
+    "preferredFormat": "pdf",
+    "version": 3,
+    "isActive": true,
+    "termsAccepted": true,
+    "priority": "2",
+    "aliases": [
+        "alias-one",
+        "alias-two"
+    ]
+}
