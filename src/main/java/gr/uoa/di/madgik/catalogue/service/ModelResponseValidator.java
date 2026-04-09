@@ -207,29 +207,44 @@ public class ModelResponseValidator {
      */
     private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
         boolean empty = true;
-        if (object != null) {
-            for (UiField field : fields) {
-                path.push(field.getLabel().getText());
-                if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
-                    if (object instanceof List) {
-                        for (Object ans : (List<?>) object) {
-                            empty = validateFields(((LinkedHashMap<?, ?>) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-                            removeCompositeFieldIfEmpty(field, ans, empty);
-                        }
-                    } else {
-                        empty = validateFields(((LinkedHashMap<?, ?>) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-                    }
-                    removeCompositeFieldIfEmpty(field, object, empty);
-                }
-                if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
-                    checkMandatoryField(object, field, path);
-                }
+        if (object == null) {
+            return true;
+        }
 
-                if (containsAndValidatesValue(object, field, path)) {
-                    empty = false;
-                }
-                path.pop();
+        for (UiField field : fields) {
+            boolean fieldEmpty = true;
+            path.push(field.getLabel().getText());
+            Object value = null;
+            if (object instanceof LinkedHashMap<?, ?> map) {
+                value = map.get(field.getName());
             }
+            if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
+                if (value instanceof List<?>) {
+                    for (Object ans : (List<?>) value) {
+                        Object childValue = null;
+                        if (ans instanceof LinkedHashMap<?, ?>) {
+                            LinkedHashMap<?, ?> childMap = (LinkedHashMap<?, ?>) ans;
+                            childValue = childMap.get(field.getName());
+                        }
+                        boolean childEmpty = validateFields(childValue, field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                        removeCompositeFieldIfEmpty(field, ans, childEmpty);
+                        fieldEmpty = fieldEmpty && childEmpty;
+                    }
+                } else {
+                    boolean childEmpty = validateFields(value, field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                    removeCompositeFieldIfEmpty(field, object, childEmpty);
+                    fieldEmpty = childEmpty;
+                }
+            }
+            if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
+                checkMandatoryField(object, field, path);
+            }
+            if (containsAndValidatesValue(object, field, path)) {
+                fieldEmpty = false;
+            }
+
+            empty = empty && fieldEmpty;
+            path.pop();
         }
         return empty;
     }
