@@ -20,10 +20,11 @@ import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -47,6 +48,11 @@ import java.time.Instant;
 public class GenericExceptionController {
 
     private static final Logger logger = LoggerFactory.getLogger(GenericExceptionController.class);
+    private final Tracer tracer;
+
+    public GenericExceptionController(ObjectProvider<Tracer> tracer) {
+        this.tracer = tracer.getIfAvailable();
+    }
 
     /**
      * Handles registry exceptions that already expose an HTTP status.
@@ -140,8 +146,10 @@ public class GenericExceptionController {
     @ExceptionHandler(value = Exception.class, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ProblemDetail> handleException(HttpServletRequest req, Exception ex) {
         logger.error(ex.getMessage(), ex);
-        HttpStatusCode status = getStatusFromException(ex);
-        return buildErrorResponse(req, status, new RuntimeException("Internal Server Error", ex));
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(buildProblemDetail(req, HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"));
+
     }
 
     /**
@@ -173,7 +181,10 @@ public class GenericExceptionController {
         }
         problemDetail.setInstance(getUriWithParams(req));
         problemDetail.setProperty("method", req.getMethod());
-        problemDetail.setProperty("traceId", MDC.get("traceId"));
+        var traceId = currentTraceId();
+        if (traceId != null) {
+            problemDetail.setProperty("traceId", traceId);
+        }
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
@@ -196,5 +207,12 @@ public class GenericExceptionController {
             sb.append(request.getQueryString());
         }
         return URI.create(sb.toString());
+    }
+
+    private String currentTraceId() {
+        if (tracer == null || tracer.currentSpan() == null) {
+            return null;
+        }
+        return tracer.currentSpan().context().traceId();
     }
 }

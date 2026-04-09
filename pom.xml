@@ -24,6 +24,7 @@
     <properties>
         <java.version>25</java.version>
         <registry.version>5.0.0-SNAPSHOT</registry.version>
+        <typescript-generator-maven-plugin.version>3.2.1263</typescript-generator-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -92,8 +93,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-micrometer-tracing-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
         </dependency>
 
     </dependencies>
@@ -166,6 +171,7 @@
             <plugin>
                 <groupId>cz.habarta.typescript-generator</groupId>
                 <artifactId>typescript-generator-maven-plugin</artifactId>
+                <version>${typescript-generator-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>generate</id>
@@ -178,8 +184,8 @@
                 <configuration>
                     <jsonLibrary>jackson2</jsonLibrary>
                     <classPatterns>
-                        <pattern>gr.uoa.di.madgik.catalogue.ui.domain.types.*</pattern>
-                        <pattern>gr.uoa.di.madgik.catalogue.ui.domain.*</pattern>
+                        <pattern>gr.uoa.di.madgik.catalogue.domain.types.*</pattern>
+                        <pattern>gr.uoa.di.madgik.catalogue.domain.*</pattern>
                         <pattern>gr.uoa.di.madgik.catalogue.dto.**</pattern>
                     </classPatterns>
                     <outputFile>target/catalogue-model.d.ts</outputFile>
