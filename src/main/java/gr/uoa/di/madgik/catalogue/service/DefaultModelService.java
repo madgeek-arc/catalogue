@@ -41,6 +41,7 @@ import org.springframework.http.HttpStatus;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -152,20 +153,18 @@ public class DefaultModelService implements ModelService {
         validateModel(model);
         createParents(model);
         model = update(id, model, MODEL_RESOURCE_TYPE_NAME);
+
+        updateResourceTypeIfNeeded(model);
+
         return model;
     }
 
     @Override
-    public ResourceType createResourceType(Model model) {
+    public ResourceType generateResourceType(Model model) {
         createSectionIds(model);
         validateModel(model);
         createParents(model);
-        return modelResourceTypeMapper.map(model, new ResourceType());
-    }
-
-    @Override
-    public void updateResourceType(Model model) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return modelResourceTypeMapper.map(model, resourceTypeService.getResourceType(model.getResourceType()));
     }
 
     @Override
@@ -237,6 +236,44 @@ public class DefaultModelService implements ModelService {
                 .map(Object::toString)
                 .filter(item -> !unique.add(item))
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Schedules propagation of a model update to its mapped {@link ResourceType}, when the model
+     * declares a target resource type name.
+     *
+     * <p>This keeps the model update path responsive by delegating the registry-side resource type
+     * refresh to {@link #updateMappedResourceTypeAsync(Model, String)}.</p>
+     *
+     * @param model the updated model whose mapping may need to be reflected in the registry
+     */
+    private void updateResourceTypeIfNeeded(Model model) {
+        String resourceType = model.getResourceType();
+        if (resourceType != null && !resourceType.isBlank()) {
+            updateMappedResourceTypeAsync(model, resourceType);
+        }
+    }
+
+    /**
+     * Rebuilds and updates the mapped {@link ResourceType} on a background thread.
+     *
+     * <p>The caller does not block on registry projection rebuilds triggered by
+     * {@link gr.uoa.di.madgik.registry.service.ResourceTypeService#updateResourceType(ResourceType)}.
+     * Any failure in the asynchronous update path is logged and not rethrown to the original
+     * request thread.</p>
+     *
+     * @param model the source model used to rebuild the resource type definition
+     * @param resourceType the target resource type name to load and update
+     */
+    private void updateMappedResourceTypeAsync(Model model, String resourceType) {
+        CompletableFuture.runAsync(() -> {
+            ResourceType updatedResourceType = modelResourceTypeMapper
+                    .map(model, resourceTypeService.getResourceType(resourceType));
+            resourceTypeService.updateResourceType(updatedResourceType);
+        }).exceptionally(exception -> {
+            logger.error("Failed to update mapped resource type '{}' for model '{}'", resourceType, model.getId(), exception);
+            return null;
+        });
     }
 
     private void createSectionIds(Model model) {

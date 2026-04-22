@@ -50,7 +50,7 @@ public class FormsController {
 
     @PostMapping("resourceTypes")
     public ResponseEntity<ResourceType> createResourceType(@RequestBody Model model) {
-        return new ResponseEntity<>(modelService.createResourceType(model), HttpStatus.CREATED);
+        return new ResponseEntity<>(modelService.generateResourceType(model), HttpStatus.CREATED);
     }
 
     @PutMapping("models/{id}")

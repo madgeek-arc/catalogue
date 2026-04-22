@@ -25,16 +25,25 @@ import gr.uoa.di.madgik.catalogue.domain.UiField;
 import gr.uoa.di.madgik.catalogue.domain.types.VocabularyProperties;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.domain.index.IndexField;
+import gr.uoa.di.madgik.registry.domain.index.SearchCapability;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Maps a catalogue {@link Model} definition to a Registry {@link ResourceType}.
+ *
+ * <p>The mapper derives {@link IndexField} definitions from the model's sections and fields,
+ * preserving nested access paths, multiplicity, search capabilities, and vocabulary relations.
+ * It also ensures the generated resource type has the Registry defaults required for JSON payload
+ * handling.</p>
+ */
 public class ModelResourceTypeMapper {
 
     static final String PRIMARY_KEY_FIELD_NAME = "resource_internal_id";
@@ -44,6 +53,17 @@ public class ModelResourceTypeMapper {
     static final String DEFAULT_INDEX_MAPPER_CLASS = "gr.uoa.di.madgik.registry.index.DefaultIndexMapper";
     static final String DEFAULT_VOCABULARY_RESOURCE_TYPE = "vocabulary";
 
+    /**
+     * Applies model-derived Registry metadata onto the provided resource type.
+     *
+     * <p>If the model declares a resource type name, that name becomes the target
+     * {@link ResourceType#getName()}. Existing payload/index-mapper defaults are preserved unless
+     * blank, and index fields are regenerated from the model structure on every invocation.</p>
+     *
+     * @param model the source model definition
+     * @param resourceType the target resource type to populate
+     * @return the populated resource type
+     */
     public ResourceType map(Model model, ResourceType resourceType) {
         if (model == null) {
             throw new IllegalArgumentException("Model cannot be null");
@@ -77,7 +97,7 @@ public class ModelResourceTypeMapper {
 
         if (model.getSections() != null) {
             for (Section section : model.getSections()) {
-                collectSectionFields(section, resourceType, usedNames, indexFields, rootSectionPath(section));
+                collectSectionFields(section, resourceType, usedNames, indexFields, rootSectionPath(section), false);
             }
         }
 
@@ -85,42 +105,63 @@ public class ModelResourceTypeMapper {
         return resourceType;
     }
 
+    /**
+     * Recursively traverses a section tree and emits index fields for all eligible UI fields.
+     *
+     * @param section the current section to inspect
+     * @param resourceType the resource type receiving generated index fields
+     * @param usedNames the set of already reserved index field names
+     * @param indexFields the mutable output list of generated index fields
+     * @param pathSegments the current logical nesting path
+     * @param ancestorMultivalued whether any ancestor path segment is multivalued
+     */
     private void collectSectionFields(Section section, ResourceType resourceType, Set<String> usedNames,
-                                      List<IndexField> indexFields, List<PathSegment> pathSegments) {
+                                      List<IndexField> indexFields, List<PathSegment> pathSegments,
+                                      boolean ancestorMultivalued) {
         if (section == null) {
             return;
         }
         if (section.getFields() != null) {
             for (UiField field : section.getFields()) {
-                collectUiField(field, resourceType, usedNames, indexFields, pathSegments);
+                collectUiField(field, resourceType, usedNames, indexFields, pathSegments, ancestorMultivalued);
             }
         }
         if (section.getSubSections() != null) {
             for (Section subSection : section.getSubSections()) {
-                collectSectionFields(subSection, resourceType, usedNames, indexFields, pathSegments);
+                collectSectionFields(subSection, resourceType, usedNames, indexFields, pathSegments, ancestorMultivalued);
             }
         }
     }
 
+    /**
+     * Generates an {@link IndexField} for the given UI field when its type is indexable, then
+     * continues recursively through any sub-fields.
+     */
     private void collectUiField(UiField field, ResourceType resourceType, Set<String> usedNames,
-                                List<IndexField> indexFields, List<PathSegment> parentPathSegments) {
+                                List<IndexField> indexFields, List<PathSegment> parentPathSegments,
+                                boolean ancestorMultivalued) {
         if (field == null) {
             return;
         }
 
-        List<PathSegment> currentPathSegments = appendPathSegment(parentPathSegments, field.getName(), isMultivalued(field.getTypeInfo()));
+        boolean currentMultivalued = isMultivalued(field.getTypeInfo());
+        boolean effectiveMultivalued = ancestorMultivalued || currentMultivalued;
+        List<PathSegment> currentPathSegments = appendPathSegment(parentPathSegments, field.getName(), currentMultivalued);
         if (shouldCreateIndexField(field)) {
             String path = resolvePath(field, currentPathSegments);
-            indexFields.add(createIndexField(field, resourceType, usedNames, path));
+            indexFields.add(createIndexField(field, resourceType, usedNames, path, currentPathSegments, effectiveMultivalued));
         }
 
         if (field.getSubFields() != null) {
             for (UiField subField : field.getSubFields()) {
-                collectUiField(subField, resourceType, usedNames, indexFields, currentPathSegments);
+                collectUiField(subField, resourceType, usedNames, indexFields, currentPathSegments, effectiveMultivalued);
             }
         }
     }
 
+    /**
+     * Creates the mandatory Registry primary key field mapped to {@code $.id}.
+     */
     private IndexField createPrimaryKeyField(ResourceType resourceType) {
         IndexField indexField = new IndexField();
         indexField.setResourceType(resourceType);
@@ -133,26 +174,60 @@ public class ModelResourceTypeMapper {
         return indexField;
     }
 
-    private IndexField createIndexField(UiField field, ResourceType resourceType, Set<String> usedNames, String path) {
+    /**
+     * Builds a Registry {@link IndexField} from a model field, including type, path, search
+     * behavior, vocabulary relation metadata, and embedding defaults for strings.
+     */
+    private IndexField createIndexField(UiField field, ResourceType resourceType, Set<String> usedNames, String path,
+                                        List<PathSegment> pathSegments, boolean multivalued) {
+        String javaType = resolveJavaType(field.getTypeInfo());
+
         IndexField indexField = new IndexField();
         indexField.setResourceType(resourceType);
-        indexField.setName(uniqueFieldName(field, usedNames));
+        indexField.setName(uniqueFieldName(field, pathSegments, usedNames));
         indexField.setPath(path);
-        indexField.setType(resolveJavaType(field.getTypeInfo()));
-        indexField.setMultivalued(isMultivalued(field.getTypeInfo()));
+        indexField.setType(javaType);
+        indexField.setMultivalued(multivalued);
         indexField.setLabel(resolveLabel(field));
+        applySearchCapabilities(field.getTypeInfo(), indexField);
         applyVocabularyRelation(field.getTypeInfo(), indexField);
+
+        if (String.class.getName().equals(javaType)) { // include all string fields in embedding vector
+            indexField.setEmbeddingWeight(1.0f);
+        }
         return indexField;
     }
 
+    /**
+     * Returns whether the UI field should materialize as a Registry index field.
+     *
+     * <p>Composite fields are structural containers only; their concrete sub-fields carry the
+     * actual indexable values.</p>
+     */
     private boolean shouldCreateIndexField(UiField field) {
         TypeInfo typeInfo = field.getTypeInfo();
         FieldType fieldType = typeInfo == null ? null : typeInfo.getType();
         return fieldType != FieldType.composite;
     }
 
-    private String uniqueFieldName(UiField field, Set<String> usedNames) {
+    /**
+     * Produces a unique Registry field name from model metadata.
+     *
+     * <p>The name is sanitized to a Registry-safe identifier, deduplicated with numeric suffixes,
+     * and for nested fields named {@code id}, prefixed with the parent path to avoid collisions
+     * with common identifier fields deeper in the model tree.</p>
+     */
+    private String uniqueFieldName(UiField field, List<PathSegment> pathSegments, Set<String> usedNames) {
         String baseName = sanitizeFieldName(firstNonBlank(field.getId(), field.getName(), field.getAccessPath()));
+        if ("id".equals(baseName) && pathSegments != null && pathSegments.size() > 1) {
+            String nestingPrefix = sanitizeFieldName(pathSegments.subList(0, pathSegments.size() - 1).stream()
+                    .map(PathSegment::name)
+                    .filter(StringUtils::hasText)
+                    .collect(java.util.stream.Collectors.joining("_")));
+            if (StringUtils.hasText(nestingPrefix)) {
+                baseName = nestingPrefix + "_" + baseName;
+            }
+        }
         String candidate = baseName;
         int suffix = 2;
         while (!usedNames.add(candidate)) {
@@ -161,6 +236,9 @@ public class ModelResourceTypeMapper {
         return candidate;
     }
 
+    /**
+     * Normalizes an arbitrary field identifier into an ASCII-ish Registry field name.
+     */
     private String sanitizeFieldName(String value) {
         String normalized = value == null ? "" : value.trim().replaceAll("[^A-Za-z0-9_]", "_");
         normalized = normalized.replaceAll("_+", "_");
@@ -171,18 +249,45 @@ public class ModelResourceTypeMapper {
         if (Character.isDigit(normalized.charAt(0))) {
             normalized = "field_" + normalized;
         }
-        return normalized.toLowerCase(Locale.ROOT);
+        return normalized;
     }
 
+    /**
+     * Resolves the human-readable label text to store on the Registry index field.
+     */
     private String resolveLabel(UiField field) {
         StyledString styledString = field.getLabel();
         return styledString == null ? null : styledString.getText();
     }
 
+    /**
+     * Returns whether the field should be treated as multivalued in generated Registry metadata.
+     */
     private boolean isMultivalued(TypeInfo typeInfo) {
         return typeInfo != null && typeInfo.isMultiplicity();
     }
 
+    /**
+     * Assigns Registry search capabilities based on the catalogue field type.
+     */
+    private void applySearchCapabilities(TypeInfo typeInfo, IndexField indexField) {
+        FieldType fieldType = typeInfo == null ? null : typeInfo.getType();
+        if (fieldType == null) {
+            return;
+        }
+
+        switch (fieldType) {
+            case largeText, richText -> indexField.setSearchCapabilities(EnumSet.of(SearchCapability.TEXT));
+            case string -> indexField.setSearchCapabilities(EnumSet.of(SearchCapability.KEYWORD));
+            default -> {
+            }
+        }
+    }
+
+    /**
+     * Maps vocabulary field metadata to Registry related-resource references used by facet label
+     * resolution.
+     */
     private void applyVocabularyRelation(TypeInfo typeInfo, IndexField indexField) {
         if (typeInfo == null || typeInfo.getType() != FieldType.vocabulary) {
             return;
@@ -195,6 +300,9 @@ public class ModelResourceTypeMapper {
         indexField.setRelatedResourceType(resolveRelatedResourceType(vocabularyProperties));
     }
 
+    /**
+     * Infers the related Registry resource type for a vocabulary field from its configured URL.
+     */
     private String resolveRelatedResourceType(VocabularyProperties vocabularyProperties) {
         URI url = vocabularyProperties.getUrl();
         if (url == null || !StringUtils.hasText(url.getPath())) {
@@ -225,6 +333,9 @@ public class ModelResourceTypeMapper {
         return DEFAULT_VOCABULARY_RESOURCE_TYPE;
     }
 
+    /**
+     * Resolves the Java type stored in Registry metadata for the given catalogue field type.
+     */
     private String resolveJavaType(TypeInfo typeInfo) {
         FieldType fieldType = typeInfo == null ? null : typeInfo.getType();
         if (fieldType == null) {
@@ -239,6 +350,9 @@ public class ModelResourceTypeMapper {
         };
     }
 
+    /**
+     * Normalizes a model access path into Registry JSONPath notation.
+     */
     private String normalizePath(String accessPath) {
         if (!StringUtils.hasText(accessPath)) {
             return null;
@@ -253,6 +367,10 @@ public class ModelResourceTypeMapper {
         return "$." + path;
     }
 
+    /**
+     * Resolves the Registry JSONPath for the field, preferring an explicit access path when one is
+     * defined and otherwise deriving it from the section/field nesting path.
+     */
     private String resolvePath(UiField field, List<PathSegment> pathSegments) {
         String explicitPath = normalizePath(field.getAccessPath());
         if (explicitPath != null) {
@@ -271,6 +389,9 @@ public class ModelResourceTypeMapper {
         return builder.toString();
     }
 
+    /**
+     * Starts a derived path from the root section name, when present.
+     */
     private List<PathSegment> rootSectionPath(Section section) {
         if (section == null || !StringUtils.hasText(section.getName())) {
             return Collections.emptyList();
@@ -278,6 +399,10 @@ public class ModelResourceTypeMapper {
         return List.of(new PathSegment(section.getName().trim(), false));
     }
 
+    /**
+     * Appends a logical path segment used for deriving JSONPath expressions and nested-name
+     * disambiguation.
+     */
     private List<PathSegment> appendPathSegment(List<PathSegment> pathSegments, String segment, boolean multivalued) {
         if (!StringUtils.hasText(segment)) {
             return pathSegments;
@@ -290,6 +415,9 @@ public class ModelResourceTypeMapper {
     private record PathSegment(String name, boolean multivalued) {
     }
 
+    /**
+     * Returns the first non-blank value from the provided candidates.
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {

@@ -111,7 +111,28 @@ class ModelResourceTypeMapperTest {
 
         IndexField indexField = mapped.getIndexFields().get(1);
         assertEquals("$.main.groupedItems[*].childField", indexField.getPath());
-        assertEquals(false, indexField.isMultivalued());
+        assertEquals(true, indexField.isMultivalued());
+    }
+
+    @Test
+    void mapMarksNestedLeafAsMultivaluedWhenAnyAncestorHasMultiplicity() {
+        UiField grandChildField = field("Grand Child Field", "grandChildField", null, FieldType.string, false);
+
+        UiField childComposite = field("Child Composite", "childComposite", null, FieldType.composite, false);
+        childComposite.setSubFields(List.of(grandChildField));
+
+        UiField groupedItems = field("Grouped Items", "groupedItems", null, FieldType.composite, true);
+        groupedItems.setSubFields(List.of(childComposite));
+
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(groupedItems)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        IndexField indexField = mapped.getIndexFields().get(1);
+        assertEquals("$.main.groupedItems[*].childComposite.grandChildField", indexField.getPath());
+        assertEquals(true, indexField.isMultivalued());
     }
 
     @Test
@@ -149,6 +170,7 @@ class ModelResourceTypeMapperTest {
         ResourceType mapped = mapper.map(model, new ResourceType());
 
         assertEquals(2, mapped.getIndexFields().size());
+        assertEquals("sampleEntity_id", mapped.getIndexFields().get(1).getName());
         assertEquals("$.sampleEntity.id", mapped.getIndexFields().get(1).getPath());
     }
 
