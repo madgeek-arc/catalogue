@@ -28,6 +28,7 @@ import gr.uoa.di.madgik.registry.service.ResourceTypeService;
 import gr.uoa.di.madgik.registry.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -65,6 +66,7 @@ public class CatalogueConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(ModelResourceTypeMapper.class)
     ModelResourceTypeMapper modelResourceTypeMapper() {
         return new ModelResourceTypeMapper();
     }

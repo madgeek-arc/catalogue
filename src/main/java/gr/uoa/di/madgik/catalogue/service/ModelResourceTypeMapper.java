@@ -22,6 +22,7 @@ import gr.uoa.di.madgik.catalogue.domain.Section;
 import gr.uoa.di.madgik.catalogue.domain.StyledString;
 import gr.uoa.di.madgik.catalogue.domain.TypeInfo;
 import gr.uoa.di.madgik.catalogue.domain.UiField;
+import gr.uoa.di.madgik.catalogue.domain.types.DateProperties;
 import gr.uoa.di.madgik.catalogue.domain.types.VocabularyProperties;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.domain.index.IndexField;
@@ -94,15 +95,59 @@ public class ModelResourceTypeMapper {
 
         Set<String> usedNames = new LinkedHashSet<>();
         usedNames.add(PRIMARY_KEY_FIELD_NAME);
+        Set<String> usedPaths = new LinkedHashSet<>();
+        usedPaths.add(PRIMARY_KEY_FIELD_PATH);
 
         if (model.getSections() != null) {
             for (Section section : model.getSections()) {
-                collectSectionFields(section, resourceType, usedNames, indexFields, rootSectionPath(section), false);
+                collectSectionFields(section, resourceType, usedNames, usedPaths, indexFields, rootSectionPath(section), false);
             }
         }
+        mergeAdditionalIndexFields(model, resourceType, usedNames, usedPaths, indexFields);
 
         resourceType.setIndexFields(indexFields);
         return resourceType;
+    }
+
+    /**
+     * Hook for downstream projects to contribute additional index fields alongside the fields
+     * derived from the UI model.
+     *
+     * <p>The default implementation contributes no extra fields. Returned fields are merged after
+     * model-derived fields. Paths already present are ignored, while name collisions are resolved
+     * with the same uniqueness rules used for model-derived fields.</p>
+     */
+    protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Convenience factory for downstream projects contributing extra index fields through
+     * {@link #additionalIndexFields(Model, ResourceType)}.
+     */
+    protected IndexField additionalIndexField(ResourceType resourceType, String name, String label, String path, String type,
+                                              boolean multivalued) {
+        IndexField indexField = new IndexField();
+        indexField.setResourceType(resourceType);
+        indexField.setName(name);
+        indexField.setLabel(label);
+        indexField.setPath(path);
+        indexField.setType(type);
+        indexField.setMultivalued(multivalued);
+        return indexField;
+    }
+
+    /**
+     * Convenience factory for downstream projects contributing extra index fields through
+     * {@link #additionalIndexFields(Model, ResourceType)}.
+     */
+    protected IndexField additionalIndexField(ResourceType resourceType, String name, String label, String path, String type,
+                                              boolean multivalued, Set<SearchCapability> capabilities,
+                                              float embeddingWeight) {
+        IndexField indexField = additionalIndexField(resourceType, name, label, path, type, multivalued);
+        indexField.setSearchCapabilities(capabilities);
+        indexField.setEmbeddingWeight(embeddingWeight);
+        return indexField;
     }
 
     /**
@@ -116,6 +161,7 @@ public class ModelResourceTypeMapper {
      * @param ancestorMultivalued whether any ancestor path segment is multivalued
      */
     private void collectSectionFields(Section section, ResourceType resourceType, Set<String> usedNames,
+                                      Set<String> usedPaths,
                                       List<IndexField> indexFields, List<PathSegment> pathSegments,
                                       boolean ancestorMultivalued) {
         if (section == null) {
@@ -123,12 +169,12 @@ public class ModelResourceTypeMapper {
         }
         if (section.getFields() != null) {
             for (UiField field : section.getFields()) {
-                collectUiField(field, resourceType, usedNames, indexFields, pathSegments, ancestorMultivalued);
+                collectUiField(field, resourceType, usedNames, usedPaths, indexFields, pathSegments, ancestorMultivalued);
             }
         }
         if (section.getSubSections() != null) {
             for (Section subSection : section.getSubSections()) {
-                collectSectionFields(subSection, resourceType, usedNames, indexFields, pathSegments, ancestorMultivalued);
+                collectSectionFields(subSection, resourceType, usedNames, usedPaths, indexFields, pathSegments, ancestorMultivalued);
             }
         }
     }
@@ -138,6 +184,7 @@ public class ModelResourceTypeMapper {
      * continues recursively through any sub-fields.
      */
     private void collectUiField(UiField field, ResourceType resourceType, Set<String> usedNames,
+                                Set<String> usedPaths,
                                 List<IndexField> indexFields, List<PathSegment> parentPathSegments,
                                 boolean ancestorMultivalued) {
         if (field == null) {
@@ -149,13 +196,53 @@ public class ModelResourceTypeMapper {
         List<PathSegment> currentPathSegments = appendPathSegment(parentPathSegments, field.getName(), currentMultivalued);
         if (shouldCreateIndexField(field)) {
             String path = resolvePath(field, currentPathSegments);
-            indexFields.add(createIndexField(field, resourceType, usedNames, path, currentPathSegments, effectiveMultivalued));
+            if (usedPaths.add(path)) {
+                indexFields.add(createIndexField(field, resourceType, usedNames, path, currentPathSegments, effectiveMultivalued));
+            }
         }
 
         if (field.getSubFields() != null) {
             for (UiField subField : field.getSubFields()) {
-                collectUiField(subField, resourceType, usedNames, indexFields, currentPathSegments, effectiveMultivalued);
+                collectUiField(subField, resourceType, usedNames, usedPaths, indexFields, currentPathSegments, effectiveMultivalued);
             }
+        }
+    }
+
+    private void mergeAdditionalIndexFields(Model model, ResourceType resourceType, Set<String> usedNames,
+                                            Set<String> usedPaths, List<IndexField> indexFields) {
+        List<IndexField> additionalFields = additionalIndexFields(model, resourceType);
+        if (additionalFields == null) {
+            return;
+        }
+        for (IndexField additionalField : additionalFields) {
+            if (additionalField == null || !StringUtils.hasText(additionalField.getPath())) {
+                continue;
+            }
+            String path = additionalField.getPath().trim();
+            if (!usedPaths.add(path)) {
+                continue;
+            }
+
+            IndexField mergedField = new IndexField();
+            mergedField.setResourceType(resourceType);
+            mergedField.setName(uniqueFieldName(
+                    firstNonBlank(additionalField.getName(), path),
+                    pathSegmentsFromPath(path),
+                    usedNames
+            ));
+            mergedField.setPath(path);
+            mergedField.setType(StringUtils.hasText(additionalField.getType())
+                    ? additionalField.getType()
+                    : String.class.getName());
+            mergedField.setMultivalued(additionalField.isMultivalued());
+            mergedField.setLabel(additionalField.getLabel());
+            mergedField.setPrimaryKey(additionalField.isPrimaryKey());
+            mergedField.setDefaultValue(additionalField.getDefaultValue());
+            mergedField.setSearchCapabilities(additionalField.getSearchCapabilities());
+            mergedField.setRelatedResourceType(additionalField.getRelatedResourceType());
+            mergedField.setRelatedResourceTypeField(additionalField.getRelatedResourceTypeField());
+            mergedField.setEmbeddingWeight(additionalField.getEmbeddingWeight());
+            indexFields.add(mergedField);
         }
     }
 
@@ -218,7 +305,11 @@ public class ModelResourceTypeMapper {
      * with common identifier fields deeper in the model tree.</p>
      */
     private String uniqueFieldName(UiField field, List<PathSegment> pathSegments, Set<String> usedNames) {
-        String baseName = sanitizeFieldName(firstNonBlank(field.getId(), field.getName(), field.getAccessPath()));
+        return uniqueFieldName(firstNonBlank(field.getId(), field.getName(), field.getAccessPath()), pathSegments, usedNames);
+    }
+
+    private String uniqueFieldName(String rawName, List<PathSegment> pathSegments, Set<String> usedNames) {
+        String baseName = sanitizeFieldName(rawName);
         if ("id".equals(baseName) && pathSegments != null && pathSegments.size() > 1) {
             String nestingPrefix = sanitizeFieldName(pathSegments.subList(0, pathSegments.size() - 1).stream()
                     .map(PathSegment::name)
@@ -345,9 +436,43 @@ public class ModelResourceTypeMapper {
         return switch (fieldType) {
             case number, scale -> Float.class.getName();
             case bool, checkbox -> Boolean.class.getName();
-            case date -> java.time.Instant.class.getName();
+            case date -> {
+                DateProperties properties = (DateProperties) typeInfo.getProperties();
+                yield properties.isFormatToString() ?
+                        java.lang.String.class.getName() : java.time.Instant.class.getName();
+            }
             default -> String.class.getName();
         };
+    }
+
+    private List<PathSegment> pathSegmentsFromPath(String path) {
+        if (!StringUtils.hasText(path) || "$".equals(path.trim())) {
+            return Collections.emptyList();
+        }
+        String normalized = path.trim();
+        if (normalized.startsWith("$.")) {
+            normalized = normalized.substring(2);
+        } else if (normalized.startsWith("$")) {
+            normalized = normalized.substring(1);
+        }
+
+        List<PathSegment> segments = new ArrayList<>();
+        for (String rawSegment : normalized.split("\\.")) {
+            if (!StringUtils.hasText(rawSegment)) {
+                continue;
+            }
+            String segment = rawSegment.trim();
+            boolean multivalued = segment.endsWith("[*]");
+            if (multivalued) {
+                segment = segment.substring(0, segment.length() - 3);
+            } else if ("*".equals(segment)) {
+                continue;
+            }
+            if (StringUtils.hasText(segment)) {
+                segments.add(new PathSegment(segment, multivalued));
+            }
+        }
+        return segments;
     }
 
     /**

@@ -212,6 +212,61 @@ class ModelResourceTypeMapperTest {
         assertEquals("name", indexField.getRelatedResourceTypeField());
     }
 
+    @Test
+    void mapMergesAdditionalIndexFieldsProvidedBySubclass() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false))));
+
+        ModelResourceTypeMapper mapper = new AdditionalFieldsMapper();
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "catalogueId", "$.catalogueId", "java.lang.String");
+        assertHasField(mapped, "active", "$.active", "java.lang.Boolean");
+        assertHasField(mapped, "registeredBy", "$.metadata.registeredBy", "java.lang.String");
+    }
+
+    @Test
+    void mapDoesNotDuplicateModelFieldsAlreadyMappedByPath() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        UiField catalogueId = field("Catalogue Id", "catalogueId", "$.catalogueId", FieldType.string, false);
+        model.setSections(List.of(section(catalogueId)));
+
+        ModelResourceTypeMapper mapper = new AdditionalFieldsMapper();
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertEquals(1, mapped.getIndexFields().stream().filter(f -> "$.catalogueId".equals(f.getPath())).count());
+    }
+
+    @Test
+    void mapSkipsAdditionalIndexFieldsWithoutPath() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false))));
+
+        ResourceType mapped = new ModelResourceTypeMapper() {
+            @Override
+            protected List<IndexField> additionalIndexFields(Model inputModel, ResourceType resourceType) {
+                IndexField invalid = new IndexField();
+                invalid.setName("invalid");
+                return List.of(invalid);
+            }
+        }.map(model, new ResourceType());
+
+        assertEquals(2, mapped.getIndexFields().size());
+    }
+
+    private void assertHasField(ResourceType resourceType, String name, String path, String type) {
+        IndexField indexField = resourceType.getIndexFields().stream()
+                .filter(field -> name.equals(field.getName()) && path.equals(field.getPath()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(type, indexField.getType());
+    }
+
     private Section section(UiField... fields) {
         Section section = new Section();
         section.setName("main");
@@ -230,5 +285,16 @@ class ModelResourceTypeMapperTest {
         typeInfo.setMultiplicity(multiplicity);
         field.setTypeInfo(typeInfo);
         return field;
+    }
+
+    private static class AdditionalFieldsMapper extends ModelResourceTypeMapper {
+        @Override
+        protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
+            return List.of(
+                    additionalIndexField(resourceType, "catalogueId", "$.catalogueId", String.class.getName(), false),
+                    additionalIndexField(resourceType, "active", "$.active", Boolean.class.getName(), false),
+                    additionalIndexField(resourceType, "registeredBy", "$.metadata.registeredBy", String.class.getName(), false)
+            );
+        }
     }
 }
