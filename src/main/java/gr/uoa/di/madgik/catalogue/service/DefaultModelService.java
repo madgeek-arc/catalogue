@@ -37,6 +37,7 @@ import gr.uoa.di.madgik.registry.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.core.task.AsyncTaskExecutor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
@@ -56,6 +57,7 @@ public class DefaultModelService implements ModelService {
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
     private final ModelResourceTypeMapper modelResourceTypeMapper;
+    private final AsyncTaskExecutor modelUpdateTaskExecutor;
 
     public DefaultModelService(GenericResourceService genericResourceService,
                                IdGenerator<String> idGenerator,
@@ -63,7 +65,8 @@ public class DefaultModelService implements ModelService {
                                ResourceService resourceService,
                                ResourceTypeService resourceTypeService,
                                ParserService parserPool,
-                               ModelResourceTypeMapper modelResourceTypeMapper) {
+                               ModelResourceTypeMapper modelResourceTypeMapper,
+                               AsyncTaskExecutor modelUpdateTaskExecutor) {
         this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
@@ -71,6 +74,7 @@ public class DefaultModelService implements ModelService {
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
         this.modelResourceTypeMapper = modelResourceTypeMapper;
+        this.modelUpdateTaskExecutor = modelUpdateTaskExecutor;
     }
 
     public <T> T add(T obj, String resourceTypeName) {
@@ -270,7 +274,7 @@ public class DefaultModelService implements ModelService {
             ResourceType updatedResourceType = modelResourceTypeMapper
                     .map(model, resourceTypeService.getResourceType(resourceType));
             resourceTypeService.updateResourceType(updatedResourceType);
-        }).exceptionally(exception -> {
+        }, modelUpdateTaskExecutor).exceptionally(exception -> {
             logger.error("Failed to update mapped resource type '{}' for model '{}'", resourceType, model.getId(), exception);
             return null;
         });

@@ -33,6 +33,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 @Configuration
 @ComponentScan(basePackages = "gr.uoa.di.madgik.catalogue")
@@ -60,14 +63,21 @@ public class CatalogueConfiguration {
                               SearchService searchService, ResourceService resourceService,
                               ResourceTypeService resourceTypeService, ParserService parserService,
                               IdGenerator<String> idGenerator,
-                              ModelResourceTypeMapper modelResourceTypeMapper) {
+                              ModelResourceTypeMapper modelResourceTypeMapper,
+                              AsyncTaskExecutor modelUpdateTaskExecutor) {
         return new DefaultModelService(genericResourceService, idGenerator, searchService, resourceService,
-                resourceTypeService, parserService, modelResourceTypeMapper);
+                resourceTypeService, parserService, modelResourceTypeMapper, modelUpdateTaskExecutor);
     }
 
     @Bean
     @ConditionalOnMissingBean(ModelResourceTypeMapper.class)
     ModelResourceTypeMapper modelResourceTypeMapper() {
         return new ModelResourceTypeMapper();
+    }
+
+    @Bean
+    AsyncTaskExecutor modelUpdateTaskExecutor() {
+        SimpleAsyncTaskExecutor delegate = new SimpleAsyncTaskExecutor("catalogue-model-update-");
+        return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
     }
 }
