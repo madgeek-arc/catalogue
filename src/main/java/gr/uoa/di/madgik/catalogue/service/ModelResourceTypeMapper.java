@@ -16,12 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.catalogue.domain.FieldType;
-import gr.uoa.di.madgik.catalogue.domain.Model;
-import gr.uoa.di.madgik.catalogue.domain.Section;
-import gr.uoa.di.madgik.catalogue.domain.StyledString;
-import gr.uoa.di.madgik.catalogue.domain.TypeInfo;
-import gr.uoa.di.madgik.catalogue.domain.UiField;
+import gr.uoa.di.madgik.catalogue.domain.*;
 import gr.uoa.di.madgik.catalogue.domain.types.DateProperties;
 import gr.uoa.di.madgik.catalogue.domain.types.VocabularyProperties;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
@@ -30,12 +25,7 @@ import gr.uoa.di.madgik.registry.domain.index.SearchCapability;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Maps a catalogue {@link Model} definition to a Registry {@link ResourceType}.
@@ -61,7 +51,7 @@ public class ModelResourceTypeMapper {
      * {@link ResourceType#getName()}. Existing payload/index-mapper defaults are preserved unless
      * blank, and index fields are regenerated from the model structure on every invocation.</p>
      *
-     * @param model the source model definition
+     * @param model        the source model definition
      * @param resourceType the target resource type to populate
      * @return the populated resource type
      */
@@ -153,11 +143,11 @@ public class ModelResourceTypeMapper {
     /**
      * Recursively traverses a section tree and emits index fields for all eligible UI fields.
      *
-     * @param section the current section to inspect
-     * @param resourceType the resource type receiving generated index fields
-     * @param usedNames the set of already reserved index field names
-     * @param indexFields the mutable output list of generated index fields
-     * @param pathSegments the current logical nesting path
+     * @param section             the current section to inspect
+     * @param resourceType        the resource type receiving generated index fields
+     * @param usedNames           the set of already reserved index field names
+     * @param indexFields         the mutable output list of generated index fields
+     * @param pathSegments        the current logical nesting path
      * @param ancestorMultivalued whether any ancestor path segment is multivalued
      */
     private void collectSectionFields(Section section, ResourceType resourceType, Set<String> usedNames,
@@ -275,8 +265,13 @@ public class ModelResourceTypeMapper {
         indexField.setPath(path);
         indexField.setType(javaType);
         indexField.setMultivalued(multivalued);
-        indexField.setLabel(resolveLabel(field));
+
         applySearchCapabilities(field.getTypeInfo(), indexField);
+        indexField.setLabel(indexField.getSearchCapabilities().contains(SearchCapability.KEYWORD) ?
+                // if field is not mapped as a keyword, skip labeling to treat it as not a facet field
+                resolveLabel(field) : null
+        );
+
         applyVocabularyRelation(field.getTypeInfo(), indexField);
 
         if (String.class.getName().equals(javaType)) { // include all string fields in embedding vector
