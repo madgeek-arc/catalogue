@@ -291,9 +291,9 @@ class ModelResourceTypeMapperTest {
         @Override
         protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
             return List.of(
-                    additionalIndexField(resourceType, "catalogueId", "$.catalogueId", String.class.getName(), false),
-                    additionalIndexField(resourceType, "active", "$.active", Boolean.class.getName(), false),
-                    additionalIndexField(resourceType, "registeredBy", "$.metadata.registeredBy", String.class.getName(), false)
+                    additionalIndexField(resourceType, "catalogueId", "Catalogue ID", "$.catalogueId", String.class.getName(), false),
+                    additionalIndexField(resourceType, "active", "Active", "$.active", Boolean.class.getName(), false),
+                    additionalIndexField(resourceType, "registeredBy", "Registered By", "$.metadata.registeredBy", String.class.getName(), false)
             );
         }
     }
