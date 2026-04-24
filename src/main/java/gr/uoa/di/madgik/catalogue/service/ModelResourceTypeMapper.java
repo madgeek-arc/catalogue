@@ -433,7 +433,7 @@ public class ModelResourceTypeMapper {
             case bool, checkbox -> Boolean.class.getName();
             case date -> {
                 DateProperties properties = (DateProperties) typeInfo.getProperties();
-                yield properties.isFormatToString() ?
+                yield properties != null && properties.isFormatToString() ?
                         java.lang.String.class.getName() : java.time.Instant.class.getName();
             }
             default -> String.class.getName();
