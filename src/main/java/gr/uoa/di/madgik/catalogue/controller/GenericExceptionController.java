@@ -130,10 +130,10 @@ public class GenericExceptionController {
     @ExceptionHandler(value = {SQLException.class, DataAccessException.class}, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ProblemDetail> handlePersistenceException(HttpServletRequest req, Exception ex) {
         logger.error(ex.getMessage(), ex);
-        reportException(req, ex, HttpStatus.UNPROCESSABLE_ENTITY);
+        reportException(req, ex, HttpStatus.UNPROCESSABLE_CONTENT);
         return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(buildProblemDetail(req, HttpStatus.UNPROCESSABLE_ENTITY, "Could not process request"));
+                .status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(buildProblemDetail(req, HttpStatus.UNPROCESSABLE_CONTENT, "Could not process request"));
     }
 
     /**

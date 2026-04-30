@@ -16,9 +16,6 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
 import gr.uoa.di.madgik.catalogue.domain.*;
 import gr.uoa.di.madgik.catalogue.domain.types.*;
@@ -42,6 +39,9 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -117,7 +117,8 @@ public class ModelResponseValidator implements ResourceValidator {
             if (logger.isDebugEnabled()) {
                 try {
                     logger.debug("Validating resource: {}", objectMapper.writeValueAsString(resource));
-                } catch (JsonProcessingException ignore) {
+                } catch (JacksonException _) {
+                    // ignore
                 }
             }
 
