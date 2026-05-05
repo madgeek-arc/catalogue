@@ -17,9 +17,19 @@
 package gr.uoa.di.madgik.catalogue.config;
 
 import gr.uoa.di.madgik.catalogue.domain.Model;
-import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.Constraint;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.Payload;
+import jakarta.validation.Valid;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @ConfigurationProperties(prefix = "catalogue-lib")
 @Validated
@@ -28,13 +38,8 @@ public class CatalogueLibProperties {
     /**
      * Model-based catalogue behavior.
      */
+    @Valid
     private ModelProperties model = new ModelProperties();
-
-    @AssertTrue(message = "catalogue-lib.model.validation.base-url is required when catalogue-lib.model.validation.enabled is true")
-    public boolean isModelValidationBaseUrlConfigured() {
-        return !model.getValidation().isEnabled()
-                || (model.getValidation().getBaseUrl() != null && !model.getValidation().getBaseUrl().isBlank());
-    }
 
     public ModelProperties getModel() {
         return model;
@@ -44,6 +49,7 @@ public class CatalogueLibProperties {
         this.model = model;
     }
 
+    @ValidCatalogueValidation
     public static class CatalogueValidation {
 
         /**
@@ -78,6 +84,7 @@ public class CatalogueLibProperties {
         /**
          * Validation-based properties.
          */
+        @Valid
         private CatalogueValidation validation = new CatalogueValidation();
 
         /**
@@ -128,6 +135,39 @@ public class CatalogueLibProperties {
 
         public void setOnUpdate(boolean onUpdate) {
             this.onUpdate = onUpdate;
+        }
+    }
+
+    @Documented
+    @Constraint(validatedBy = CatalogueValidationValidator.class)
+    @Target(ElementType.TYPE)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ValidCatalogueValidation {
+
+        String message() default "catalogue-lib.model.validation.base-url is required when catalogue-lib.model.validation.enabled is true";
+
+        Class<?>[] groups() default {};
+
+        Class<? extends Payload>[] payload() default {};
+    }
+
+    public static class CatalogueValidationValidator implements ConstraintValidator<ValidCatalogueValidation, CatalogueValidation> {
+
+        @Override
+        public boolean isValid(CatalogueValidation validation, ConstraintValidatorContext context) {
+            if (validation == null || !validation.isEnabled() || hasText(validation.getBaseUrl())) {
+                return true;
+            }
+
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
+                    .addPropertyNode("baseUrl")
+                    .addConstraintViolation();
+            return false;
+        }
+
+        private boolean hasText(String value) {
+            return value != null && !value.isBlank();
         }
     }
 }
