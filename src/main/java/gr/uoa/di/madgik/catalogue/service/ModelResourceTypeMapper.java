@@ -80,13 +80,16 @@ public class ModelResourceTypeMapper {
             resourceType.setSchema(DEFAULT_SCHEMA);
         }
 
-        List<IndexField> indexFields = new ArrayList<>();
-        indexFields.add(createPrimaryKeyField(resourceType));
+        IndexField primaryKeyField = primaryKeyIndexField(model, resourceType);
+        validatePrimaryKeyField(primaryKeyField, resourceType);
 
         Set<String> usedNames = new LinkedHashSet<>();
-        usedNames.add(PRIMARY_KEY_FIELD_NAME);
+        usedNames.add(primaryKeyField.getName());
         Set<String> usedPaths = new LinkedHashSet<>();
-        usedPaths.add(PRIMARY_KEY_FIELD_PATH);
+        usedPaths.add(primaryKeyField.getPath());
+
+        List<IndexField> indexFields = new ArrayList<>();
+        indexFields.add(primaryKeyField);
 
         if (model.getSections() != null) {
             for (Section section : model.getSections()) {
@@ -109,6 +112,18 @@ public class ModelResourceTypeMapper {
      */
     protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
         return Collections.emptyList();
+    }
+
+    /**
+     * Hook for downstream projects to customize the primary key index field.
+     *
+     * <p>The returned field is always marked as primary key and associated with the mapped
+     * {@link ResourceType}. Its name and path are reserved before model-derived and additional
+     * fields are merged, so later fields with the same path are ignored and later name collisions
+     * are deduplicated.</p>
+     */
+    protected IndexField primaryKeyIndexField(Model model, ResourceType resourceType) {
+        return primaryKeyIndexField(resourceType, "ID", PRIMARY_KEY_FIELD_PATH, String.class.getName());
     }
 
     /**
@@ -137,6 +152,16 @@ public class ModelResourceTypeMapper {
         IndexField indexField = additionalIndexField(resourceType, name, label, path, type, multivalued);
         indexField.setSearchCapabilities(capabilities);
         indexField.setEmbeddingWeight(embeddingWeight);
+        return indexField;
+    }
+
+    /**
+     * Convenience factory for downstream projects overriding the primary key index field through
+     * {@link #primaryKeyIndexField(Model, ResourceType)}.
+     */
+    protected IndexField primaryKeyIndexField(ResourceType resourceType, String label, String path, String type) {
+        IndexField indexField = additionalIndexField(resourceType, PRIMARY_KEY_FIELD_NAME, label, path, type, false);
+        indexField.setPrimaryKey(true);
         return indexField;
     }
 
@@ -236,19 +261,23 @@ public class ModelResourceTypeMapper {
         }
     }
 
-    /**
-     * Creates the mandatory Registry primary key field mapped to {@code $.id}.
-     */
-    private IndexField createPrimaryKeyField(ResourceType resourceType) {
-        IndexField indexField = new IndexField();
+    private void validatePrimaryKeyField(IndexField indexField, ResourceType resourceType) {
+        if (indexField == null) {
+            throw new IllegalArgumentException("Primary key index field cannot be null");
+        }
+        if (!StringUtils.hasText(indexField.getName())) {
+            throw new IllegalArgumentException("Primary key index field name cannot be blank");
+        }
+        if (!StringUtils.hasText(indexField.getPath())) {
+            throw new IllegalArgumentException("Primary key index field path cannot be blank");
+        }
+        indexField.setName(indexField.getName().trim());
+        indexField.setPath(indexField.getPath().trim());
+        if (!StringUtils.hasText(indexField.getType())) {
+            indexField.setType(String.class.getName());
+        }
         indexField.setResourceType(resourceType);
-        indexField.setName(PRIMARY_KEY_FIELD_NAME);
-        indexField.setPath(PRIMARY_KEY_FIELD_PATH);
-        indexField.setType(String.class.getName());
         indexField.setPrimaryKey(true);
-        indexField.setMultivalued(false);
-        indexField.setLabel("ID");
-        return indexField;
     }
 
     /**

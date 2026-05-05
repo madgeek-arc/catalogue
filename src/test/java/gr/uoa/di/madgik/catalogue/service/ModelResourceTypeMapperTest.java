@@ -259,6 +259,34 @@ class ModelResourceTypeMapperTest {
         assertEquals(2, mapped.getIndexFields().size());
     }
 
+    @Test
+    void mapAllowsSubclassToOverridePrimaryKeyIndexField() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false))));
+
+        ResourceType mapped = new CustomPrimaryKeyMapper().map(model, new ResourceType());
+
+        IndexField primaryKey = mapped.getIndexFields().getFirst();
+        assertEquals("resource_internal_id", primaryKey.getName());
+        assertEquals("$.identifiers.pid", primaryKey.getPath());
+        assertEquals("java.lang.String", primaryKey.getType());
+        assertEquals(true, primaryKey.isPrimaryKey());
+        assertEquals(mapped, primaryKey.getResourceType());
+    }
+
+    @Test
+    void mapDoesNotDuplicateModelFieldAlreadyMappedByCustomPrimaryKeyPath() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        UiField pid = field("PID", "pid", "$.identifiers.pid", FieldType.string, false);
+        model.setSections(List.of(section(pid)));
+
+        ResourceType mapped = new CustomPrimaryKeyMapper().map(model, new ResourceType());
+
+        assertEquals(1, mapped.getIndexFields().stream().filter(f -> "$.identifiers.pid".equals(f.getPath())).count());
+    }
+
     private void assertHasField(ResourceType resourceType, String name, String path, String type) {
         IndexField indexField = resourceType.getIndexFields().stream()
                 .filter(field -> name.equals(field.getName()) && path.equals(field.getPath()))
@@ -295,6 +323,13 @@ class ModelResourceTypeMapperTest {
                     additionalIndexField(resourceType, "active", "Active", "$.active", Boolean.class.getName(), false),
                     additionalIndexField(resourceType, "registeredBy", "Registered By", "$.metadata.registeredBy", String.class.getName(), false)
             );
+        }
+    }
+
+    private static class CustomPrimaryKeyMapper extends ModelResourceTypeMapper {
+        @Override
+        protected IndexField primaryKeyIndexField(Model model, ResourceType resourceType) {
+            return primaryKeyIndexField(resourceType, "PID", "$.identifiers.pid", String.class.getName());
         }
     }
 }
