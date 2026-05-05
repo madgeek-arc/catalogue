@@ -17,30 +17,31 @@
 package gr.uoa.di.madgik.catalogue.config;
 
 import gr.uoa.di.madgik.catalogue.domain.Model;
-import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.AssertTrue;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = "catalogue-lib")
+@Validated
 public class CatalogueLibProperties {
 
     /**
-     * Validation-based properties.
+     * Model-based catalogue behavior.
      */
-    private CatalogueValidation validation = new CatalogueValidation();
+    private ModelProperties model = new ModelProperties();
 
-    @PostConstruct
-    void validate() {
-        if (validation.isEnabled() && (validation.getBaseUrl() == null || validation.getBaseUrl().isBlank())) {
-            throw new RuntimeException("Could not resolve placeholder 'catalogue-lib.validation.base-url' in value \"${catalogue-lib.validation.base-url}\"");
-        }
+    @AssertTrue(message = "catalogue-lib.model.validation.base-url is required when catalogue-lib.model.validation.enabled is true")
+    public boolean isModelValidationBaseUrlConfigured() {
+        return !model.getValidation().isEnabled()
+                || (model.getValidation().getBaseUrl() != null && !model.getValidation().getBaseUrl().isBlank());
     }
 
-    public CatalogueValidation getValidation() {
-        return validation;
+    public ModelProperties getModel() {
+        return model;
     }
 
-    public void setValidation(CatalogueValidation validation) {
-        this.validation = validation;
+    public void setModel(ModelProperties model) {
+        this.model = model;
     }
 
     public static class CatalogueValidation {
@@ -53,7 +54,6 @@ public class CatalogueLibProperties {
         /**
          * The base url for validating vocabularies (if absolute path is not provided in the field).
          */
-        @jakarta.validation.constraints.Null
         private String baseUrl;
 
         public boolean isEnabled() {
@@ -70,6 +70,64 @@ public class CatalogueLibProperties {
 
         public void setBaseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
+        }
+    }
+
+    public static class ModelProperties {
+
+        /**
+         * Validation-based properties.
+         */
+        private CatalogueValidation validation = new CatalogueValidation();
+
+        /**
+         * Resource type synchronization behavior for model create/update operations.
+         */
+        private ResourceTypeSyncProperties resourceTypeSync = new ResourceTypeSyncProperties();
+
+        public CatalogueValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(CatalogueValidation validation) {
+            this.validation = validation;
+        }
+
+        public ResourceTypeSyncProperties getResourceTypeSync() {
+            return resourceTypeSync;
+        }
+
+        public void setResourceTypeSync(ResourceTypeSyncProperties resourceTypeSync) {
+            this.resourceTypeSync = resourceTypeSync;
+        }
+    }
+
+    public static class ResourceTypeSyncProperties {
+
+        /**
+         * Whether creating a model should also create the mapped Registry resource type.
+         */
+        private boolean onCreate = false;
+
+        /**
+         * Whether updating a model should also update the mapped Registry resource type.
+         */
+        private boolean onUpdate = false;
+
+        public boolean isOnCreate() {
+            return onCreate;
+        }
+
+        public void setOnCreate(boolean onCreate) {
+            this.onCreate = onCreate;
+        }
+
+        public boolean isOnUpdate() {
+            return onUpdate;
+        }
+
+        public void setOnUpdate(boolean onUpdate) {
+            this.onUpdate = onUpdate;
         }
     }
 }

@@ -16,6 +16,7 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
+import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
 import gr.uoa.di.madgik.catalogue.domain.Model;
 import gr.uoa.di.madgik.catalogue.domain.Section;
 import gr.uoa.di.madgik.catalogue.domain.UiField;
@@ -58,6 +59,7 @@ public class DefaultModelService implements ModelService {
     public final ParserService parserPool;
     private final ModelResourceTypeMapper modelResourceTypeMapper;
     private final AsyncTaskExecutor modelUpdateTaskExecutor;
+    private final CatalogueLibProperties catalogueLibProperties;
 
     public DefaultModelService(GenericResourceService genericResourceService,
                                IdGenerator<String> idGenerator,
@@ -66,7 +68,8 @@ public class DefaultModelService implements ModelService {
                                ResourceTypeService resourceTypeService,
                                ParserService parserPool,
                                ModelResourceTypeMapper modelResourceTypeMapper,
-                               AsyncTaskExecutor modelUpdateTaskExecutor) {
+                               AsyncTaskExecutor modelUpdateTaskExecutor,
+                               CatalogueLibProperties catalogueLibProperties) {
         this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
         this.searchService = searchService;
@@ -75,6 +78,7 @@ public class DefaultModelService implements ModelService {
         this.parserPool = parserPool;
         this.modelResourceTypeMapper = modelResourceTypeMapper;
         this.modelUpdateTaskExecutor = modelUpdateTaskExecutor;
+        this.catalogueLibProperties = catalogueLibProperties;
     }
 
     public <T> T add(T obj, String resourceTypeName) {
@@ -147,6 +151,9 @@ public class DefaultModelService implements ModelService {
         validateModel(model);
         createParents(model);
         model = add(model, MODEL_RESOURCE_TYPE_NAME);
+
+        addResourceTypeIfNeeded(model);
+
         return model;
     }
 
@@ -242,6 +249,15 @@ public class DefaultModelService implements ModelService {
                 .collect(Collectors.toSet());
     }
 
+    private void addResourceTypeIfNeeded(Model model) {
+        String resourceType = model.getResourceType();
+        if (catalogueLibProperties.getModel().getResourceTypeSync().isOnCreate()
+                && resourceType != null && !resourceType.isBlank()) {
+            ResourceType rt = modelResourceTypeMapper.map(model, new ResourceType());
+            resourceTypeService.addResourceType(rt);
+        }
+    }
+
     /**
      * Schedules propagation of a model update to its mapped {@link ResourceType}, when the model
      * declares a target resource type name.
@@ -253,7 +269,8 @@ public class DefaultModelService implements ModelService {
      */
     private void updateResourceTypeIfNeeded(Model model) {
         String resourceType = model.getResourceType();
-        if (resourceType != null && !resourceType.isBlank()) {
+        if (catalogueLibProperties.getModel().getResourceTypeSync().isOnUpdate()
+                && resourceType != null && !resourceType.isBlank()) {
             updateMappedResourceTypeAsync(model, resourceType);
         }
     }

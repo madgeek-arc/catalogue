@@ -55,7 +55,7 @@ public class ModelResourceTypeMapper {
      * @param resourceType the target resource type to populate
      * @return the populated resource type
      */
-    public ResourceType map(Model model, ResourceType resourceType) {
+    public final ResourceType map(Model model, ResourceType resourceType) {
         if (model == null) {
             throw new IllegalArgumentException("Model cannot be null");
         }
@@ -300,7 +300,7 @@ public class ModelResourceTypeMapper {
      * with common identifier fields deeper in the model tree.</p>
      */
     private String uniqueFieldName(UiField field, List<PathSegment> pathSegments, Set<String> usedNames) {
-        return uniqueFieldName(firstNonBlank(field.getId(), field.getName(), field.getAccessPath()), pathSegments, usedNames);
+        return uniqueFieldName(firstNonBlank(field.getName(), field.getAccessPath()), pathSegments, usedNames);
     }
 
     private String uniqueFieldName(String rawName, List<PathSegment> pathSegments, Set<String> usedNames) {

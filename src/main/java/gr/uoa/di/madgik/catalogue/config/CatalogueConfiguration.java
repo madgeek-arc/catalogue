@@ -64,9 +64,11 @@ public class CatalogueConfiguration {
                               ResourceTypeService resourceTypeService, ParserService parserService,
                               IdGenerator<String> idGenerator,
                               ModelResourceTypeMapper modelResourceTypeMapper,
-                              AsyncTaskExecutor modelUpdateTaskExecutor) {
+                              AsyncTaskExecutor modelUpdateTaskExecutor,
+                              CatalogueLibProperties catalogueLibProperties) {
         return new DefaultModelService(genericResourceService, idGenerator, searchService, resourceService,
-                resourceTypeService, parserService, modelResourceTypeMapper, modelUpdateTaskExecutor);
+                resourceTypeService, parserService, modelResourceTypeMapper, modelUpdateTaskExecutor,
+                catalogueLibProperties);
     }
 
     @Bean

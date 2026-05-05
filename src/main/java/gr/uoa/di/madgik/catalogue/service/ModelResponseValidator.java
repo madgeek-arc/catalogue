@@ -27,7 +27,6 @@ import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -66,9 +65,6 @@ public class ModelResponseValidator implements ResourceValidator {
     private final ModelService modelService;
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
-
-    @Value("${catalogue-lib.validation.base-url}")
-    private String baseUrl;
 
     private String modelId;
 
@@ -112,7 +108,7 @@ public class ModelResponseValidator implements ResourceValidator {
      * @return {@link T}
      */
     public <T> T validate(T resource, String resourceTypeName) {
-        if (properties.getValidation().isEnabled()) {
+        if (properties.getModel().getValidation().isEnabled()) {
 
             if (logger.isDebugEnabled()) {
                 try {
@@ -729,6 +725,7 @@ public class ModelResponseValidator implements ResourceValidator {
                             .block();
                 } else {
                     String vocabPath = vocabularyUrl.toString();
+                    String baseUrl = properties.getModel().getValidation().getBaseUrl();
                     if (!baseUrl.endsWith("/") && !vocabPath.startsWith("/")) {
                         vocabPath = "/" + vocabPath;
                     }
