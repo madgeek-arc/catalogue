@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -225,6 +226,32 @@ class ModelResourceTypeMapperTest {
         assertHasField(mapped, "catalogueId", "$.catalogueId", "java.lang.String");
         assertHasField(mapped, "active", "$.active", "java.lang.Boolean");
         assertHasField(mapped, "registeredBy", "$.metadata.registeredBy", "java.lang.String");
+    }
+
+    @Test
+    void mapMergesCustomResourceTypePropertiesBeforeAdditionalIndexFields() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false))));
+
+        ResourceType resourceType = new ResourceType();
+        resourceType.setProperties(new java.util.HashMap<>(Map.of("class", "existing.Class")));
+
+        ResourceType mapped = new ModelResourceTypeMapper() {
+            @Override
+            protected Map<String, String> customResourceTypeProperties(ResourceType resourceType) {
+                return Map.of("class", "custom.Class");
+            }
+
+            @Override
+            protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
+                return List.of(additionalIndexField(resourceType, "className", "Class", "$.className",
+                        String.class.getName(), false));
+            }
+        }.map(model, resourceType);
+
+        assertEquals("custom.Class", mapped.getProperties().get("class"));
+        assertHasField(mapped, "className", "$.className", "java.lang.String");
     }
 
     @Test

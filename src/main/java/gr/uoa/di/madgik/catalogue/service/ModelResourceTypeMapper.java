@@ -79,6 +79,7 @@ public class ModelResourceTypeMapper {
         if (!StringUtils.hasText(resourceType.getSchema()) && !StringUtils.hasText(resourceType.getSchemaUrl())) {
             resourceType.setSchema(DEFAULT_SCHEMA);
         }
+        mergeCustomResourceTypeProperties(resourceType);
 
         IndexField primaryKeyField = primaryKeyIndexField(model, resourceType);
         validatePrimaryKeyField(primaryKeyField, resourceType);
@@ -112,6 +113,17 @@ public class ModelResourceTypeMapper {
      */
     protected List<IndexField> additionalIndexFields(Model model, ResourceType resourceType) {
         return Collections.emptyList();
+    }
+
+    /**
+     * Hook for downstream projects to add or override Registry resource type properties before
+     * index fields are generated.
+     *
+     * <p>The default implementation contributes no custom properties. Returned values are merged
+     * into {@link ResourceType#getProperties()}, replacing existing values with the same key.</p>
+     */
+    protected Map<String, String> customResourceTypeProperties(ResourceType resourceType) {
+        return Collections.emptyMap();
     }
 
     /**
@@ -259,6 +271,20 @@ public class ModelResourceTypeMapper {
             mergedField.setEmbeddingWeight(additionalField.getEmbeddingWeight());
             indexFields.add(mergedField);
         }
+    }
+
+    private void mergeCustomResourceTypeProperties(ResourceType resourceType) {
+        Map<String, String> customProperties = customResourceTypeProperties(resourceType);
+        if (customProperties == null || customProperties.isEmpty()) {
+            return;
+        }
+
+        Map<String, String> properties = resourceType.getProperties();
+        if (properties == null) {
+            properties = new LinkedHashMap<>();
+            resourceType.setProperties(properties);
+        }
+        properties.putAll(customProperties);
     }
 
     private void validatePrimaryKeyField(IndexField indexField, ResourceType resourceType) {
