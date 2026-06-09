@@ -33,6 +33,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
@@ -145,6 +146,9 @@ public class GenericExceptionController {
      */
     @ExceptionHandler(value = Exception.class, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ProblemDetail> handleException(HttpServletRequest req, Exception ex) {
+        if (ex instanceof ErrorResponse error) {
+            return ResponseEntity.status(error.getStatusCode()).body(error.getBody());
+        }
         logger.error(ex.getMessage(), ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
