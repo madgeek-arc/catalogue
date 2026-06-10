@@ -36,6 +36,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @ComponentScan(basePackages = "gr.uoa.di.madgik.catalogue")
@@ -82,4 +85,14 @@ public class CatalogueConfiguration {
         SimpleAsyncTaskExecutor delegate = new SimpleAsyncTaskExecutor("catalogue-model-update-");
         return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
     }
+
+    @Bean
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    ObjectMapper objectMapper() {
+        return JsonMapper.builder()
+                .findAndAddModules()
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
+    }
+
 }
