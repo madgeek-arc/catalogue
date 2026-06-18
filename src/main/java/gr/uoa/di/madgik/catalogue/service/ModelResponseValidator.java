@@ -660,8 +660,7 @@ public class ModelResponseValidator implements ResourceValidator {
             }
 
             if (response == null) {
-                logger.warn("URL connectivity check returned no response for '{}'", url);
-                return;
+                throw new ValidationException("Failed to validate URL: " + url);
             }
 
             HttpStatusCode statusCode = response.statusCode();
@@ -674,7 +673,7 @@ public class ModelResponseValidator implements ResourceValidator {
         } catch (ValidationException e) {
             throw e;
         } catch (WebClientRequestException e) {
-            logger.warn("URL connectivity check failed for '{}': {}", url, e.getMessage());
+            throw new ValidationException("Failed to validate URL: " + url);
         } catch (URISyntaxException e) {
             throw new ValidationException("Failed to parse URI: " + url);
         }
