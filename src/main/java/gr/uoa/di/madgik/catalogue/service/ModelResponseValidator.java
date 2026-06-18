@@ -637,34 +637,42 @@ public class ModelResponseValidator implements ResourceValidator {
             .clientConnector(new ReactorClientHttpConnector(
                     HttpClient.create()
                             .followRedirect(true)
-                            .responseTimeout(Duration.ofSeconds(5))
-                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                            .responseTimeout(Duration.ofSeconds(10))
+                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             ))
             .build();
 
     public void validateUrl(UiField field, String url) {
         try {
-            URI uri = new URI(url); // parse and validate the URL string, throws URISyntaxException if malformed
+            URI uri = new URI(url);
 
-            ClientResponse response = webClient.get()
+            ClientResponse response = webClient.head()
                     .uri(uri)
                     .exchangeToMono(Mono::just)
                     .block();
+
+            // Fallback to GET for servers that reject HEAD
+            if (response != null && response.statusCode().isSameCodeAs(HttpStatus.METHOD_NOT_ALLOWED)) {
+                response = webClient.get()
+                        .uri(uri)
+                        .exchangeToMono(Mono::just)
+                        .block();
+            }
 
             if (response == null) {
                 throw new ValidationException("Failed to validate URL: " + url);
             }
 
             HttpStatusCode statusCode = response.statusCode();
-            if (statusCode.isSameCodeAs(HttpStatus.OK)) {
-                return;
-            } else if (!statusCode.is2xxSuccessful()) {
+            if (!statusCode.is2xxSuccessful()) {
                 String fieldName = (field != null) ? field.getName() : "unknown";
                 throw new ValidationException(
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
                                 fieldName, uri, statusCode.value()));
             }
-        } catch (WebClientResponseException | WebClientRequestException e) {
+        } catch (ValidationException e) {
+            throw e;
+        } catch (WebClientRequestException e) {
             throw new ValidationException("Failed to validate URL: " + url);
         } catch (URISyntaxException e) {
             throw new ValidationException("Failed to parse URI: " + url);
