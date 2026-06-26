@@ -64,13 +64,19 @@ public class GenericExceptionController {
      */
     @ExceptionHandler(value = ResourceException.class, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ProblemDetail> handleResourceException(HttpServletRequest req, ResourceException ex) {
-        logger.info(ex.getMessage(), ex);
+        if (ex.getStatus().is5xxServerError()) {
+            logger.error(ex.getMessage(), ex);
+        } else {
+            logger.info(ex.getMessage());
+            logger.debug(ex.getMessage(), ex);
+        }
         return buildErrorResponse(req, ex.getStatus(), ex);
     }
 
     @ExceptionHandler(value = HttpClientErrorException.class, produces = MediaType.APPLICATION_JSON_VALUE)
     protected ResponseEntity<ProblemDetail> handleHttpClientError(HttpServletRequest req, HttpClientErrorException ex) {
-        logger.info(ex.getMessage(), ex);
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, ex.getStatusCode(), ex);
     }
 

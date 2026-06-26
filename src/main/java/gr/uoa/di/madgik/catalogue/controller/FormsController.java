@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "forms", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = {"", "forms"}, produces = MediaType.APPLICATION_JSON_VALUE)
 public class FormsController {
 
     private final ModelService modelService;
