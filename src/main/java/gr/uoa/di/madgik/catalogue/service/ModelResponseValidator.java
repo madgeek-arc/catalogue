@@ -23,7 +23,6 @@ import gr.uoa.di.madgik.registry.service.ResourceValidator;
 import gr.uoa.di.madgik.catalogue.dto.IdLabel;
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
-import gr.uoa.di.madgik.registry.exception.ResourceException;
 import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,13 +119,15 @@ public class ModelResponseValidator implements ResourceValidator {
 
             FacetFilter ff = new FacetFilter();
             ff.addFilter("resourceType", resourceTypeName);
-            //FIXME: how to resolve multiple models on the same resource type (eg. configuration_template_instance)
             List<Model> models = modelService.browse(ff).getResults();
             if (models == null || models.isEmpty()) {
                 logger.warn("Could not find model to validate resource : [resourceType={}]", resourceTypeName);
                 return resource;
             } else if (models.size() != 1) {
-                throw new ResourceException(String.format("Found more than one models : [resourceType=%s]", resourceTypeName), HttpStatus.CONFLICT);
+                // multiple Models can legitimately share a resourceType (e.g. configuration_template_instance);
+                // there's no reliable discriminator yet, so skip validation rather than rejecting the write
+                logger.warn("Found more than one models, skipping validation : [resourceType={}]", resourceTypeName);
+                return resource;
             }
             Model model = models.getFirst();
             modelId = model.getId();
