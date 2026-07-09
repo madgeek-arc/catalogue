@@ -16,6 +16,8 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
+import com.jayway.jsonpath.InvalidPathException;
+import com.jayway.jsonpath.JsonPath;
 import gr.uoa.di.madgik.catalogue.domain.*;
 import gr.uoa.di.madgik.catalogue.domain.types.DateProperties;
 import gr.uoa.di.madgik.catalogue.domain.types.VocabularyProperties;
@@ -26,6 +28,7 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Maps a catalogue {@link Model} definition to a Registry {@link ResourceType}.
@@ -43,6 +46,7 @@ public class ModelResourceTypeMapper {
     static final String DEFAULT_SCHEMA = "{}";
     static final String DEFAULT_INDEX_MAPPER_CLASS = "gr.uoa.di.madgik.registry.index.DefaultIndexMapper";
     static final String DEFAULT_VOCABULARY_RESOURCE_TYPE = "vocabulary";
+    private static final Pattern SAFE_JSONPATH_BARE_SEGMENT = Pattern.compile("[A-Za-z0-9_-]+");
 
     /**
      * Applies model-derived Registry metadata onto the provided resource type.
@@ -99,6 +103,7 @@ public class ModelResourceTypeMapper {
         }
         mergeAdditionalIndexFields(model, resourceType, usedNames, usedPaths, indexFields);
 
+        validateIndexFieldPaths(indexFields, resourceType);
         resourceType.setIndexFields(indexFields);
         return resourceType;
     }
@@ -304,6 +309,23 @@ public class ModelResourceTypeMapper {
         }
         indexField.setResourceType(resourceType);
         indexField.setPrimaryKey(true);
+    }
+
+    /**
+     * Validates that every generated {@link IndexField#getPath()} is a syntactically valid
+     * JSONPath expression, failing fast at Model create/update time instead of surfacing later as
+     * an unrelated indexing failure when a resource is submitted.
+     */
+    private void validateIndexFieldPaths(List<IndexField> indexFields, ResourceType resourceType) {
+        for (IndexField indexField : indexFields) {
+            try {
+                JsonPath.compile(indexField.getPath());
+            } catch (InvalidPathException e) {
+                throw new IllegalArgumentException("Invalid JSONPath '" + indexField.getPath()
+                        + "' generated for index field '" + indexField.getName()
+                        + "' on resource type '" + resourceType.getName() + "': " + e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -556,12 +578,35 @@ public class ModelResourceTypeMapper {
         }
         StringBuilder builder = new StringBuilder("$");
         for (PathSegment segment : pathSegments) {
-            builder.append('.').append(segment.name());
+            appendJsonPathSegment(builder, segment.name());
             if (segment.multivalued()) {
                 builder.append("[*]");
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * Appends a single JSONPath segment to {@code builder}, using dot notation when {@code name}
+     * is a safe bare identifier and escaped bracket notation otherwise, so segment names
+     * containing spaces or other special characters always yield a syntactically valid JSONPath
+     * expression.
+     */
+    private void appendJsonPathSegment(StringBuilder builder, String name) {
+        if (SAFE_JSONPATH_BARE_SEGMENT.matcher(name).matches()) {
+            builder.append('.').append(name);
+        } else {
+            builder.append("['").append(escapeBracketSegment(name)).append("']");
+        }
+    }
+
+    /**
+     * Escapes a segment name for inclusion inside a single-quoted JSONPath bracket-notation
+     * property, per Jayway JsonPath's unescaping rules (backslash and single-quote are the only
+     * characters that require escaping).
+     */
+    private String escapeBracketSegment(String name) {
+        return name.replace("\\", "\\\\").replace("'", "\\'");
     }
 
     /**

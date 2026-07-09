@@ -33,6 +33,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ModelResourceTypeMapperTest {
 
@@ -173,6 +174,69 @@ class ModelResourceTypeMapperTest {
         assertEquals(2, mapped.getIndexFields().size());
         assertEquals("sampleEntity_id", mapped.getIndexFields().get(1).getName());
         assertEquals("$.sampleEntity.id", mapped.getIndexFields().get(1).getPath());
+    }
+
+    @Test
+    void mapBracketQuotesFieldNameContainingSpace() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Full Name", "full name", null, FieldType.string, false))));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        IndexField field = mapped.getIndexFields().get(1);
+        assertEquals("$.main['full name']", field.getPath());
+        assertEquals("full_name", field.getName());
+    }
+
+    @Test
+    void mapBracketQuotesSectionNameContainingSpace() {
+        Section rootSection = new Section();
+        rootSection.setName("root section");
+        rootSection.setFields(List.of(field("Id", "id", null, FieldType.string, false)));
+
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(rootSection));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertEquals("$['root section'].id", mapped.getIndexFields().get(1).getPath());
+    }
+
+    @Test
+    void mapEscapesEmbeddedSingleQuoteInBracketQuotedSegment() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("O'Brien", "o'brien", null, FieldType.string, false))));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertEquals("$.main['o\\'brien']", mapped.getIndexFields().get(1).getPath());
+    }
+
+    @Test
+    void mapThrowsForAccessPathThatCompilesToAnInvalidJsonPath() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(
+                field("Full Name", "fullName", "contact.full name", FieldType.string, false)
+        )));
+
+        assertThrows(IllegalArgumentException.class, () -> mapper.map(model, new ResourceType()));
+    }
+
+    @Test
+    void mapPreservesExplicitlyBracketQuotedAccessPath() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(
+                field("Full Name", "fullName", "contact['full name']", FieldType.string, false)
+        )));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertEquals("$.contact['full name']", mapped.getIndexFields().get(1).getPath());
     }
 
     @Test
