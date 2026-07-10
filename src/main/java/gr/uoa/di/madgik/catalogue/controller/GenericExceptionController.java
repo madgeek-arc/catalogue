@@ -17,14 +17,19 @@
 package gr.uoa.di.madgik.catalogue.controller;
 
 import gr.uoa.di.madgik.catalogue.exception.ValidationException;
+import gr.uoa.di.madgik.registry.exception.MissingResourceEmbeddingsException;
 import gr.uoa.di.madgik.registry.exception.ResourceAlreadyExistsException;
 import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
+import gr.uoa.di.madgik.registry.exception.UnsupportedSearchParameterException;
+import gr.uoa.di.madgik.registry.service.ServiceException;
 import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -44,8 +49,13 @@ import java.time.Instant;
 
 /**
  * Advice handling all thrown exceptions.
+ *
+ * <p>Ordered ahead of registry's {@code GlobalExceptionHandler} (which registers itself at
+ * {@link Ordered#LOWEST_PRECEDENCE} as a fallback) so this advice wins for exception types
+ * both handle.
  */
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GenericExceptionController {
 
     private static final Logger logger = LoggerFactory.getLogger(GenericExceptionController.class);
@@ -108,6 +118,29 @@ public class GenericExceptionController {
         logger.info(ex.getMessage());
         logger.debug(ex.getMessage(), ex);
         return buildErrorResponse(req, HttpStatus.NOT_FOUND, ex);
+    }
+
+    @ExceptionHandler(value = UnsupportedSearchParameterException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ProblemDetail> handleUnsupportedSearchParameter(HttpServletRequest req,
+                                                                             UnsupportedSearchParameterException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(value = MissingResourceEmbeddingsException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ProblemDetail> handleMissingResourceEmbeddings(HttpServletRequest req,
+                                                                             MissingResourceEmbeddingsException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.UNPROCESSABLE_CONTENT, ex);
+    }
+
+    @ExceptionHandler(value = ServiceException.class, produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ProblemDetail> handleServiceException(HttpServletRequest req, ServiceException ex) {
+        logger.info(ex.getMessage());
+        logger.debug(ex.getMessage(), ex);
+        return buildErrorResponse(req, HttpStatus.BAD_REQUEST, ex);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class, produces = MediaType.APPLICATION_JSON_VALUE)
