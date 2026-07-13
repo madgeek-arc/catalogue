@@ -39,7 +39,7 @@ import java.util.List;
  * Legacy generic resource controller kept for backward compatibility with the old {@code /items}
  * endpoint shape where {@code resourceType} is provided as a query parameter.
  *
- * @deprecated Since 10.0.0, use {@link gr.uoa.di.madgik.registry.controllers.GenericController}
+ * @deprecated Since 10.0.0, use {@link gr.uoa.di.madgik.registry.controllers.TypedResourceController}
  * instead. The replacement controller exposes the generic API under {@code /records/{resourceType}}
  * and carries the resource type in the path rather than in request parameters.
  */
