@@ -22,6 +22,7 @@ public class Form {
 
     FieldIdNameValue dependsOn;
     List<FieldIdNameValue> affects = null;
+    AutofillFrom autofillFrom = null;
     String group;
     StyledString description;
     StyledString suggestion;
@@ -48,6 +49,14 @@ public class Form {
 
     public void setAffects(List<FieldIdNameValue> affects) {
         this.affects = affects;
+    }
+
+    public AutofillFrom getAutofillFrom() {
+        return autofillFrom;
+    }
+
+    public void setAutofillFrom(AutofillFrom autofillFrom) {
+        this.autofillFrom = autofillFrom;
     }
 
     public String getGroup() {
