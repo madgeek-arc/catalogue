@@ -727,7 +727,7 @@ public class ModelResponseValidator implements ResourceValidator {
 
                 if (vocabularyUrl.isAbsolute()) {
                     String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
-                    uriToCall = URI.create(vocabularyUrl + "/" + decodedValue);
+                    uriToCall = URI.create(appendPathSegment(vocabularyUrl.toString(), decodedValue));
                     response = webClient.get()
                             .uri(uriToCall)
                             .exchangeToMono(Mono::just)
@@ -738,7 +738,7 @@ public class ModelResponseValidator implements ResourceValidator {
                     if (!baseUrl.endsWith("/") && !vocabPath.startsWith("/")) {
                         vocabPath = "/" + vocabPath;
                     }
-                    String resolvedPath = vocabPath + "/" + stringValue;
+                    String resolvedPath = appendPathSegment(vocabPath, stringValue);
                     String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
                     response = webClient.mutate()
                             .baseUrl(baseUrl)
@@ -773,6 +773,28 @@ public class ModelResponseValidator implements ResourceValidator {
                 );
             }
         }
+    }
+
+    /**
+     * Appends {@code "/" + value} to the <em>path</em> portion of {@code url}, before any query
+     * string or fragment, so a vocabulary {@code url} that carries query parameters (e.g.
+     * {@code /api/interoperabilityRecord/list?federation=true}) still yields a well-formed
+     * "resolve one value" URL. Naive concatenation would push the value into the query string
+     * ({@code .../list?federation=true/21.T15999/EnMoNU00}) and break the downstream endpoint.
+     * The value keeps any literal {@code '/'} it contains (PIDs are {@code prefix/suffix}), matching
+     * the previous behaviour for query-less URLs.
+     */
+    private static String appendPathSegment(String url, String value) {
+        int cut = url.length();
+        int queryIdx = url.indexOf('?');
+        int fragmentIdx = url.indexOf('#');
+        if (queryIdx >= 0) {
+            cut = Math.min(cut, queryIdx);
+        }
+        if (fragmentIdx >= 0) {
+            cut = Math.min(cut, fragmentIdx);
+        }
+        return url.substring(0, cut) + "/" + value + url.substring(cut);
     }
 
     public static boolean isValidUrl(String value) {
