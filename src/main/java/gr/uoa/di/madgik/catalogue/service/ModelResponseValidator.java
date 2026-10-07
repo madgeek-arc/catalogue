@@ -44,6 +44,7 @@ import tools.jackson.core.type.TypeReference;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -666,6 +667,13 @@ public class ModelResponseValidator implements ResourceValidator {
 
             HttpStatusCode statusCode = response.statusCode();
             if (!statusCode.is2xxSuccessful()) {
+                if (isTransientStatus(statusCode)) {
+                    // the remote end is temporarily unavailable (e.g. service downtime); this says nothing
+                    // about whether the URL itself is wrong, so don't block the submission
+                    logger.warn("URL '{}' responded with transient error code {}; skipping strict validation",
+                            uri, statusCode.value());
+                    return;
+                }
                 String fieldName = (field != null) ? field.getName() : "unknown";
                 throw new ValidationException(
                         String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
@@ -674,10 +682,33 @@ public class ModelResponseValidator implements ResourceValidator {
         } catch (ValidationException e) {
             throw e;
         } catch (WebClientRequestException e) {
-            throw new ValidationException("Failed to validate URL: " + url);
+            if (hasCause(e, UnknownHostException.class)) {
+                throw new ValidationException("Failed to validate URL (unknown host): " + url);
+            }
+            // timeout / connection refused / reset: indistinguishable from the target being down
+            logger.warn("URL '{}' is unreachable ({}); skipping strict validation", url, e.getMessage());
         } catch (URISyntaxException e) {
             throw new ValidationException("Failed to parse URI: " + url);
         }
+    }
+
+    /**
+     * Server-side errors and throttling describe the state of the remote service, not the correctness
+     * of the value we were given, so they must not fail validation.
+     */
+    private static boolean isTransientStatus(HttpStatusCode statusCode) {
+        return statusCode.is5xxServerError()
+                || statusCode.isSameCodeAs(HttpStatus.REQUEST_TIMEOUT)
+                || statusCode.isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    private static boolean hasCause(Throwable t, Class<? extends Throwable> type) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause() == cause ? null : cause.getCause()) {
+            if (type.isInstance(cause)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateVocabulary(Object value, UiField field, Deque<String> path, Object obj) {
@@ -721,11 +752,14 @@ public class ModelResponseValidator implements ResourceValidator {
                 }
             }
 
+            // absolute URLs point at another service (e.g. the federation nodes list); relative ones are
+            // served by this very application, where a failure is a bug and should stay visible
+            final boolean remote = vocabularyUrl.isAbsolute();
             try {
                 ClientResponse response;
                 URI uriToCall;
 
-                if (vocabularyUrl.isAbsolute()) {
+                if (remote) {
                     String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
                     uriToCall = URI.create(appendPathSegment(vocabularyUrl.toString(), decodedValue));
                     response = webClient.get()
@@ -762,12 +796,21 @@ public class ModelResponseValidator implements ResourceValidator {
                     throw new ValidationException(
                             String.format("Field '%s' is invalid. Vocabulary value '%s' was not found (404)", prettyPrintPath(path), stringValue)
                     );
+                } else if (remote && isTransientStatus(statusCode)) {
+                    logger.warn("Remote vocabulary '{}' responded with {}; skipping validation of value '{}'",
+                            vocabularyUrl, statusCode.value(), stringValue);
                 } else {
                     throw new ValidationException(
                             String.format("Field '%s' is invalid. Vocabulary validation failed for value '%s' with status %d", prettyPrintPath(path), stringValue, statusCode.value())
                     );
                 }
             } catch (WebClientResponseException | WebClientRequestException e) {
+                if (remote) {
+                    // a remote vocabulary being down must not block edits; only a definite 404 does
+                    logger.warn("Remote vocabulary '{}' is unreachable; skipping validation of value '{}': {}",
+                            vocabularyUrl, stringValue, e.getMessage());
+                    return;
+                }
                 throw new ValidationException(
                         String.format("Field '%s' is invalid. Vocabulary service is unreachable for value '%s'", prettyPrintPath(path), stringValue)
                 );
