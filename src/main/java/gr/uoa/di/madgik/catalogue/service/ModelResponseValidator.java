@@ -65,7 +65,11 @@ public class ModelResponseValidator implements ResourceValidator {
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
 
-    private String modelId;
+    /**
+     * Model of the resource being validated by the current thread. The validator is a shared singleton, so the
+     * model can't be kept in a plain field.
+     */
+    private final ThreadLocal<Model> currentModel = new ThreadLocal<>();
 
     public ModelResponseValidator(@Lazy ModelService modelService,
                                   CatalogueLibProperties properties,
@@ -130,9 +134,13 @@ public class ModelResponseValidator implements ResourceValidator {
                 return resource;
             }
             Model model = models.getFirst();
-            modelId = model.getId();
-            validateResourceAgainstModel(resource, model.getSections());
-            return validateSections(resource, model.getSections());
+            currentModel.set(model);
+            try {
+                validateResourceAgainstModel(resource, model.getSections());
+                return validateSections(resource, model.getSections());
+            } finally {
+                currentModel.remove();
+            }
         }
         return resource;
     }
@@ -703,7 +711,7 @@ public class ModelResponseValidator implements ResourceValidator {
             FieldIdNameValue fieldIdNameValue = field.getForm().getDependsOn();
             if (fieldIdNameValue != null) {
                 String dependsOnFieldName = field.getForm().getDependsOn().getName();
-                List<UiField> fields = modelService.getAllFields(modelService.get(modelId));
+                List<UiField> fields = modelService.getAllFields(currentModel.get());
                 for (UiField uiField : fields) {
                     //TODO: check fields for dependsOn too
                     List<UiField> subfields = uiField.getSubFields();
