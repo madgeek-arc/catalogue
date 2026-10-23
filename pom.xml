@@ -169,6 +169,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <parameters>true</parameters>
+                    <!-- JDK 23+ no longer runs classpath annotation processors by default; the Spring Boot
+                         configuration processor generates the catalogue-lib.* metadata. -->
+                    <proc>full</proc>
                 </configuration>
             </plugin>
 
