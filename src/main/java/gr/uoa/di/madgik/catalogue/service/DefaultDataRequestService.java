@@ -21,19 +21,25 @@ import gr.uoa.di.madgik.registry.exception.ResourceException;
 import gr.uoa.di.madgik.registry.exception.ResourceNotFoundException;
 import gr.uoa.di.madgik.catalogue.domain.DataRequest;
 import gr.uoa.di.madgik.catalogue.domain.Request;
+import gr.uoa.di.madgik.catalogue.config.CatalogueLibProperties;
+import gr.uoa.di.madgik.catalogue.http.PublicAddressGuard;
+import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilderFactory;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
@@ -42,18 +48,32 @@ public class DefaultDataRequestService implements DataRequestService {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDataRequestService.class);
 
+    private final PublicAddressGuard addressGuard;
+    private final WebClient webClient;
+
+    public DefaultDataRequestService(CatalogueLibProperties properties) {
+        CatalogueLibProperties.DataRequestProperties settings = properties.getDataRequest();
+        this.addressGuard = new PublicAddressGuard(settings.isAllowPrivateAddresses());
+        // Redirects are not followed, so every fetched URL is the one checked by the guard.
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create()
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) settings.getConnectTimeout().toMillis())
+                        .responseTimeout(settings.getResponseTimeout())
+                        .followRedirect(false)))
+                .build();
+    }
+
     @Override
     public Mono<?> retrieve(DataRequest dataRequest) {
         Request request = dataRequest.getRequest();
 
         Mono<String> response;
         try {
-            WebClient client = WebClient
-                    .builder()
-                    .uriBuilderFactory(createUriBuilderFactory(request.getUrl(), dataRequest.getParams()))
-                    .build();
-            response = client
+            URI target = createUriBuilderFactory(request.getUrl(), dataRequest.getParams()).expand("");
+            addressGuard.check(target);
+            response = webClient
                     .method(request.getMethod())
+                    .uri(target)
                     .body(Mono.justOrEmpty(request.getBody()), String.class)
                     .headers(headers -> {
                         if (request.getHeaders() != null) {

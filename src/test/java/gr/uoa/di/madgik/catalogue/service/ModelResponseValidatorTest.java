@@ -70,6 +70,8 @@ class ModelResponseValidatorTest {
         CatalogueLibProperties properties = new CatalogueLibProperties();
         properties.getModel().getValidation().setEnabled(true);
         properties.getModel().getValidation().setBaseUrl("http://localhost:8080");
+        // HTTP is mocked below; skip DNS resolution of the fictitious hosts used by the test data
+        properties.getModel().getValidation().setAllowPrivateAddresses(true);
 
         validator = new ModelResponseValidator(modelService, properties, objectMapper);
 
@@ -90,6 +92,7 @@ class ModelResponseValidatorTest {
                 .thenReturn(mockResponse);
 
         ReflectionTestUtils.setField(validator, "webClient", mockWebClient);
+        ReflectionTestUtils.setField(validator, "vocabularyClient", mockWebClient);
     }
 
     // -------------------------------------------------------------------------

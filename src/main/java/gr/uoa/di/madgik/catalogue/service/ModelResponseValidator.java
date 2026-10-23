@@ -27,6 +27,7 @@ import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -36,6 +37,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import gr.uoa.di.madgik.catalogue.http.BlockedUrlException;
+import gr.uoa.di.madgik.catalogue.http.PublicAddressGuard;
+import reactor.netty.http.client.HttpClientRequest;
+import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.http.client.HttpClient;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -71,12 +76,48 @@ public class ModelResponseValidator implements ResourceValidator {
      */
     private final ThreadLocal<Model> currentModel = new ThreadLocal<>();
 
+    private final PublicAddressGuard urlGuard;
+    private final WebClient webClient;
+    private final WebClient vocabularyClient;
+
     public ModelResponseValidator(@Lazy ModelService modelService,
                                   CatalogueLibProperties properties,
                                   ObjectMapper objectMapper) {
         this.modelService = modelService;
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.urlGuard = new PublicAddressGuard(properties.getModel().getValidation().isAllowPrivateAddresses());
+        // Redirects are followed only to URLs the guard allows.
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create()
+                                .followRedirect((request, response) -> isAllowedRedirect(request, response))
+                                .responseTimeout(Duration.ofSeconds(10))
+                                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                ))
+                .build();
+        // Vocabulary hosts come from the model or catalogue-lib.model.validation.base-url, not from submitted values.
+        this.vocabularyClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create()
+                                .followRedirect(true)
+                                .responseTimeout(Duration.ofSeconds(10))
+                                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                ))
+                .build();
+    }
+
+    private boolean isAllowedRedirect(HttpClientRequest request, HttpClientResponse response) {
+        int status = response.status().code();
+        String location = response.responseHeaders().get(HttpHeaders.LOCATION);
+        if (status < 300 || status >= 400 || location == null) {
+            return false;
+        }
+        try {
+            return urlGuard.allows(URI.create(request.resourceUrl()).resolve(location));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // Email regex pattern (RFC 5322 simplified)
@@ -656,19 +697,16 @@ public class ModelResponseValidator implements ResourceValidator {
     }
 
 
-    // Class-level field - created once, reused everywhere
-    private final WebClient webClient = WebClient.builder()
-            .clientConnector(new ReactorClientHttpConnector(
-                    HttpClient.create()
-                            .followRedirect(true)
-                            .responseTimeout(Duration.ofSeconds(10))
-                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-            ))
-            .build();
-
     public void validateUrl(UiField field, String url) {
         try {
             URI uri = new URI(url);
+            try {
+                urlGuard.check(uri);
+            } catch (BlockedUrlException e) {
+                String fieldName = (field != null) ? field.getName() : "unknown";
+                throw new ValidationException(String.format("Field [%s]: the URL you provided '%s' is not allowed. %s",
+                        fieldName, url, e.getMessage()));
+            }
 
             ClientResponse response = webClient.head()
                     .uri(uri)
@@ -751,7 +789,7 @@ public class ModelResponseValidator implements ResourceValidator {
                 if (vocabularyUrl.isAbsolute()) {
                     String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
                     uriToCall = URI.create(appendPathSegment(vocabularyUrl.toString(), decodedValue));
-                    response = webClient.get()
+                    response = vocabularyClient.get()
                             .uri(uriToCall)
                             .exchangeToMono(Mono::just)
                             .block();
@@ -763,7 +801,7 @@ public class ModelResponseValidator implements ResourceValidator {
                     }
                     String resolvedPath = appendPathSegment(vocabPath, stringValue);
                     String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
-                    response = webClient.mutate()
+                    response = vocabularyClient.mutate()
                             .baseUrl(baseUrl)
                             .build()
                             .get()

@@ -30,6 +30,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.Duration;
 
 @ConfigurationProperties(prefix = "catalogue-lib")
 @Validated
@@ -41,12 +42,67 @@ public class CatalogueLibProperties {
     @Valid
     private ModelProperties model = new ModelProperties();
 
+    /**
+     * Settings of the generic data request endpoint ({@code POST /request/default}).
+     */
+    private DataRequestProperties dataRequest = new DataRequestProperties();
+
     public ModelProperties getModel() {
         return model;
     }
 
     public void setModel(ModelProperties model) {
         this.model = model;
+    }
+
+    public DataRequestProperties getDataRequest() {
+        return dataRequest;
+    }
+
+    public void setDataRequest(DataRequestProperties dataRequest) {
+        this.dataRequest = dataRequest;
+    }
+
+    public static class DataRequestProperties {
+
+        /**
+         * Whether requests may target loopback, private, link-local and other non-public addresses.
+         */
+        private boolean allowPrivateAddresses = false;
+
+        /**
+         * Timeout for connecting to the requested URL.
+         */
+        private Duration connectTimeout = Duration.ofSeconds(10);
+
+        /**
+         * Timeout for receiving the response of the requested URL.
+         */
+        private Duration responseTimeout = Duration.ofSeconds(30);
+
+        public boolean isAllowPrivateAddresses() {
+            return allowPrivateAddresses;
+        }
+
+        public void setAllowPrivateAddresses(boolean allowPrivateAddresses) {
+            this.allowPrivateAddresses = allowPrivateAddresses;
+        }
+
+        public Duration getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public Duration getResponseTimeout() {
+            return responseTimeout;
+        }
+
+        public void setResponseTimeout(Duration responseTimeout) {
+            this.responseTimeout = responseTimeout;
+        }
     }
 
     @ValidCatalogueValidation
@@ -61,6 +117,20 @@ public class CatalogueLibProperties {
          * The base url for validating vocabularies (if absolute path is not provided in the field).
          */
         private String baseUrl;
+
+        /**
+         * Whether URL field values may point to loopback, private, link-local and other non-public addresses.
+         * Vocabulary checks against the configured base url or vocabulary urls are not affected.
+         */
+        private boolean allowPrivateAddresses = false;
+
+        public boolean isAllowPrivateAddresses() {
+            return allowPrivateAddresses;
+        }
+
+        public void setAllowPrivateAddresses(boolean allowPrivateAddresses) {
+            this.allowPrivateAddresses = allowPrivateAddresses;
+        }
 
         public boolean isEnabled() {
             return enabled;
