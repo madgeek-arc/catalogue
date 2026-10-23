@@ -109,11 +109,6 @@ class ModelResponseValidatorTest {
             when(browsing.getResults()).thenReturn(List.of(testModel));
             when(modelService.browse(any(FacetFilter.class))).thenReturn(browsing);
 
-            // Two vocabulary fields use dependsOn (scientificSubdomain → scientificDomain,
-            // subcategory → category), which triggers modelService.get + getAllFields.
-            // Returning an empty field list leaves `dependedOn` null, so the placeholder
-            // in the vocab URL is not substituted — acceptable for this test.
-            lenient().when(modelService.get(anyString())).thenReturn(testModel);
             lenient().when(modelService.getAllFields(any(Model.class))).thenReturn(List.of());
 
             LinkedHashMap<String, Object> resource;
@@ -487,5 +482,51 @@ class ModelResponseValidatorTest {
         LinkedHashMap<String, Object> map = new LinkedHashMap<>();
         map.put(fieldName, value);
         return map;
+    }
+
+    @Nested
+    class VocabularyDependsOn {
+
+        @Test
+        void dependsOnLookupUsesTheModelFoundForThisValidation() {
+            VocabularyProperties vocabulary = new VocabularyProperties();
+            vocabulary.setUrl(URI.create("/vocabularies/subdomains"));
+            UiField field = buildField("subdomain", FieldType.vocabulary, vocabulary);
+            field.getForm().setDependsOn(new FieldIdNameValue(null, "domain", null));
+            stubSingleFieldModel(field);
+            when(modelService.getAllFields(any(Model.class))).thenReturn(List.of());
+
+            validator.validate(resource("subdomain", "physics"), "test-model");
+
+            verify(modelService).getAllFields(argThat(model -> "test-model".equals(model.getId())));
+            verify(modelService, never()).get(anyString());
+        }
+    }
+
+    @Nested
+    class UrlAddressGuard {
+
+        @Test
+        void urlPointingToNonPublicAddressIsRejectedWithoutBeingFetched() {
+            CatalogueLibProperties properties = new CatalogueLibProperties();
+            properties.getModel().getValidation().setBaseUrl("http://localhost:8080");
+            ModelResponseValidator guarded = new ModelResponseValidator(modelService, properties, objectMapper);
+            UiField field = new UiField();
+            field.setName("webpage");
+
+            for (String url : List.of("http://127.0.0.1:8080/admin", "http://169.254.169.254/latest/meta-data/",
+                    "http://[::1]/", "http://10.0.0.1/")) {
+                ValidationException e = assertThrows(ValidationException.class, () -> guarded.validateUrl(field, url));
+                assertTrue(e.getMessage().contains("not allowed"), e.getMessage());
+            }
+        }
+
+        @Test
+        void nonHttpUrlIsRejectedEvenWhenPrivateAddressesAreAllowed() {
+            UiField field = new UiField();
+            field.setName("webpage");
+
+            assertThrows(ValidationException.class, () -> validator.validateUrl(field, "file:///etc/passwd"));
+        }
     }
 }
