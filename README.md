@@ -12,7 +12,6 @@ the UI model for frontends.
 |---|---|
 | Component | Catalogue (`gr.uoa.di.madgik:catalogue`) |
 | Type | Supporting service (Java library embedded in a backend application, not deployed on its own) |
-| Status | Released (`v9.1.1`); `main` is `9.1.2-SNAPSHOT` |
 | Technology | Java 21, Spring Boot 3.5 (web MVC controllers, WebFlux `WebClient`), registry-core 4.2.0, JAXB, Jackson, springdoc-openapi, Log4j2, Maven |
 | API | Yes, REST controllers registered in the host application (`/forms`, `/items`, `/ui`, `/request/default`, `/logs`); no authentication: the consuming application guards the paths |
 | Swagger | Contributes to the host's springdoc OpenAPI (`springdoc-openapi-starter-webmvc-api`) |
