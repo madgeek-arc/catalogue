@@ -12,7 +12,6 @@ endpoints for models, and generates TypeScript typings of the model for frontend
 |---|---|
 | Component | Catalogue (`gr.uoa.di.madgik:catalogue`) |
 | Type | Supporting service (Java library embedded in a backend application, not deployed on its own) |
-| Status | `version/10.0.0` line, `10.0.0-SNAPSHOT` (unreleased). The latest release, `v9.1.1`, is on the `main` (9.x) line |
 | Technology | Java 25, Spring Boot 4.0 (web MVC controllers, WebFlux `WebClient`), registry 5.0.0 (`registry-bom`), Jackson 3, JAXB (through the registry), Micrometer tracing, Maven |
 | API | Yes, REST controllers registered in the host application (`/forms`, `/models`, `/items`, `/request/default`); no authentication: the consuming application guards the paths |
 | Swagger | Contributes to the host's springdoc OpenAPI |
