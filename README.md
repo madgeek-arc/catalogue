@@ -6,23 +6,12 @@ It validates submitted items against their model (field types, required fields, 
 vocabularies, URLs), exposes generic CRUD/search REST endpoints, and generates TypeScript typings of
 the UI model for frontends.
 
-## Component metadata
-
-| Field | Value |
-|---|---|
-| Component | Catalogue (`gr.uoa.di.madgik:catalogue`) |
-| Type | Supporting service (Java library embedded in a backend application, not deployed on its own) |
-| Technology | Java 21, Spring Boot 3.5 (web MVC controllers, WebFlux `WebClient`), registry-core 4.2.0, JAXB, Jackson, springdoc-openapi, Log4j2, Maven |
-| API | Yes, REST controllers registered in the host application (`/forms`, `/items`, `/ui`, `/request/default`, `/logs`); no authentication: the consuming application guards the paths |
-| Swagger | Contributes to the host's springdoc OpenAPI (`springdoc-openapi-starter-webmvc-api`) |
-| Deployment | Library (Maven artefact) |
-| Documentation | [docs/](docs/) |
-
 ## Role
 
 Supplies the form/model engine that backends use to define survey-like data models and store
 validated responses as registry resources. It needs a registry implementation in the same
-application (for example `registry-starter-service`).
+application (for example `registry-starter-service`). Its REST controllers are registered in the host
+application and appear in the host's springdoc OpenAPI document.
 
 ## Securing the REST API
 
