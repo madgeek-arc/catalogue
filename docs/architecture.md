@@ -93,7 +93,7 @@ singleton `ModelResponseValidator` (see gaps).
 ## Security
 
 The library's controllers are unauthenticated, and the consuming application guards them. See
-[security.md](security.md).
+[security-model.md](security-model.md).
 
 ## Significant design decisions
 

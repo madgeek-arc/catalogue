@@ -7,7 +7,7 @@ context path, security filter chain and springdoc OpenAPI document.
 | Item | Value |
 |---|---|
 | Base URL | The host's |
-| Authentication | None. The consuming application guards the paths below (see [security.md](security.md)) |
+| Authentication | None. The consuming application guards the paths below (see [security-model.md](security-model.md)) |
 | OpenAPI | Included in the host's springdoc document (`/v3/api-docs` by default) |
 | Errors | JSON `ServerError` with HTTP status mapped by `GenericExceptionController` (403, 401, 409, 404, 400, 501, 422, 500), including the trace ID |
 
@@ -22,4 +22,4 @@ context path, security filter chain and springdoc OpenAPI document.
 | Logs | `POST /logs/level/root?standardLevel=`, `POST /logs/level/package/{path}?standardLevel=`, `GET /logs[?filepath=]` | Change Log4j2 levels. List `logs/`. Download a file | `LogsController` |
 
 **Note:** `DELETE /forms/models` deletes all models. (`FormsController`). Data request
-and logs are security-sensitive (see [security.md](security.md)).
+and logs are security-sensitive (see [security-model.md](security-model.md)).

@@ -1,4 +1,4 @@
-# Catalogue — Security
+# Catalogue — Security model
 
 ## Authentication and authorisation
 
