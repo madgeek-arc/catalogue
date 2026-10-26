@@ -27,6 +27,7 @@ import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -36,6 +37,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import gr.uoa.di.madgik.catalogue.http.BlockedUrlException;
+import gr.uoa.di.madgik.catalogue.http.PublicAddressGuard;
+import reactor.netty.http.client.HttpClientRequest;
+import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.http.client.HttpClient;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -65,7 +70,15 @@ public class ModelResponseValidator implements ResourceValidator {
     private final CatalogueLibProperties properties;
     private final ObjectMapper objectMapper;
 
-    private String modelId;
+    /**
+     * Model of the resource being validated by the current thread. The validator is a shared singleton, so the
+     * model can't be kept in a plain field.
+     */
+    private final ThreadLocal<Model> currentModel = new ThreadLocal<>();
+
+    private final PublicAddressGuard urlGuard;
+    private final WebClient webClient;
+    private final WebClient vocabularyClient;
 
     public ModelResponseValidator(@Lazy ModelService modelService,
                                   CatalogueLibProperties properties,
@@ -73,6 +86,38 @@ public class ModelResponseValidator implements ResourceValidator {
         this.modelService = modelService;
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.urlGuard = new PublicAddressGuard(properties.getModel().getValidation().isAllowPrivateAddresses());
+        // Redirects are followed only to URLs the guard allows.
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create()
+                                .followRedirect((request, response) -> isAllowedRedirect(request, response))
+                                .responseTimeout(Duration.ofSeconds(10))
+                                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                ))
+                .build();
+        // Vocabulary hosts come from the model or catalogue-lib.model.validation.base-url, not from submitted values.
+        this.vocabularyClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create()
+                                .followRedirect(true)
+                                .responseTimeout(Duration.ofSeconds(10))
+                                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                ))
+                .build();
+    }
+
+    private boolean isAllowedRedirect(HttpClientRequest request, HttpClientResponse response) {
+        int status = response.status().code();
+        String location = response.responseHeaders().get(HttpHeaders.LOCATION);
+        if (status < 300 || status >= 400 || location == null) {
+            return false;
+        }
+        try {
+            return urlGuard.allows(URI.create(request.resourceUrl()).resolve(location));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // Email regex pattern (RFC 5322 simplified)
@@ -130,9 +175,13 @@ public class ModelResponseValidator implements ResourceValidator {
                 return resource;
             }
             Model model = models.getFirst();
-            modelId = model.getId();
-            validateResourceAgainstModel(resource, model.getSections());
-            return validateSections(resource, model.getSections());
+            currentModel.set(model);
+            try {
+                validateResourceAgainstModel(resource, model.getSections());
+                return validateSections(resource, model.getSections());
+            } finally {
+                currentModel.remove();
+            }
         }
         return resource;
     }
@@ -206,29 +255,44 @@ public class ModelResponseValidator implements ResourceValidator {
      */
     private boolean validateFields(Object object, List<UiField> fields, boolean mandatory, Deque<String> path) {
         boolean empty = true;
-        if (object != null) {
-            for (UiField field : fields) {
-                path.push(field.getLabel().getText());
-                if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
-                    if (object instanceof List) {
-                        for (Object ans : (List<?>) object) {
-                            empty = validateFields(((LinkedHashMap<?, ?>) ans).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-                            removeCompositeFieldIfEmpty(field, ans, empty);
-                        }
-                    } else {
-                        empty = validateFields(((LinkedHashMap<?, ?>) object).get(field.getName()), field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
-                    }
-                    removeCompositeFieldIfEmpty(field, object, empty);
-                }
-                if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
-                    checkMandatoryField(object, field, path);
-                }
+        if (object == null) {
+            return true;
+        }
 
-                if (containsAndValidatesValue(object, field, path)) {
-                    empty = false;
-                }
-                path.pop();
+        for (UiField field : fields) {
+            boolean fieldEmpty = true;
+            path.push(field.getLabel().getText());
+            Object value = null;
+            if (object instanceof LinkedHashMap<?, ?> map) {
+                value = map.get(field.getName());
             }
+            if (field.getSubFields() != null && !field.getSubFields().isEmpty()) {
+                if (value instanceof List<?>) {
+                    for (Object ans : (List<?>) value) {
+                        Object childValue = null;
+                        if (ans instanceof LinkedHashMap<?, ?>) {
+                            LinkedHashMap<?, ?> childMap = (LinkedHashMap<?, ?>) ans;
+                            childValue = childMap.get(field.getName());
+                        }
+                        boolean childEmpty = validateFields(childValue, field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                        removeCompositeFieldIfEmpty(field, ans, childEmpty);
+                        fieldEmpty = fieldEmpty && childEmpty;
+                    }
+                } else {
+                    boolean childEmpty = validateFields(value, field.getSubFields(), mandatory && field.getForm().getMandatory(), path);
+                    removeCompositeFieldIfEmpty(field, object, childEmpty);
+                    fieldEmpty = childEmpty;
+                }
+            }
+            if (mandatory && Boolean.TRUE.equals(field.getForm().getMandatory())) {
+                checkMandatoryField(object, field, path);
+            }
+            if (containsAndValidatesValue(object, field, path)) {
+                fieldEmpty = false;
+            }
+
+            empty = empty && fieldEmpty;
+            path.pop();
         }
         return empty;
     }
@@ -261,7 +325,7 @@ public class ModelResponseValidator implements ResourceValidator {
      * @param empty  condition to remove field
      */
     void removeCompositeFieldIfEmpty(UiField field, Object object, boolean empty) {
-        if ("composite".equals(field.getTypeInfo().getType()) && empty) {
+        if (field.getTypeInfo().getType() == FieldType.composite && empty) {
             if (object instanceof LinkedHashMap) {
                 ((LinkedHashMap) object).put(field.getName(), null);
             }
@@ -633,19 +697,16 @@ public class ModelResponseValidator implements ResourceValidator {
     }
 
 
-    // Class-level field - created once, reused everywhere
-    private final WebClient webClient = WebClient.builder()
-            .clientConnector(new ReactorClientHttpConnector(
-                    HttpClient.create()
-                            .followRedirect(true)
-                            .responseTimeout(Duration.ofSeconds(10))
-                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-            ))
-            .build();
-
     public void validateUrl(UiField field, String url) {
         try {
             URI uri = new URI(url);
+            try {
+                urlGuard.check(uri);
+            } catch (BlockedUrlException e) {
+                String fieldName = (field != null) ? field.getName() : "unknown";
+                throw new ValidationException(String.format("Field [%s]: the URL you provided '%s' is not allowed. %s",
+                        fieldName, url, e.getMessage()));
+            }
 
             ClientResponse response = webClient.head()
                     .uri(uri)
@@ -688,7 +749,7 @@ public class ModelResponseValidator implements ResourceValidator {
             FieldIdNameValue fieldIdNameValue = field.getForm().getDependsOn();
             if (fieldIdNameValue != null) {
                 String dependsOnFieldName = field.getForm().getDependsOn().getName();
-                List<UiField> fields = modelService.getAllFields(modelService.get(modelId));
+                List<UiField> fields = modelService.getAllFields(currentModel.get());
                 for (UiField uiField : fields) {
                     //TODO: check fields for dependsOn too
                     List<UiField> subfields = uiField.getSubFields();
@@ -728,7 +789,7 @@ public class ModelResponseValidator implements ResourceValidator {
                 if (vocabularyUrl.isAbsolute()) {
                     String decodedValue = URLDecoder.decode(stringValue, StandardCharsets.UTF_8);
                     uriToCall = URI.create(appendPathSegment(vocabularyUrl.toString(), decodedValue));
-                    response = webClient.get()
+                    response = vocabularyClient.get()
                             .uri(uriToCall)
                             .exchangeToMono(Mono::just)
                             .block();
@@ -740,7 +801,7 @@ public class ModelResponseValidator implements ResourceValidator {
                     }
                     String resolvedPath = appendPathSegment(vocabPath, stringValue);
                     String decodedValue = URLDecoder.decode(resolvedPath, StandardCharsets.UTF_8);
-                    response = webClient.mutate()
+                    response = vocabularyClient.mutate()
                             .baseUrl(baseUrl)
                             .build()
                             .get()
