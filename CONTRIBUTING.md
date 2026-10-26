@@ -8,6 +8,8 @@ Use [GitHub Issues](https://github.com/madgeek-arc/catalogue/issues) for bugs, f
 questions. For bugs, include the version, the environment, the steps to reproduce, and the expected
 and actual behaviour.
 
+Don't report security vulnerabilities in public issues; follow [SECURITY.md](SECURITY.md) instead.
+
 ## Branching
 
 - `main` carries the released 9.x line and its next `-SNAPSHOT` version.

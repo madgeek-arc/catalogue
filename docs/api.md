@@ -7,7 +7,7 @@ them out. (`CatalogueConfiguration` `@ComponentScan("gr.uoa.di.madgik.catalogue"
 | Item | Value |
 |---|---|
 | Base URL | The host's |
-| Authentication | None. The consuming application guards the paths below (see [security.md](security.md)) |
+| Authentication | None. The consuming application guards the paths below (see [security-model.md](security-model.md)) |
 | OpenAPI | Included in the host's springdoc document (`/v3/api-docs` by default) |
 | Errors | RFC 7807 `ProblemDetail` with the trace ID, from `GenericExceptionController` |
 

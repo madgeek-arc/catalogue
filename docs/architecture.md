@@ -100,7 +100,7 @@ rewrites stored `class` properties of resource types from the 9.x package `catal
 ## Security
 
 The library's controllers are unauthenticated, and the consuming application guards them. Outbound
-requests from submitted data are limited to public addresses. See [security.md](security.md).
+requests from submitted data are limited to public addresses. See [security-model.md](security-model.md).
 
 ## Significant design decisions
 

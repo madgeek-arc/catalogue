@@ -18,7 +18,7 @@ registered in the host application and appear in the host's springdoc OpenAPI do
 The library has no authentication or authorisation, and every application that includes it gets its
 REST controllers, including model deletion and a generic outbound HTTP request endpoint
 (`/request/default`). **The consuming application is responsible for guarding those paths** in its
-own security configuration. See [docs/security.md](docs/security.md).
+own security configuration. See [docs/security-model.md](docs/security-model.md).
 
 ## Prerequisites
 
@@ -42,7 +42,7 @@ catalogue-lib.model.validation.base-url=https://<host>/<context-path>
 
 The auto-configuration registers the controllers, `ModelService` and the validator, and the registry
 loads the bundled `model` resource type (`resourceTypes/model.json`). **The consuming application must
-guard the exposed endpoints**: see [docs/security.md](docs/security.md).
+guard the exposed endpoints**: see [docs/security-model.md](docs/security-model.md).
 
 ## Build
 
@@ -54,7 +54,7 @@ mvn install
 ## Documentation
 
 - [Architecture](docs/architecture.md) · [Integration](docs/integration.md) · [API](docs/api.md)
-- [Configuration](docs/configuration.md) · [Security](docs/security.md)
+- [Configuration](docs/configuration.md) · [Security model](docs/security-model.md) · [Security policy](SECURITY.md)
 - [Development](docs/development.md) · [Testing](docs/testing.md)
 - [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
