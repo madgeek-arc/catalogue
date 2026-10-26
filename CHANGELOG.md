@@ -1,3 +1,44 @@
+## Unreleased
+
+### Documentation
+
+* Add README, `docs/`, contribution guide; add the missing 9.1.0 and 9.1.1 entries below
+
+## [9.1.1](https://github.com/madgeek-arc/catalogue/compare/v9.1.0...v9.1.1) (2026-04-09)
+
+Summarised from the commit history (entries were not recorded at release time).
+
+### Bug Fixes
+
+* correct empty field aggregation in nested validation ([5571bca](https://github.com/madgeek-arc/catalogue/commit/5571bca))
+
+### Tests
+
+* add tests for model response validation ([fff8543](https://github.com/madgeek-arc/catalogue/commit/fff8543))
+
+## [9.1.0](https://github.com/madgeek-arc/catalogue/compare/v9.0.0...v9.1.0) (2026-04-04)
+
+Summarised from the commit history (entries were not recorded at release time).
+
+### Features
+
+* model-based validation of submitted resources: email, phone, pattern, string, large text, radio, number, boolean, checkbox, scale, select, date and URL fields, values inside lists and maps, and rejection of fields not defined in the model ([ebbaab0](https://github.com/madgeek-arc/catalogue/commit/ebbaab0), [809b2c8](https://github.com/madgeek-arc/catalogue/commit/809b2c8), [61e457c](https://github.com/madgeek-arc/catalogue/commit/61e457c))
+* vocabulary validation, including dynamic vocabulary URLs and vocabularies that depend on other fields ([8a28f46](https://github.com/madgeek-arc/catalogue/commit/8a28f46), [2045aeb](https://github.com/madgeek-arc/catalogue/commit/2045aeb), [b9d6d8b](https://github.com/madgeek-arc/catalogue/commit/b9d6d8b))
+* open / close dates for submission of model responses ([5a48aa2](https://github.com/madgeek-arc/catalogue/commit/5a48aa2))
+* separate properties classes per field type; `values` changed from a list of strings to an object ([023c870](https://github.com/madgeek-arc/catalogue/commit/023c870))
+* search returning highlights and score, and recommendations of similar resources ([0eea110](https://github.com/madgeek-arc/catalogue/commit/0eea110), [1b56544](https://github.com/madgeek-arc/catalogue/commit/1b56544))
+* API responses returned as JSON ([ab8179e](https://github.com/madgeek-arc/catalogue/commit/ab8179e))
+* TypeScript typings generation ([029d34d](https://github.com/madgeek-arc/catalogue/commit/029d34d))
+
+### Bug Fixes
+
+* validation base URL property renamed to `catalogue-lib.validation.base-url` and required when validation is enabled ([b7fb78f](https://github.com/madgeek-arc/catalogue/commit/b7fb78f), [125cd60](https://github.com/madgeek-arc/catalogue/commit/125cd60))
+* handler for `MethodArgumentNotValidException`; hide stack trace for `NoResourceFoundException` ([9a83672](https://github.com/madgeek-arc/catalogue/commit/9a83672), [8016a96](https://github.com/madgeek-arc/catalogue/commit/8016a96))
+
+### Dependencies
+
+* registry-core 4.2.0 ([ab49036](https://github.com/madgeek-arc/catalogue/commit/ab49036))
+
 ## [9.0.0](https://github.com/madgeek-arc/catalogue/compare/v8.0.2...v9.0.0) (2025-12-23)
 
 ### ⚠ BREAKING CHANGES
