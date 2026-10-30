@@ -20,7 +20,6 @@ import gr.uoa.di.madgik.catalogue.ui.domain.Model;
 import gr.uoa.di.madgik.catalogue.ui.domain.Section;
 import gr.uoa.di.madgik.catalogue.ui.domain.UiField;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
-import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
 import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
 import gr.uoa.di.madgik.registry.domain.Browsing;
 import gr.uoa.di.madgik.registry.domain.FacetFilter;
@@ -96,7 +95,6 @@ public class DefaultModelService implements ModelService {
                 obj,
                 ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()))
         );
-        logger.trace(LoggingUtils.addResource(resourceTypeName, id, obj));
         resourceService.addResource(resource);
         return obj;
     }
@@ -115,17 +113,12 @@ public class DefaultModelService implements ModelService {
             throw new RuntimeException(e);
         }
 
-        logger.trace(LoggingUtils.updateResource(resourceTypeName, id, obj));
         resourceService.updateResource(existing);
         return obj;
     }
 
     public <T> void delete(String id, String resourceTypeName) throws ResourceNotFoundException {
-        Resource resource = null;
-        Class<?> clazz = genericResourceService.getClassFromResourceType(resourceTypeName);
-        resource = genericResourceService.searchResource(resourceTypeName, id, true);
-        T obj = (T) parserPool.deserialize(resource, clazz);
-        logger.trace(LoggingUtils.deleteResource(resourceTypeName, id, obj));
+        Resource resource = genericResourceService.searchResource(resourceTypeName, id, true);
         resourceService.deleteResource(resource.getId());
 //        return obj;
     }
