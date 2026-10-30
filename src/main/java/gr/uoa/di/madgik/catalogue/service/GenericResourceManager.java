@@ -16,7 +16,6 @@
 
 package gr.uoa.di.madgik.catalogue.service;
 
-import gr.uoa.di.madgik.catalogue.utils.LoggingUtils;
 import gr.uoa.di.madgik.catalogue.utils.ReflectUtils;
 import gr.uoa.di.madgik.registry.domain.*;
 import gr.uoa.di.madgik.registry.domain.index.IndexField;
@@ -169,7 +168,8 @@ public class GenericResourceManager implements GenericResourceService {
 
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
-        logger.info("adding : [resourceType={}] : [body={}]", resourceTypeName, resource);
+        String id = idOf(resource);
+        logger.info("Adding {} [{}]", resourceTypeName, logId(resourceTypeName, id));
         resourceService.addResource(res);
 
         return resource;
@@ -197,7 +197,7 @@ public class GenericResourceManager implements GenericResourceService {
         Resource res = searchResource(resourceTypeName, id, true);
         String payload = parserPool.serialize(resource, ParserService.ParserServiceTypes.fromString(resourceType.getPayloadType()));
         res.setPayload(payload);
-        logger.info(LoggingUtils.updateResource(resourceTypeName, id, resource));
+        logger.info("Updating {} [{}]", resourceTypeName, logId(resourceTypeName, id));
         resourceService.updateResource(res);
 
         return resource;
@@ -206,7 +206,7 @@ public class GenericResourceManager implements GenericResourceService {
     @Override
     public <T> T delete(String resourceTypeName, String id) {
         Resource res = searchResource(resourceTypeName, id, true);
-        logger.info(LoggingUtils.deleteResource(resourceTypeName, id, res));
+        logger.info("Deleting {} [{}]", resourceTypeName, logId(resourceTypeName, id));
         resourceService.deleteResource(res.getId());
         return (T) parserPool.deserialize(res, getClassFromResourceType(resourceTypeName));
     }
@@ -349,6 +349,22 @@ public class GenericResourceManager implements GenericResourceService {
 
     public void setBrowseByMap(Map<String, List<String>> browseByMap) {
         this.browseByMap = browseByMap;
+    }
+
+    /**
+     * Returns the form of a resource id written to the logs. Override to pseudonymise ids that are
+     * personal data.
+     */
+    protected String logId(String resourceTypeName, String id) {
+        return id;
+    }
+
+    private static String idOf(Object resource) {
+        try {
+            return ReflectUtils.getId(resource.getClass(), resource);
+        } catch (NoSuchFieldException | NoSuchMethodException | InvocationTargetException e) {
+            return null;
+        }
     }
 
     private List<String> createBrowseBy(FacetFilter filter) {
