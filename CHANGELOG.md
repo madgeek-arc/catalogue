@@ -1,8 +1,12 @@
-## Unreleased
+## [9.1.2](https://github.com/madgeek-arc/catalogue/compare/v9.1.1...v9.1.2) (2026-11-02)
+
+### Bug Fixes
+
+* **logging:** stop logging resource bodies; resource add/update/delete now logs only the resource type and id, overridable through a protected `logId` hook for applications whose ids are personal data; `LoggingUtils` is deprecated ([796e5e3](https://github.com/madgeek-arc/catalogue/commit/796e5e3))
 
 ### Documentation
 
-* Add README, `docs/`, contribution guide; add the missing 9.1.0 and 9.1.1 entries below
+* add README, `docs/`, contribution guide and security policy; add the missing 9.1.0 and 9.1.1 entries below ([70bf188](https://github.com/madgeek-arc/catalogue/commit/70bf188), [9cb7b25](https://github.com/madgeek-arc/catalogue/commit/9cb7b25))
 
 ## [9.1.1](https://github.com/madgeek-arc/catalogue/compare/v9.1.0...v9.1.1) (2026-04-09)
 
