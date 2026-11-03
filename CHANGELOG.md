@@ -1,3 +1,9 @@
+## [9.1.3](https://github.com/madgeek-arc/catalogue/compare/v9.1.2...v9.1.3) (2026-11-03)
+
+### Bug Fixes
+
+* **deps:** build against registry 4.3.2 ([e206d19](https://github.com/madgeek-arc/catalogue/commit/e206d19be2621e16e4c9f7ab3feb08b05c5a289a))
+
 ## [9.1.2](https://github.com/madgeek-arc/catalogue/compare/v9.1.1...v9.1.2) (2026-11-02)
 
 ### Bug Fixes
