@@ -20,7 +20,6 @@ them out. (`CatalogueConfiguration` `@ComponentScan("gr.uoa.di.madgik.catalogue"
 |---|---|---|---|
 | Models | `POST/GET /forms/models`, `GET/PUT/DELETE /forms/models/{id}`, `DELETE /forms/models` | Manage form models. `DELETE /forms/models` deletes all models | `FormsController` |
 | Resource types | `POST /forms/resourceTypes` (body: a `Model`) | Create the registry resource type derived from a model | `FormsController` |
-| Items (deprecated) | `POST /items?resourceType=`, `PUT/DELETE/GET /items/{id}`, `GET /items`, `GET /items/highlighted`, `GET /items/{id}/recommendations` | Generic CRUD, browse, highlighted search, recommendations. Deprecated for removal: use the registry's `/records/{resourceType}` | `GenericItemController` |
 | Data request | `POST /request/default` (body `DataRequest`: method, url, headers, body, params, expression, contentType) | Perform an outbound HTTP request to a public address and extract a value with JSONPath/XPath. Non-public targets get 400 | `DataRequestController` |
 
 ## Errors

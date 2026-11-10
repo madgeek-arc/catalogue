@@ -8,8 +8,8 @@ includes it, and there is no property to turn them off.
 ## Responsibility of the consuming application
 
 Guarding the library's REST paths is the responsibility of the application that includes it. Cover
-every path in the application's security configuration: `/forms/**`, `/models/**`, `/resourceTypes`,
-`/items/**` and `/request/default` (relative to the context path; `FormsController` answers both at the
+every path in the application's security configuration: `/forms/**`, `/models/**`, `/resourceTypes`
+and `/request/default` (relative to the context path; `FormsController` answers both at the
 root and under `/forms`). A rule that only lists some of them leaves the rest open.
 
 | Endpoint | Risk | Evidence | Recommended rule |
@@ -17,7 +17,6 @@ root and under `/forms`). A rule that only lists some of them leaves the rest op
 | `POST /request/default` | Outbound HTTP request with any method, caller-supplied headers and body, response returned to the caller. Limited to public addresses by default | `controller/DataRequestController`, `service/DefaultDataRequestService` | Authenticated users at minimum |
 | `POST/PUT/DELETE /forms/models**` and `/models**` (including delete-all) | Changing models changes the validation rules for every resource | `FormsController` | Admin only |
 | `POST /forms/resourceTypes`, `/resourceTypes` | Creates registry resource types (and their database views) | `FormsController` | Admin only |
-| `POST/PUT/DELETE /items**` | Generic writes to **any** registry resource type named in `resourceType` | `GenericItemController` (deprecated) | Restrict per resource type |
 
 ## Outbound requests from submitted data
 

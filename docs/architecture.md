@@ -45,7 +45,7 @@
 | Package | Responsibility |
 |---|---|
 | `config` | `CatalogueConfiguration` (registered through `AutoConfiguration.imports`): component scan of `gr.uoa.di.madgik.catalogue`, `ModelService`, `ModelResourceTypeMapper` (replaceable), an `AsyncTaskExecutor` for model updates that carries the security context, and an `ObjectMapper` when the host has none. `CatalogueLibProperties` (`catalogue-lib.*`) |
-| `controller` | `FormsController` (`/forms/...` and `/...`: models, resource types), `GenericItemController` (`/items`, deprecated for removal), `DataRequestController` (`/request/default`), `GenericExceptionController` (RFC 7807 errors for the whole application) |
+| `controller` | `FormsController` (`/forms/...` and `/...`: models, resource types), `DataRequestController` (`/request/default`), `GenericExceptionController` (RFC 7807 errors for the whole application) |
 | `service` | `ModelService`/`DefaultModelService`, `ModelResourceTypeMapper`, `ModelResponseValidator`, `DataRequestService`/`DefaultDataRequestService`, `id.StringIdGenerator` |
 | `http` | `PublicAddressGuard`: refuses URLs that resolve to non-public addresses |
 | `domain`, `domain.types`, `domain.jackson` | Form model and field-type properties, plus the Jackson 3 deserialiser for `TypeInfo` |
@@ -58,7 +58,7 @@ flowchart LR
     UI[Frontend<br/>uses catalogue-model.d.ts] -- REST --> CTRL
     subgraph HOST[Host Spring Boot application]
         subgraph CAT[catalogue]
-            CTRL["Controllers<br/>/forms /models /items /request/default"] --> MS[DefaultModelService]
+            CTRL["Controllers<br/>/forms /models /request/default"] --> MS[DefaultModelService]
             MS --> MAP[ModelResourceTypeMapper]
             VAL[ModelResponseValidator] --> MS
             CTRL --> DRS[DefaultDataRequestService]
@@ -76,8 +76,7 @@ flowchart LR
 
 ## Main data flow: create a resource
 
-1. The resource is created through the registry's generic API (`/records/{resourceType}`) or
-   catalogue's deprecated `POST /items?resourceType=<type>`.
+1. The resource is created through the registry's generic API (`/records/{resourceType}`).
 2. The registry's `GenericResourceManager` calls `ModelResponseValidator#validate` (when
    `catalogue-lib.model.validation.enabled`), which finds the models with `resourceType=<type>`.
    None, or more than one: it logs `WARN` and **skips validation**. Otherwise it validates the payload
