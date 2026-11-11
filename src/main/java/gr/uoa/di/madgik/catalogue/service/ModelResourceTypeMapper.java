@@ -96,10 +96,16 @@ public class ModelResourceTypeMapper {
         List<IndexField> indexFields = new ArrayList<>();
         indexFields.add(primaryKeyField);
 
+        List<FieldCandidate> candidates = new ArrayList<>();
         if (model.getSections() != null) {
             for (Section section : model.getSections()) {
-                collectSectionFields(section, resourceType, usedNames, usedPaths, indexFields, rootSectionPath(section), false);
+                List<PathSegment> rootPath = rootSectionPath(section);
+                collectSectionFields(section, usedPaths, candidates, rootPath, rootPath.size(), false);
             }
+        }
+        Map<FieldCandidate, String> fieldNames = resolveModelFieldNames(candidates);
+        for (FieldCandidate candidate : candidates) {
+            indexFields.add(createIndexField(candidate, fieldNames.get(candidate), resourceType, usedNames));
         }
         mergeAdditionalIndexFields(model, resourceType, usedNames, usedPaths, indexFields);
 
@@ -183,42 +189,39 @@ public class ModelResourceTypeMapper {
     }
 
     /**
-     * Recursively traverses a section tree and emits index fields for all eligible UI fields.
+     * Recursively traverses a section tree and collects every UI field that should become an
+     * index field.
      *
      * @param section             the current section to inspect
-     * @param resourceType        the resource type receiving generated index fields
-     * @param usedNames           the set of already reserved index field names
-     * @param indexFields         the mutable output list of generated index fields
+     * @param usedPaths           the set of already reserved index field paths
+     * @param candidates          the mutable output list of collected fields
      * @param pathSegments        the current logical nesting path
+     * @param rootDepth           the number of leading path segments contributed by the root section
      * @param ancestorMultivalued whether any ancestor path segment is multivalued
      */
-    private void collectSectionFields(Section section, ResourceType resourceType, Set<String> usedNames,
-                                      Set<String> usedPaths,
-                                      List<IndexField> indexFields, List<PathSegment> pathSegments,
-                                      boolean ancestorMultivalued) {
+    private void collectSectionFields(Section section, Set<String> usedPaths, List<FieldCandidate> candidates,
+                                      List<PathSegment> pathSegments, int rootDepth, boolean ancestorMultivalued) {
         if (section == null) {
             return;
         }
         if (section.getFields() != null) {
             for (UiField field : section.getFields()) {
-                collectUiField(field, resourceType, usedNames, usedPaths, indexFields, pathSegments, ancestorMultivalued);
+                collectUiField(field, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued);
             }
         }
         if (section.getSubSections() != null) {
             for (Section subSection : section.getSubSections()) {
-                collectSectionFields(subSection, resourceType, usedNames, usedPaths, indexFields, pathSegments, ancestorMultivalued);
+                collectSectionFields(subSection, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued);
             }
         }
     }
 
     /**
-     * Generates an {@link IndexField} for the given UI field when its type is indexable, then
-     * continues recursively through any sub-fields.
+     * Collects the given UI field when its type is indexable and its path is not yet reserved,
+     * then continues recursively through any sub-fields.
      */
-    private void collectUiField(UiField field, ResourceType resourceType, Set<String> usedNames,
-                                Set<String> usedPaths,
-                                List<IndexField> indexFields, List<PathSegment> parentPathSegments,
-                                boolean ancestorMultivalued) {
+    private void collectUiField(UiField field, Set<String> usedPaths, List<FieldCandidate> candidates,
+                                List<PathSegment> parentPathSegments, int rootDepth, boolean ancestorMultivalued) {
         if (field == null) {
             return;
         }
@@ -229,15 +232,90 @@ public class ModelResourceTypeMapper {
         if (shouldCreateIndexField(field)) {
             String path = resolvePath(field, currentPathSegments);
             if (usedPaths.add(path)) {
-                indexFields.add(createIndexField(field, resourceType, usedNames, path, currentPathSegments, effectiveMultivalued));
+                List<String> parentNames = parentPathSegments.subList(Math.min(rootDepth, parentPathSegments.size()),
+                                parentPathSegments.size()).stream()
+                        .map(PathSegment::name)
+                        .toList();
+                candidates.add(new FieldCandidate(field, path, currentPathSegments, parentNames, effectiveMultivalued));
             }
         }
 
         if (field.getSubFields() != null) {
             for (UiField subField : field.getSubFields()) {
-                collectUiField(subField, resourceType, usedNames, usedPaths, indexFields, currentPathSegments, effectiveMultivalued);
+                collectUiField(subField, usedPaths, candidates, currentPathSegments, rootDepth, effectiveMultivalued);
             }
         }
+    }
+
+    /**
+     * Assigns a base index field name to every collected model field.
+     *
+     * <p>Fields whose base name is unique keep it. Fields sharing a base name are prefixed, in
+     * camelCase, with the fewest trailing parent field names (root section excluded) that tell
+     * them apart, e.g. {@code mainContact.email} and {@code publicContacts.email} become
+     * {@code mainContactEmail} and {@code publicContactsEmail}, while a top-level
+     * {@code accessPolicy} keeps its name next to {@code classTierAccessPolicy}. The result
+     * depends only on the field paths, not on their order in the model. Fields that cannot be
+     * told apart this way keep the longest prefixed name and are later deduplicated with a
+     * numeric suffix.</p>
+     */
+    private Map<FieldCandidate, String> resolveModelFieldNames(List<FieldCandidate> candidates) {
+        Map<String, List<FieldCandidate>> byBaseName = new LinkedHashMap<>();
+        Map<FieldCandidate, String> baseNames = new IdentityHashMap<>();
+        for (FieldCandidate candidate : candidates) {
+            String baseName = baseFieldName(firstNonBlank(candidate.field().getName(), candidate.field().getAccessPath()),
+                    candidate.pathSegments());
+            baseNames.put(candidate, baseName);
+            byBaseName.computeIfAbsent(baseName, key -> new ArrayList<>()).add(candidate);
+        }
+
+        Map<FieldCandidate, String> resolved = new IdentityHashMap<>();
+        byBaseName.forEach((baseName, group) -> {
+            if (group.size() == 1) {
+                resolved.put(group.getFirst(), baseName);
+                return;
+            }
+            int maxDepth = group.stream().mapToInt(candidate -> candidate.parentNames().size()).max().orElse(0);
+            for (FieldCandidate candidate : group) {
+                int depth = 0;
+                while (depth <= maxDepth && !isDistinctAtDepth(candidate, group, depth)) {
+                    depth++;
+                }
+                resolved.put(candidate, prefixedFieldName(trailingParents(candidate, Math.min(depth, maxDepth)), baseName));
+            }
+        });
+        return resolved;
+    }
+
+    private boolean isDistinctAtDepth(FieldCandidate candidate, List<FieldCandidate> group, int depth) {
+        List<String> parents = trailingParents(candidate, depth);
+        for (FieldCandidate other : group) {
+            if (other != candidate && trailingParents(other, depth).equals(parents)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<String> trailingParents(FieldCandidate candidate, int depth) {
+        List<String> parents = candidate.parentNames();
+        return parents.subList(Math.max(0, parents.size() - depth), parents.size());
+    }
+
+    private String prefixedFieldName(List<String> parents, String baseName) {
+        if (parents.isEmpty()) {
+            return baseName;
+        }
+        StringBuilder builder = new StringBuilder(sanitizeFieldName(parents.getFirst()));
+        for (String parent : parents.subList(1, parents.size())) {
+            builder.append(capitalize(sanitizeFieldName(parent)));
+        }
+        builder.append(capitalize(baseName));
+        return sanitizeFieldName(builder.toString());
+    }
+
+    private String capitalize(String value) {
+        return value.isEmpty() ? value : Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 
     private void mergeAdditionalIndexFields(Model model, ResourceType resourceType, Set<String> usedNames,
@@ -332,16 +410,17 @@ public class ModelResourceTypeMapper {
      * Builds a Registry {@link IndexField} from a model field, including type, path, search
      * behavior, vocabulary relation metadata, and embedding defaults for strings.
      */
-    private IndexField createIndexField(UiField field, ResourceType resourceType, Set<String> usedNames, String path,
-                                        List<PathSegment> pathSegments, boolean multivalued) {
+    private IndexField createIndexField(FieldCandidate candidate, String baseName, ResourceType resourceType,
+                                        Set<String> usedNames) {
+        UiField field = candidate.field();
         String javaType = resolveJavaType(field.getTypeInfo());
 
         IndexField indexField = new IndexField();
         indexField.setResourceType(resourceType);
-        indexField.setName(uniqueFieldName(field, pathSegments, usedNames));
-        indexField.setPath(path);
+        indexField.setName(reserveFieldName(baseName, usedNames));
+        indexField.setPath(candidate.path());
         indexField.setType(javaType);
-        indexField.setMultivalued(multivalued);
+        indexField.setMultivalued(candidate.multivalued());
 
         applySearchCapabilities(field.getTypeInfo(), indexField);
         indexField.setLabel(indexField.getSearchCapabilities().contains(SearchCapability.KEYWORD) ?
@@ -370,17 +449,17 @@ public class ModelResourceTypeMapper {
     }
 
     /**
-     * Produces a unique Registry field name from model metadata.
-     *
-     * <p>The name is sanitized to a Registry-safe identifier, deduplicated with numeric suffixes,
-     * and for nested fields named {@code id}, prefixed with the parent path to avoid collisions
-     * with common identifier fields deeper in the model tree.</p>
+     * Produces a unique Registry field name from a raw name, deduplicated with numeric suffixes.
      */
-    private String uniqueFieldName(UiField field, List<PathSegment> pathSegments, Set<String> usedNames) {
-        return uniqueFieldName(firstNonBlank(field.getName(), field.getAccessPath()), pathSegments, usedNames);
+    private String uniqueFieldName(String rawName, List<PathSegment> pathSegments, Set<String> usedNames) {
+        return reserveFieldName(baseFieldName(rawName, pathSegments), usedNames);
     }
 
-    private String uniqueFieldName(String rawName, List<PathSegment> pathSegments, Set<String> usedNames) {
+    /**
+     * Sanitizes a raw name to a Registry-safe identifier. Nested fields named {@code id} are
+     * prefixed with their parent path, so they do not collide with top-level identifiers.
+     */
+    private String baseFieldName(String rawName, List<PathSegment> pathSegments) {
         String baseName = sanitizeFieldName(rawName);
         if ("id".equals(baseName) && pathSegments != null && pathSegments.size() > 1) {
             String nestingPrefix = sanitizeFieldName(pathSegments.subList(0, pathSegments.size() - 1).stream()
@@ -391,6 +470,13 @@ public class ModelResourceTypeMapper {
                 baseName = nestingPrefix + "_" + baseName;
             }
         }
+        return baseName;
+    }
+
+    /**
+     * Reserves {@code baseName}, appending {@code _2}, {@code _3}, ... when it is already taken.
+     */
+    private String reserveFieldName(String baseName, Set<String> usedNames) {
         String candidate = baseName;
         int suffix = 2;
         while (!usedNames.add(candidate)) {
@@ -633,6 +719,14 @@ public class ModelResourceTypeMapper {
     }
 
     private record PathSegment(String name, boolean multivalued) {
+    }
+
+    /**
+     * A model field selected for indexing, with its nesting path and the names of its parent
+     * fields below the root section.
+     */
+    private record FieldCandidate(UiField field, String path, List<PathSegment> pathSegments,
+                                  List<String> parentNames, boolean multivalued) {
     }
 
     /**

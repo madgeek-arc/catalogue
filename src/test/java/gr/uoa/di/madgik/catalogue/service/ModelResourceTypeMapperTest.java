@@ -378,6 +378,82 @@ class ModelResourceTypeMapperTest {
         assertEquals(1, mapped.getIndexFields().stream().filter(f -> "$.identifiers.pid".equals(f.getPath())).count());
     }
 
+    @Test
+    void mapPrefixesSameNamedFieldsWithTheirParentFieldNames() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(
+                composite("mainContact", false, field("Email", "email", null, FieldType.string, false)),
+                composite("publicContacts", true, field("Email", "email", null, FieldType.string, false))
+        )));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "mainContactEmail", "$.main.mainContact.email", "java.lang.String");
+        assertHasField(mapped, "publicContactsEmail", "$.main.publicContacts[*].email", "java.lang.String");
+    }
+
+    @Test
+    void mapKeepsTopLevelNameAndPrefixesNestedSameNamedFieldRegardlessOfOrder() {
+        UiField topLevel = field("Access Policy", "accessPolicy", null, FieldType.string, false);
+        UiField nested = composite("classTier", false, field("Access Policy", "accessPolicy", null, FieldType.string, false));
+
+        for (List<UiField> fields : List.of(List.of(nested, topLevel), List.of(topLevel, nested))) {
+            Model model = new Model();
+            model.setResourceType("sample_entity");
+            model.setSections(List.of(section(fields.toArray(UiField[]::new))));
+
+            ResourceType mapped = mapper.map(model, new ResourceType());
+
+            assertHasField(mapped, "accessPolicy", "$.main.accessPolicy", "java.lang.String");
+            assertHasField(mapped, "classTierAccessPolicy", "$.main.classTier.accessPolicy", "java.lang.String");
+        }
+    }
+
+    @Test
+    void mapUsesAsManyParentNamesAsNeededToTellSameNamedFieldsApart() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(
+                composite("first", false, composite("contact", false, field("Email", "email", null, FieldType.string, false))),
+                composite("second", false, composite("contact", false, field("Email", "email", null, FieldType.string, false))),
+                composite("other", false, field("Email", "email", null, FieldType.string, false))
+        )));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "firstContactEmail", "$.main.first.contact.email", "java.lang.String");
+        assertHasField(mapped, "secondContactEmail", "$.main.second.contact.email", "java.lang.String");
+        assertHasField(mapped, "otherEmail", "$.main.other.email", "java.lang.String");
+    }
+
+    @Test
+    void mapFallsBackToNumericSuffixWhenPathsCannotTellNamesApart() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(
+                field("Title", "title", null, FieldType.string, false),
+                field("Title", "title", "$.other.title", FieldType.string, false)
+        )));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "title", "$.main.title", "java.lang.String");
+        assertHasField(mapped, "title_2", "$.other.title", "java.lang.String");
+    }
+
+    @Test
+    void mapSuffixesAdditionalFieldClashingWithModelFieldName() {
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Active", "active", null, FieldType.bool, false))));
+
+        ResourceType mapped = new AdditionalFieldsMapper().map(model, new ResourceType());
+
+        assertHasField(mapped, "active", "$.main.active", "java.lang.Boolean");
+        assertHasField(mapped, "active_2", "$.active", "java.lang.Boolean");
+    }
+
     private void assertHasField(ResourceType resourceType, String name, String path, String type) {
         IndexField indexField = resourceType.getIndexFields().stream()
                 .filter(field -> name.equals(field.getName()) && path.equals(field.getPath()))
@@ -391,6 +467,12 @@ class ModelResourceTypeMapperTest {
         section.setName("main");
         section.setFields(List.of(fields));
         return section;
+    }
+
+    private UiField composite(String id, boolean multiplicity, UiField... subFields) {
+        UiField composite = field(id, id, null, FieldType.composite, multiplicity);
+        composite.setSubFields(List.of(subFields));
+        return composite;
     }
 
     private UiField field(String label, String id, String accessPath, FieldType fieldType, boolean multiplicity) {
