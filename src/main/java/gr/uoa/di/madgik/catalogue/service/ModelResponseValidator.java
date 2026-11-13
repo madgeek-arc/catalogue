@@ -35,6 +35,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import tools.jackson.core.JacksonException;
@@ -133,7 +134,17 @@ public class ModelResponseValidator implements ResourceValidator {
             Model model = models.getFirst();
             modelId = model.getId();
             validateResourceAgainstModel(resource, model.getSections());
-            return validateSections(resource, model.getSections());
+            // strict URL checks are collected while walking the fields and run in parallel afterwards,
+            // so the total wait is the slowest URL rather than the sum of all of them
+            List<PendingUrlCheck> pending = new ArrayList<>();
+            PENDING_URL_CHECKS.set(pending);
+            try {
+                T validated = validateSections(resource, model.getSections());
+                runUrlChecks(pending);
+                return validated;
+            } finally {
+                PENDING_URL_CHECKS.remove();
+            }
         }
         return resource;
     }
@@ -383,7 +394,13 @@ public class ModelResponseValidator implements ResourceValidator {
             case url -> {
                 validatePattern(value, URL_PATTERN, path);
                 if (((UrlProperties) typeInfo.getProperties()).isStrictValidation()) {
-                    validateUrl(field, value.toString().trim());
+                    String url = value.toString().trim();
+                    List<PendingUrlCheck> pending = PENDING_URL_CHECKS.get();
+                    if (pending != null) {
+                        pending.add(new PendingUrlCheck(field, url));
+                    } else {
+                        validateUrl(field, url);
+                    }
                 }
             }
             // TODO: Vocabulary is scheduled to change
@@ -644,52 +661,90 @@ public class ModelResponseValidator implements ResourceValidator {
             ))
             .build();
 
+    // URL reachability checks only need a status code and the response is accepted on timeout anyway,
+    // so they use much tighter timeouts than the vocabulary lookups above
+    private final WebClient urlCheckWebClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(
+                    HttpClient.create()
+                            .followRedirect(true)
+                            .responseTimeout(Duration.ofSeconds(URL_CHECK_RESPONSE_TIMEOUT_SECONDS))
+                            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, URL_CHECK_CONNECT_TIMEOUT_MILLIS)
+            ))
+            .build();
+
+    private static final int URL_CHECK_CONNECT_TIMEOUT_MILLIS = 3000;
+    private static final long URL_CHECK_RESPONSE_TIMEOUT_SECONDS = 5;
+    private static final int URL_CHECK_CONCURRENCY = 8;
+
+    private static final ThreadLocal<List<PendingUrlCheck>> PENDING_URL_CHECKS = new ThreadLocal<>();
+
+    private record PendingUrlCheck(UiField field, String url) {
+    }
+
+    /**
+     * Checks a single URL, blocking until the result is known.
+     */
     public void validateUrl(UiField field, String url) {
-        try {
-            URI uri = new URI(url);
+        checkUrl(field, url).block();
+    }
 
-            ClientResponse response = webClient.head()
-                    .uri(uri)
-                    .exchangeToMono(Mono::just)
-                    .block();
-
-            // Fallback to GET for servers that reject HEAD
-            if (response != null && response.statusCode().isSameCodeAs(HttpStatus.METHOD_NOT_ALLOWED)) {
-                response = webClient.get()
-                        .uri(uri)
-                        .exchangeToMono(Mono::just)
-                        .block();
-            }
-
-            if (response == null) {
-                throw new ValidationException("Failed to validate URL: " + url);
-            }
-
-            HttpStatusCode statusCode = response.statusCode();
-            if (!statusCode.is2xxSuccessful()) {
-                if (isTransientStatus(statusCode)) {
-                    // the remote end is temporarily unavailable (e.g. service downtime); this says nothing
-                    // about whether the URL itself is wrong, so don't block the submission
-                    logger.warn("URL '{}' responded with transient error code {}; skipping strict validation",
-                            uri, statusCode.value());
-                    return;
-                }
-                String fieldName = (field != null) ? field.getName() : "unknown";
-                throw new ValidationException(
-                        String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
-                                fieldName, uri, statusCode.value()));
-            }
-        } catch (ValidationException e) {
-            throw e;
-        } catch (WebClientRequestException e) {
-            if (hasCause(e, UnknownHostException.class)) {
-                throw new ValidationException("Failed to validate URL (unknown host): " + url);
-            }
-            // timeout / connection refused / reset: indistinguishable from the target being down
-            logger.warn("URL '{}' is unreachable ({}); skipping strict validation", url, e.getMessage());
-        } catch (URISyntaxException e) {
-            throw new ValidationException("Failed to parse URI: " + url);
+    private void runUrlChecks(List<PendingUrlCheck> pending) {
+        if (pending.isEmpty()) {
+            return;
         }
+        // the same URL in several fields only needs to be checked once
+        Map<String, PendingUrlCheck> unique = new LinkedHashMap<>();
+        pending.forEach(check -> unique.putIfAbsent(check.url(), check));
+        long start = System.nanoTime();
+        Flux.fromIterable(unique.values())
+                .flatMap(check -> checkUrl(check.field(), check.url()), URL_CHECK_CONCURRENCY)
+                .then()
+                .block();
+        logger.debug("Checked {} URL(s) in parallel in {} ms", unique.size(), (System.nanoTime() - start) / 1_000_000);
+    }
+
+    private Mono<Void> checkUrl(UiField field, String url) {
+        URI uri;
+        try {
+            uri = new URI(url);
+        } catch (URISyntaxException e) {
+            return Mono.error(new ValidationException("Failed to parse URI: " + url));
+        }
+        long start = System.nanoTime();
+        return urlCheckWebClient.head()
+                .uri(uri)
+                .exchangeToMono(response -> Mono.just(response.statusCode()))
+                // Fallback to GET for servers that reject HEAD
+                .flatMap(statusCode -> statusCode.isSameCodeAs(HttpStatus.METHOD_NOT_ALLOWED)
+                        ? urlCheckWebClient.get().uri(uri).exchangeToMono(response -> Mono.just(response.statusCode()))
+                        : Mono.just(statusCode))
+                .doOnNext(statusCode -> logger.debug("URL check '{}' -> {} in {} ms",
+                        uri, statusCode.value(), (System.nanoTime() - start) / 1_000_000))
+                .flatMap(statusCode -> {
+                    if (!statusCode.is2xxSuccessful()) {
+                        if (isTransientStatus(statusCode)) {
+                            // the remote end is temporarily unavailable (e.g. service downtime); this says nothing
+                            // about whether the URL itself is wrong, so don't block the submission
+                            logger.warn("URL '{}' responded with transient error code {}; skipping strict validation",
+                                    uri, statusCode.value());
+                            return Mono.<Void>empty();
+                        }
+                        String fieldName = (field != null) ? field.getName() : "unknown";
+                        return Mono.<Void>error(new ValidationException(
+                                String.format("Field [%s]: the URL you provided '%s' responded with error code: %d",
+                                        fieldName, uri, statusCode.value())));
+                    }
+                    return Mono.<Void>empty();
+                })
+                .onErrorResume(WebClientRequestException.class, e -> {
+                    logger.debug("URL check '{}' failed after {} ms", uri, (System.nanoTime() - start) / 1_000_000);
+                    if (hasCause(e, UnknownHostException.class)) {
+                        return Mono.error(new ValidationException("Failed to validate URL (unknown host): " + url));
+                    }
+                    // timeout / connection refused / reset: indistinguishable from the target being down
+                    logger.warn("URL '{}' is unreachable ({}); skipping strict validation", url, e.getMessage());
+                    return Mono.empty();
+                });
     }
 
     /**
