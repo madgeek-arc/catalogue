@@ -100,7 +100,7 @@ public class ModelResourceTypeMapper {
         if (model.getSections() != null) {
             for (Section section : model.getSections()) {
                 List<PathSegment> rootPath = rootSectionPath(section);
-                collectSectionFields(section, usedPaths, candidates, rootPath, rootPath.size(), false);
+                collectSectionFields(section, usedPaths, candidates, rootPath, rootPath.size(), false, true);
             }
         }
         Map<FieldCandidate, String> fieldNames = resolveModelFieldNames(candidates);
@@ -146,7 +146,7 @@ public class ModelResourceTypeMapper {
      * are deduplicated.</p>
      */
     protected IndexField primaryKeyIndexField(Model model, ResourceType resourceType) {
-        return primaryKeyIndexField(resourceType, "ID", PRIMARY_KEY_FIELD_PATH, String.class.getName());
+        return primaryKeyIndexField(resourceType, null, PRIMARY_KEY_FIELD_PATH, String.class.getName());
     }
 
     /**
@@ -200,18 +200,21 @@ public class ModelResourceTypeMapper {
      * @param ancestorMultivalued whether any ancestor path segment is multivalued
      */
     private void collectSectionFields(Section section, Set<String> usedPaths, List<FieldCandidate> candidates,
-                                      List<PathSegment> pathSegments, int rootDepth, boolean ancestorMultivalued) {
+                                      List<PathSegment> pathSegments, int rootDepth, boolean ancestorMultivalued,
+                                      boolean ancestorFacet) {
         if (section == null) {
             return;
         }
         if (section.getFields() != null) {
             for (UiField field : section.getFields()) {
-                collectUiField(field, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued);
+                collectUiField(field, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued,
+                        ancestorFacet);
             }
         }
         if (section.getSubSections() != null) {
             for (Section subSection : section.getSubSections()) {
-                collectSectionFields(subSection, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued);
+                collectSectionFields(subSection, usedPaths, candidates, pathSegments, rootDepth, ancestorMultivalued,
+                        ancestorFacet);
             }
         }
     }
@@ -219,16 +222,19 @@ public class ModelResourceTypeMapper {
     /**
      * Collects the given UI field when its type is indexable and its path is not yet reserved,
      * then continues recursively through any sub-fields. A field not marked for indexing is
-     * skipped together with its sub-fields.
+     * skipped together with its sub-fields, and a field marked as no facet makes its sub-fields
+     * no facets either.
      */
     private void collectUiField(UiField field, Set<String> usedPaths, List<FieldCandidate> candidates,
-                                List<PathSegment> parentPathSegments, int rootDepth, boolean ancestorMultivalued) {
+                                List<PathSegment> parentPathSegments, int rootDepth, boolean ancestorMultivalued,
+                                boolean ancestorFacet) {
         if (field == null || !field.isIndex()) {
             return;
         }
 
         boolean currentMultivalued = isMultivalued(field.getTypeInfo());
         boolean effectiveMultivalued = ancestorMultivalued || currentMultivalued;
+        boolean facet = ancestorFacet && !Boolean.FALSE.equals(field.getFacet());
         List<PathSegment> currentPathSegments = appendPathSegment(parentPathSegments, field.getName(), currentMultivalued);
         if (shouldCreateIndexField(field)) {
             String path = resolvePath(field, currentPathSegments);
@@ -237,13 +243,15 @@ public class ModelResourceTypeMapper {
                                 parentPathSegments.size()).stream()
                         .map(PathSegment::name)
                         .toList();
-                candidates.add(new FieldCandidate(field, path, currentPathSegments, parentNames, effectiveMultivalued));
+                candidates.add(new FieldCandidate(field, path, currentPathSegments, parentNames, effectiveMultivalued,
+                        facet));
             }
         }
 
         if (field.getSubFields() != null) {
             for (UiField subField : field.getSubFields()) {
-                collectUiField(subField, usedPaths, candidates, currentPathSegments, rootDepth, effectiveMultivalued);
+                collectUiField(subField, usedPaths, candidates, currentPathSegments, rootDepth, effectiveMultivalued,
+                        facet);
             }
         }
     }
@@ -424,10 +432,9 @@ public class ModelResourceTypeMapper {
         indexField.setMultivalued(candidate.multivalued());
 
         applySearchCapabilities(field.getTypeInfo(), indexField);
-        indexField.setLabel(indexField.getSearchCapabilities().contains(SearchCapability.KEYWORD) ?
-                // if field is not mapped as a keyword, skip labeling to treat it as not a facet field
-                resolveLabel(field) : null
-        );
+        // Registry treats a labeled keyword field as a facet, so a field that is no facet gets no label.
+        indexField.setLabel(candidate.facet() && indexField.getSearchCapabilities().contains(SearchCapability.KEYWORD)
+                ? resolveLabel(field) : null);
 
         applyVocabularyRelation(field.getTypeInfo(), indexField);
 
@@ -727,7 +734,7 @@ public class ModelResourceTypeMapper {
      * fields below the root section.
      */
     private record FieldCandidate(UiField field, String path, List<PathSegment> pathSegments,
-                                  List<String> parentNames, boolean multivalued) {
+                                  List<String> parentNames, boolean multivalued, boolean facet) {
     }
 
     /**

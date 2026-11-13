@@ -230,6 +230,24 @@ public class DefaultModelService implements ModelService {
                     HttpStatus.CONFLICT
             );
         }
+
+        List<String> facetsNotIndexed = facetsNotIndexed(allFields);
+        if (!facetsNotIndexed.isEmpty()) {
+            throw new ResourceException(
+                    String.format("Fields marked as facets but not indexed: [%s]", String.join(", ", facetsNotIndexed)),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    /**
+     * @return the ids of the fields with {@code index} false and {@code facet} explicitly true
+     */
+    static List<String> facetsNotIndexed(List<UiField> fields) {
+        return fields.stream()
+                .filter(field -> !field.isIndex() && Boolean.TRUE.equals(field.getFacet()))
+                .map(field -> String.valueOf(field.getId()))
+                .toList();
     }
 
     private Set<String> findDuplicateFields(List<UiField> list, Function<UiField, Object> predicate) {

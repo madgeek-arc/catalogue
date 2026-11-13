@@ -35,6 +35,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,7 @@ class ModelResourceTypeMapperTest {
         assertEquals("resource_internal_id", primaryKey.getName());
         assertEquals("$.id", primaryKey.getPath());
         assertEquals("java.lang.String", primaryKey.getType());
+        assertNull(primaryKey.getLabel());
 
         IndexField title = mapped.getIndexFields().get(1);
         assertEquals("title", title.getName());
@@ -459,6 +461,47 @@ class ModelResourceTypeMapperTest {
     }
 
     @Test
+    void mapLeavesFieldThatIsNoFacetUnlabeled() {
+        UiField website = field("Website", "website", null, FieldType.string, false);
+        website.setFacet(false);
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false), website)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertEquals("Title", indexField(mapped, "$.main.title").getLabel());
+        assertNull(indexField(mapped, "$.main.website").getLabel());
+    }
+
+    @Test
+    void mapAppliesNoFacetOfCompositeToItsSubFields() {
+        UiField child = field("Name", "name", null, FieldType.string, false);
+        child.setFacet(true);
+        UiField contacts = composite("contacts", true, field("Email", "email", null, FieldType.string, false), child);
+        contacts.setFacet(false);
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(contacts)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertNull(indexField(mapped, "$.main.contacts[*].email").getLabel());
+        assertNull(indexField(mapped, "$.main.contacts[*].name").getLabel());
+    }
+
+    @Test
+    void facetDefaultsToUnsetAndReadsFromJson() {
+        JsonMapper json = JsonMapper.builder().build();
+
+        assertNull(json.readValue("{\"name\": \"title\"}", UiField.class).getFacet());
+        assertEquals(Boolean.FALSE, json.readValue("{\"name\": \"title\", \"facet\": false}", UiField.class).getFacet());
+        UiField noFacet = new UiField();
+        noFacet.setFacet(false);
+        assertEquals(Boolean.FALSE, new UiField(noFacet).getFacet());
+    }
+
+    @Test
     void indexDefaultsToTrueAndReadsFromJson() {
         JsonMapper json = JsonMapper.builder().build();
 
@@ -519,6 +562,11 @@ class ModelResourceTypeMapperTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(type, indexField.getType());
+    }
+
+    private IndexField indexField(ResourceType resourceType, String path) {
+        return resourceType.getIndexFields().stream().filter(field -> path.equals(field.getPath())).findFirst()
+                .orElseThrow();
     }
 
     private void assertNoFieldWithPathPrefix(ResourceType resourceType, String pathPrefix) {

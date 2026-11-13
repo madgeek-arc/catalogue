@@ -34,6 +34,11 @@ public class UiField {
      * Whether the field is indexed. On a composite field, it applies to all of its sub-fields.
      */
     boolean index = true;
+    /**
+     * Whether the field is a search facet when it can be one; unset means it is. It applies to indexed fields
+     * only, and on a composite field to all of its sub-fields.
+     */
+    Boolean facet;
     Form form;
     Display display;
     List<UiField> subFields;
@@ -53,6 +58,7 @@ public class UiField {
         this.form = field.getForm();
         this.display = field.getDisplay();
         this.index = field.isIndex();
+        this.facet = field.getFacet();
     }
 
     public TypeInfo getTypeInfo() {
@@ -157,6 +163,14 @@ public class UiField {
 
     public void setIndex(boolean index) {
         this.index = index;
+    }
+
+    public Boolean getFacet() {
+        return facet;
+    }
+
+    public void setFacet(Boolean facet) {
+        this.facet = facet;
     }
 
     public List<UiField> getSubFields() {
