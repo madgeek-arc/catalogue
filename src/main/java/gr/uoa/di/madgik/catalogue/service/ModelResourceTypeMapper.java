@@ -218,11 +218,12 @@ public class ModelResourceTypeMapper {
 
     /**
      * Collects the given UI field when its type is indexable and its path is not yet reserved,
-     * then continues recursively through any sub-fields.
+     * then continues recursively through any sub-fields. A field not marked for indexing is
+     * skipped together with its sub-fields.
      */
     private void collectUiField(UiField field, Set<String> usedPaths, List<FieldCandidate> candidates,
                                 List<PathSegment> parentPathSegments, int rootDepth, boolean ancestorMultivalued) {
-        if (field == null) {
+        if (field == null || !field.isIndex()) {
             return;
         }
 

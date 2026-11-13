@@ -30,6 +30,10 @@ public class UiField {
     TypeInfo typeInfo = new TypeInfo();
     boolean includedInSnippet;
     boolean deprecated;
+    /**
+     * Whether the field is indexed. On a composite field, it applies to all of its sub-fields.
+     */
+    boolean index = true;
     Form form;
     Display display;
     List<UiField> subFields;
@@ -48,6 +52,7 @@ public class UiField {
         this.typeInfo = field.getTypeInfo();
         this.form = field.getForm();
         this.display = field.getDisplay();
+        this.index = field.isIndex();
     }
 
     public TypeInfo getTypeInfo() {
@@ -144,6 +149,14 @@ public class UiField {
 
     public void setDeprecated(boolean deprecated) {
         this.deprecated = deprecated;
+    }
+
+    public boolean isIndex() {
+        return index;
+    }
+
+    public void setIndex(boolean index) {
+        this.index = index;
     }
 
     public List<UiField> getSubFields() {

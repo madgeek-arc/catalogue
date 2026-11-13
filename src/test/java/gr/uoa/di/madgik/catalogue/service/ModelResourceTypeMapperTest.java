@@ -26,14 +26,17 @@ import gr.uoa.di.madgik.catalogue.domain.types.VocabularyProperties;
 import gr.uoa.di.madgik.registry.domain.ResourceType;
 import gr.uoa.di.madgik.registry.domain.index.IndexField;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModelResourceTypeMapperTest {
 
@@ -411,6 +414,62 @@ class ModelResourceTypeMapperTest {
     }
 
     @Test
+    void mapSkipsFieldNotMarkedForIndexing() {
+        UiField hidden = field("Secret", "secret", null, FieldType.string, false);
+        hidden.setIndex(false);
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false), hidden)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "title", "$.main.title", "java.lang.String");
+        assertNoFieldWithPathPrefix(mapped, "$.main.secret");
+    }
+
+    @Test
+    void mapSkipsSubFieldsOfCompositeNotMarkedForIndexing() {
+        UiField users = composite("users", true,
+                field("Email", "email", null, FieldType.email, false),
+                field("Name", "name", null, FieldType.string, false));
+        users.setIndex(false);
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(field("Title", "title", null, FieldType.string, false), users)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "title", "$.main.title", "java.lang.String");
+        assertNoFieldWithPathPrefix(mapped, "$.main.users");
+    }
+
+    @Test
+    void mapIgnoresExcludedFieldWhenResolvingSameNamedFields() {
+        UiField topLevel = field("Access Policy", "accessPolicy", null, FieldType.string, false);
+        topLevel.setIndex(false);
+        UiField nested = composite("classTier", false, field("Access Policy", "accessPolicy", null, FieldType.string, false));
+        Model model = new Model();
+        model.setResourceType("sample_entity");
+        model.setSections(List.of(section(topLevel, nested)));
+
+        ResourceType mapped = mapper.map(model, new ResourceType());
+
+        assertHasField(mapped, "accessPolicy", "$.main.classTier.accessPolicy", "java.lang.String");
+        assertNoFieldWithPathPrefix(mapped, "$.main.accessPolicy");
+    }
+
+    @Test
+    void indexDefaultsToTrueAndReadsFromJson() {
+        JsonMapper json = JsonMapper.builder().build();
+
+        assertTrue(json.readValue("{\"name\": \"title\"}", UiField.class).isIndex());
+        assertFalse(json.readValue("{\"name\": \"title\", \"index\": false}", UiField.class).isIndex());
+        UiField excluded = new UiField();
+        excluded.setIndex(false);
+        assertFalse(new UiField(excluded).isIndex());
+    }
+
+    @Test
     void mapUsesAsManyParentNamesAsNeededToTellSameNamedFieldsApart() {
         Model model = new Model();
         model.setResourceType("sample_entity");
@@ -460,6 +519,11 @@ class ModelResourceTypeMapperTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(type, indexField.getType());
+    }
+
+    private void assertNoFieldWithPathPrefix(ResourceType resourceType, String pathPrefix) {
+        assertTrue(resourceType.getIndexFields().stream().noneMatch(field -> field.getPath().startsWith(pathPrefix)),
+                () -> "Unexpected index field under " + pathPrefix);
     }
 
     private Section section(UiField... fields) {
