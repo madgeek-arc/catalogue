@@ -162,6 +162,20 @@ public class CatalogueLibProperties {
          */
         private ResourceTypeSyncProperties resourceTypeSync = new ResourceTypeSyncProperties();
 
+        /**
+         * Maximum age of a cached snippet template; bounds how long a template can be stale when its model changes
+         * without the cache being told.
+         */
+        private Duration snippetTemplateTtl = Duration.ofMinutes(10);
+
+        public Duration getSnippetTemplateTtl() {
+            return snippetTemplateTtl;
+        }
+
+        public void setSnippetTemplateTtl(Duration snippetTemplateTtl) {
+            this.snippetTemplateTtl = snippetTemplateTtl;
+        }
+
         public CatalogueValidation getValidation() {
             return validation;
         }

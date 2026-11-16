@@ -21,6 +21,7 @@ import gr.uoa.di.madgik.registry.service.GenericResourceService;
 import gr.uoa.di.madgik.catalogue.service.id.IdGenerator;
 import gr.uoa.di.madgik.catalogue.service.ModelService;
 import gr.uoa.di.madgik.catalogue.service.DefaultModelService;
+import gr.uoa.di.madgik.catalogue.service.SnippetTemplateCache;
 import gr.uoa.di.madgik.catalogue.service.ModelResourceTypeMapper;
 import gr.uoa.di.madgik.registry.service.ParserService;
 import gr.uoa.di.madgik.registry.service.ResourceService;
@@ -72,6 +73,15 @@ public class CatalogueConfiguration {
         return new DefaultModelService(genericResourceService, idGenerator, searchService, resourceService,
                 resourceTypeService, parserService, modelResourceTypeMapper, modelUpdateTaskExecutor,
                 catalogueLibProperties);
+    }
+
+    /**
+     * Creates the cache of snippet templates, which also listens for model writes.
+     */
+    @Bean
+    SnippetTemplateCache snippetTemplateCache(ModelService modelService, ParserService parserService,
+                                              CatalogueLibProperties catalogueLibProperties) {
+        return new SnippetTemplateCache(modelService, parserService, catalogueLibProperties);
     }
 
     @Bean
