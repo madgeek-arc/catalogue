@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -43,7 +42,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
-@Service
 public class DefaultDataRequestService implements DataRequestService {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDataRequestService.class);

@@ -12,6 +12,26 @@
 | consumed | Endpoint given in a `DataRequest` | HTTP, any method, caller-supplied headers and body. Public addresses only, redirects not followed | Fetch remote data and extract values with JSONPath/XPath | `catalogue-lib.data-request.*` | `service/DefaultDataRequestService#retrieve` |
 | provided | Frontend build | `target/catalogue-model.d.ts` | Shared TypeScript model types | — | `pom.xml` typescript-generator |
 
+## Overriding library beans
+
+`CatalogueConfiguration` is an auto-configuration without component scan. Each bean below
+backs off when the host defines a bean of the listed type:
+
+| Host bean type | Replaces |
+|---|---|
+| `ModelService` | `DefaultModelService` |
+| `IdGenerator` | `StringIdGenerator` |
+| `ResourceValidator` (registry) | `ModelResponseValidator` |
+| `ModelResourceTypeMapper` | the default mapper (subclass it to customise index fields) |
+| `SnippetTemplateCache` | the default cache |
+| `DataRequestService` | `DefaultDataRequestService` |
+| `FormsController`, `DataRequestController` | the library's controller (or set `catalogue-lib.web.<name>.enabled=false`) |
+| `GenericExceptionController`, including a subclass | the library's exception advice |
+
+The library does not contribute an `ObjectMapper` and does not affect the host's
+`applicationTaskExecutor`. Background resource type updates use its own
+`catalogueResourceTypeSyncExecutor` ([ADR 0001](decisions/0001-resource-type-sync-runs-on-dedicated-single-thread-executor.md)).
+
 ## Failure behaviour
 
 | Situation | Behaviour | Evidence |
@@ -25,3 +45,4 @@
 | Data request target returns 400/500 | Mapped to `ResourceException(400)`. Other statuses propagate | `DefaultDataRequestService#retrieve` |
 | Data request target slow | Fails after `catalogue-lib.data-request.connect-timeout` (10 s) or `response-timeout` (30 s) | `DefaultDataRequestServiceTest` |
 | Automatic resource-type update after a model update fails | Logged at `ERROR`. The model update stands | `DefaultModelService#updateMappedResourceTypeAsync` |
+| Background resource-type update queue full | The update runs in the request thread | `CatalogueConfiguration#catalogueResourceTypeSyncExecutor` |

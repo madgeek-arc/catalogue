@@ -44,8 +44,8 @@
 
 | Package | Responsibility |
 |---|---|
-| `config` | `CatalogueConfiguration` (registered through `AutoConfiguration.imports`): component scan of `gr.uoa.di.madgik.catalogue`, `ModelService`, `ModelResourceTypeMapper` (replaceable), an `AsyncTaskExecutor` for model updates that carries the security context, and an `ObjectMapper` when the host has none. `CatalogueLibProperties` (`catalogue-lib.*`) |
-| `controller` | `FormsController` (`/forms/...` and `/...`: models, resource types), `DataRequestController` (`/request/default`), `GenericExceptionController` (RFC 7807 errors for the whole application) |
+| `config` | `CatalogueConfiguration` (`@AutoConfiguration`, no component scan): `ModelService`, `IdGenerator`, `ModelResourceTypeMapper`, `ModelResponseValidator`, `SnippetTemplateCache`, `DataRequestService`, each replaceable by a host bean; the `catalogueResourceTypeSyncExecutor` for background resource type updates; and, in servlet applications, the controllers and exception advice behind `catalogue-lib.web.*`. `CatalogueLibProperties` (`catalogue-lib.*`) |
+| `controller` | `FormsController` (`/forms/...` and `/...`: models, resource types), `DataRequestController` (`/request/default`), `GenericExceptionController` (RFC 7807 errors for the whole application; replaced by a host subclass when there is one) |
 | `service` | `ModelService`/`DefaultModelService`, `ModelResourceTypeMapper`, `ModelResponseValidator`, `DataRequestService`/`DefaultDataRequestService`, `id.StringIdGenerator` |
 | `http` | `PublicAddressGuard`: refuses URLs that resolve to non-public addresses |
 | `domain`, `domain.types`, `domain.jackson` | Form model and field-type properties, plus the Jackson 3 deserialiser for `TypeInfo` |
@@ -107,3 +107,7 @@ requests from submitted data are limited to public addresses. See [security-mode
 - **Server-side validation driven by the model**, mirroring the frontend form rules, plugged into the
   registry as its `ResourceValidator`.
 - **Shared typings**: TypeScript definitions are generated from the Java model at build time.
+
+Recorded decisions are in [decisions/](decisions/):
+
+- [0001 Resource type sync runs on a dedicated single-thread executor](decisions/0001-resource-type-sync-runs-on-dedicated-single-thread-executor.md)

@@ -17,9 +17,7 @@
 package gr.uoa.di.madgik.catalogue.service.id;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.stereotype.Service;
 
-@Service
 public class StringIdGenerator implements IdGenerator<String> {
 
     public static final int DEFAULT_LENGTH = 8;

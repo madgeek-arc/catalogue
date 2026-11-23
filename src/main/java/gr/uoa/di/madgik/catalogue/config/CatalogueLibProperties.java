@@ -22,6 +22,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.Payload;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -47,6 +48,11 @@ public class CatalogueLibProperties {
      */
     private DataRequestProperties dataRequest = new DataRequestProperties();
 
+    /**
+     * Switches for the library's web beans.
+     */
+    private WebProperties web = new WebProperties();
+
     public ModelProperties getModel() {
         return model;
     }
@@ -61,6 +67,72 @@ public class CatalogueLibProperties {
 
     public void setDataRequest(DataRequestProperties dataRequest) {
         this.dataRequest = dataRequest;
+    }
+
+    public WebProperties getWeb() {
+        return web;
+    }
+
+    public void setWeb(WebProperties web) {
+        this.web = web;
+    }
+
+    public static class WebProperties {
+
+        /**
+         * Model management endpoints ({@code /forms/**}).
+         */
+        private Toggle forms = new Toggle();
+
+        /**
+         * Generic data request endpoint ({@code POST /request/default}).
+         */
+        private Toggle dataRequest = new Toggle();
+
+        /**
+         * Exception advice that renders errors as {@code ProblemDetail}.
+         */
+        private Toggle errorHandler = new Toggle();
+
+        public Toggle getForms() {
+            return forms;
+        }
+
+        public void setForms(Toggle forms) {
+            this.forms = forms;
+        }
+
+        public Toggle getDataRequest() {
+            return dataRequest;
+        }
+
+        public void setDataRequest(Toggle dataRequest) {
+            this.dataRequest = dataRequest;
+        }
+
+        public Toggle getErrorHandler() {
+            return errorHandler;
+        }
+
+        public void setErrorHandler(Toggle errorHandler) {
+            this.errorHandler = errorHandler;
+        }
+    }
+
+    public static class Toggle {
+
+        /**
+         * Whether the bean is registered.
+         */
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 
     public static class DataRequestProperties {
@@ -160,6 +232,7 @@ public class CatalogueLibProperties {
         /**
          * Resource type synchronization behavior for model create/update operations.
          */
+        @Valid
         private ResourceTypeSyncProperties resourceTypeSync = new ResourceTypeSyncProperties();
 
         /**
@@ -205,6 +278,20 @@ public class CatalogueLibProperties {
          */
         private boolean onUpdate = false;
 
+        /**
+         * Executor that applies resource type updates in the background.
+         */
+        @Valid
+        private ExecutorProperties executor = new ExecutorProperties();
+
+        public ExecutorProperties getExecutor() {
+            return executor;
+        }
+
+        public void setExecutor(ExecutorProperties executor) {
+            this.executor = executor;
+        }
+
         public boolean isOnCreate() {
             return onCreate;
         }
@@ -219,6 +306,38 @@ public class CatalogueLibProperties {
 
         public void setOnUpdate(boolean onUpdate) {
             this.onUpdate = onUpdate;
+        }
+    }
+
+    public static class ExecutorProperties {
+
+        /**
+         * Number of threads. With more than one thread, updates of the same model may be applied
+         * out of order.
+         */
+        @Positive
+        private int poolSize = 1;
+
+        /**
+         * Number of pending updates kept before further updates run on the caller's thread.
+         */
+        @Positive
+        private int queueCapacity = 100;
+
+        public int getPoolSize() {
+            return poolSize;
+        }
+
+        public void setPoolSize(int poolSize) {
+            this.poolSize = poolSize;
+        }
+
+        public int getQueueCapacity() {
+            return queueCapacity;
+        }
+
+        public void setQueueCapacity(int queueCapacity) {
+            this.queueCapacity = queueCapacity;
         }
     }
 

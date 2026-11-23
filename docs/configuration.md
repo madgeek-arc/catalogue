@@ -11,6 +11,11 @@ publishes their metadata, so IDEs show the descriptions.
 | `catalogue-lib.model.validation.allow-private-addresses` | No | `false` | Let URL field values point to loopback, private, link-local and other non-public addresses. Vocabulary lookups aren't affected |
 | `catalogue-lib.model.resource-type-sync.on-create` | No | `false` | Create the derived registry resource type when a model is created |
 | `catalogue-lib.model.resource-type-sync.on-update` | No | `false` | Update the derived registry resource type, in the background, when a model is updated |
+| `catalogue-lib.model.resource-type-sync.executor.pool-size` | No | `1` | Threads applying background resource type updates. Above 1, updates of the same model may apply out of order ([ADR 0001](decisions/0001-resource-type-sync-runs-on-dedicated-single-thread-executor.md)) |
+| `catalogue-lib.model.resource-type-sync.executor.queue-capacity` | No | `100` | Pending background updates; when full, the update runs in the request thread |
+| `catalogue-lib.web.forms.enabled` | No | `true` | Register `FormsController` (servlet applications only) |
+| `catalogue-lib.web.data-request.enabled` | No | `true` | Register `DataRequestController` (`POST /request/default`) |
+| `catalogue-lib.web.error-handler.enabled` | No | `true` | Register `GenericExceptionController`. It also backs off when the host defines a bean of that type |
 | `catalogue-lib.data-request.allow-private-addresses` | No | `false` | Let `POST /request/default` target non-public addresses |
 | `catalogue-lib.data-request.connect-timeout` | No | `10s` | Connect timeout of data requests |
 | `catalogue-lib.data-request.response-timeout` | No | `30s` | Response timeout of data requests |
@@ -34,7 +39,8 @@ catalogue-lib.model.resource-type-sync.on-update=true
 
 ## Environments
 
-- Tests: `src/test/resources/application.yml` is empty. Tests construct objects directly.
+- Tests: `src/test/resources/application.yml` is empty. Tests construct objects directly, except
+  `CatalogueConfigurationTest`, which sets properties on an `ApplicationContextRunner`.
 - Hosts: values are set per deployment through environment variables or an external configuration.
   They aren't stored in the repository.
 

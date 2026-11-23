@@ -37,12 +37,12 @@ import gr.uoa.di.madgik.registry.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.core.task.AsyncTaskExecutor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -57,7 +57,7 @@ public class DefaultModelService implements ModelService {
     public final ResourceTypeService resourceTypeService;
     public final ParserService parserPool;
     private final ModelResourceTypeMapper modelResourceTypeMapper;
-    private final AsyncTaskExecutor modelUpdateTaskExecutor;
+    private final Executor resourceTypeSyncExecutor;
     private final CatalogueLibProperties catalogueLibProperties;
 
     public DefaultModelService(GenericResourceService genericResourceService,
@@ -67,7 +67,7 @@ public class DefaultModelService implements ModelService {
                                ResourceTypeService resourceTypeService,
                                ParserService parserPool,
                                ModelResourceTypeMapper modelResourceTypeMapper,
-                               AsyncTaskExecutor modelUpdateTaskExecutor,
+                               Executor resourceTypeSyncExecutor,
                                CatalogueLibProperties catalogueLibProperties) {
         this.genericResourceService = genericResourceService;
         this.idGenerator = idGenerator;
@@ -76,7 +76,7 @@ public class DefaultModelService implements ModelService {
         this.resourceTypeService = resourceTypeService;
         this.parserPool = parserPool;
         this.modelResourceTypeMapper = modelResourceTypeMapper;
-        this.modelUpdateTaskExecutor = modelUpdateTaskExecutor;
+        this.resourceTypeSyncExecutor = resourceTypeSyncExecutor;
         this.catalogueLibProperties = catalogueLibProperties;
     }
 
@@ -270,11 +270,8 @@ public class DefaultModelService implements ModelService {
     }
 
     /**
-     * Schedules propagation of a model update to its mapped {@link ResourceType}, when the model
-     * declares a target resource type name.
-     *
-     * <p>This keeps the model update path responsive by delegating the registry-side resource type
-     * refresh to {@link #updateMappedResourceTypeAsync(Model, String)}.</p>
+     * Schedules propagation of a model update to its mapped {@link ResourceType}, when update sync
+     * is enabled and the model declares a target resource type name.
      *
      * @param model the updated model whose mapping may need to be reflected in the registry
      */
@@ -287,12 +284,9 @@ public class DefaultModelService implements ModelService {
     }
 
     /**
-     * Rebuilds and updates the mapped {@link ResourceType} on a background thread.
-     *
-     * <p>The caller does not block on registry projection rebuilds triggered by
-     * {@link gr.uoa.di.madgik.registry.service.ResourceTypeService#updateResourceType(ResourceType)}.
-     * Any failure in the asynchronous update path is logged and not rethrown to the original
-     * request thread.</p>
+     * Rebuilds and updates the mapped {@link ResourceType}, and with it its index fields, on the
+     * resource type sync executor. The caller does not wait for the update; failures are logged
+     * and not rethrown.
      *
      * @param model the source model used to rebuild the resource type definition
      * @param resourceType the target resource type name to load and update
@@ -302,7 +296,7 @@ public class DefaultModelService implements ModelService {
             ResourceType updatedResourceType = modelResourceTypeMapper
                     .map(model, resourceTypeService.getResourceType(resourceType));
             resourceTypeService.updateResourceType(updatedResourceType);
-        }, modelUpdateTaskExecutor).exceptionally(exception -> {
+        }, resourceTypeSyncExecutor).exceptionally(exception -> {
             logger.error("Failed to update mapped resource type '{}' for model '{}'", resourceType, model.getId(), exception);
             return null;
         });
