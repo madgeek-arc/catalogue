@@ -36,12 +36,14 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.sql.SQLException;
 import java.net.URI;
@@ -174,6 +176,37 @@ public class GenericExceptionController {
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .body(buildProblemDetail(req, HttpStatus.UNPROCESSABLE_CONTENT, "Could not process request"));
+    }
+
+    /**
+     * Writes no response when the client disconnected before it received the whole response. Any other failure to write
+     * a message, including the body of an outbound request, is an internal server error.
+     *
+     * @param req http servlet request
+     * @param ex  the thrown exception
+     * @return {@link ProblemDetail}, or {@code null} if the client has disconnected
+     */
+    @ExceptionHandler(value = {HttpMessageNotWritableException.class, AsyncRequestNotUsableException.class},
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    protected ResponseEntity<ProblemDetail> handleResponseNotWritable(HttpServletRequest req, Exception ex) {
+        if (isResponseNotUsable(ex)) {
+            logger.debug("Client disconnected during {} {}", req.getMethod(), req.getRequestURI());
+            return null;
+        }
+        return handleException(req, ex);
+    }
+
+    /**
+     * Only a failure to write to the servlet response has {@link AsyncRequestNotUsableException} in its cause chain.
+     * An I/O error message alone does not tell the client's connection from one to another server.
+     */
+    private static boolean isResponseNotUsable(Throwable ex) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof AsyncRequestNotUsableException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
